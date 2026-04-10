@@ -1,0 +1,511 @@
+What is Astro & Why You Should 100% Use It
+Astro is a static site generator — it runs at build time, fetches all your listings from Supabase, and outputs real .html files for every single page. No JavaScript framework required on the client.
+
+Why it's perfect for your directory:
+Requirement	Astro's Answer
+Individual listing pages	Generates a real HTML file for each listing
+Hierarchical SEO URLs	File-based dynamic routing: /UK/Bristol/Easton/ZamZam
+Fast page loads	Ships zero JS by default — just HTML + CSS
+SEO	Search engines get fully-rendered HTML, not a loading spinner
+Free hosting	Deploys perfectly to Cloudflare Pages
+Your existing CSS	Paste it straight in — Astro uses standard HTML/CSS
+Your current setup (single index.html fetching from Supabase client-side) means Google sees "Loading local businesses..." — that's terrible for SEO. Astro fixes this completely.
+
+Yes, Use Cloudflare Pages
+Free tier is extremely generous:
+
+500 builds/month
+Unlimited bandwidth
+Unlimited static pages (perfect for directories)
+Global CDN (fast everywhere)
+GitHub integration (push to deploy)
+Custom domain support
+Free SSL
+The workflow: Push to GitHub → Cloudflare auto-builds → Live site updated
+
+Step 1: Update Your Supabase Table
+Add these columns to your listings table for the hierarchical URL structure:
+
+sql
+-- Run in Supabase SQL Editor
+ALTER TABLE listings
+ADD COLUMN IF NOT EXISTS country_slug TEXT DEFAULT 'uk',
+ADD COLUMN IF NOT EXISTS city_slug TEXT,
+ADD COLUMN IF NOT EXISTS area_slug TEXT,
+ADD COLUMN IF NOT EXISTS business_slug TEXT;
+
+-- Create a unique index for the full URL path
+CREATE UNIQUE INDEX idx_listing_full_slug 
+ON listings(country_slug, city_slug, area_slug, business_slug);
+
+-- Helper function to auto-generate slugs from names
+CREATE OR REPLACE FUNCTION generate_slug(input TEXT)
+RETURNS TEXT AS 
+$$
+BEGIN
+  RETURN lower(regexp_replace(regexp_replace(trim(input), '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g'));
+END;
+$$
+ LANGUAGE plpgsql;
+Then update your existing rows:
+
+sql
+-- Example: Update a listing
+UPDATE listings SET
+  country_slug = 'uk',
+  city_slug = 'bristol',
+  area_slug = 'easton',
+  business_slug = 'zamzam'
+WHERE name = 'ZamZam';
+Your table should now look like:
+
+name	country_slug	city_slug	area_slug	business_slug	status	...
+ZamZam	uk	bristol	easton	zamzam	Published	...
+The Coffee House	uk	bristol	clifton	the-coffee-house	Published	...
+Bob's Plumbing	uk	bath	oldfield-park	bobs-plumbing	Published	...
+Step 2: Scaffold the Astro Project
+bash
+# Create the project
+npm create astro@latest localpulse-directory
+# Choose: Empty project, No TypeScript (or Yes if you prefer), Install dependencies
+
+cd localpulse-directory
+
+# Install Supabase client
+npm install @supabase/supabase-js
+Step 3: Project Structure
+text
+localpulse-directory/
+├── src/
+│   ├── layouts/
+│   │   └── BaseLayout.astro          # Shared HTML shell (nav, footer, CSS)
+│   ├── lib/
+│   │   └── supabase.js               # Supabase client (shared)
+│   ├── pages/
+│   │   ├── index.astro               # Homepage
+│   │   ├── [country]/
+│   │   │   ├── index.astro           # Country page:  /uk
+│   │   │   ├── [city]/
+│   │   │   │   ├── index.astro       # City page:     /uk/bristol
+│   │   │   │   ├── [area]/
+│   │   │   │   │   ├── index.astro   # Area page:     /uk/bristol/easton
+│   │   │   │   │   └── [business].astro  # Listing:   /uk/bristol/easton/zamzam
+│   └── styles/
+│       └── global.css                 # Your existing CSS (paste it here)
+├── astro.config.mjs
+├── .env                               # Supabase keys (NEVER commit this)
+└── package.json
+Step 4: Key Files
+.env
+env
+SUPABASE_URL=https://ecrupbqtlhuisqmybleu.supabase.co
+SUPABASE_ANON_KEY=your_real_anon_key_here
+src/lib/supabase.js
+javascript
+import { createClient } from '@supabase/supabase-js';
+
+export const supabase = createClient(
+  import.meta.env.SUPABASE_URL,
+  import.meta.env.SUPABASE_ANON_KEY
+);
+src/layouts/BaseLayout.astro
+astro
+---
+// This is the "frontmatter" — runs at build time on the server
+const { title, description } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title} — LocalPulse</title>
+    <meta name="description" content={description}>
+    <link rel="stylesheet" href="/styles/global.css">
+</head>
+<body>
+
+<!-- Your existing nav -->
+<nav id="navbar">
+    <div class="container">
+        <a href="/" class="logo">📍 Local<span>Pulse</span></a>
+        <div class="nav-links">
+            <a href="/#categories">Categories</a>
+            <a href="/#how-it-works">How It Works</a>
+            <a href="/#pricing">Pricing</a>
+            <a href="#" class="btn btn-outline">List Your Business</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Page content injected here -->
+<slot />
+
+<!-- Your existing footer -->
+<footer>
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <div class="logo">📍 Local<span>Pulse</span></div>
+                <p>Connecting communities with the businesses they love.</p>
+            </div>
+            <!-- ... rest of footer ... -->
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 LocalPulse. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
+src/pages/index.astro (Homepage)
+astro
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { supabase } from '../lib/supabase';
+
+// This runs at BUILD TIME — not in the browser
+const { data: listings } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Published')
+    .order('is_featured', { ascending: false })
+    .limit(6);
+
+const { data: cities } = await supabase
+    .from('listings')
+    .select('city_slug, country_slug')
+    .eq('status', 'Published');
+
+// Get unique cities with counts
+const cityMap = {};
+cities?.forEach(l => {
+    const key = `${l.country_slug}/${l.city_slug}`;
+    cityMap[key] = (cityMap[key] || 0) + 1;
+});
+---
+
+<BaseLayout title="Discover Local Businesses" description="Find trusted local businesses with reviews, photos, and direct contact.">
+
+<!-- HERO (your existing markup, unchanged) -->
+<section class="hero">
+    <div class="container">
+        <p class="section-label">Your City's #1 Business Directory</p>
+        <h1>Discover the <span class="highlight">Best Local Businesses</span> Near You</h1>
+        <p>From restaurants to plumbers, find trusted local businesses with reviews, photos, and direct contact.</p>
+        <div class="search-box">
+            <input type="text" placeholder="🔍  What are you looking for?">
+            <input type="text" placeholder="📍  City or Zip" style="max-width: 160px; border-left: 1px solid #E5E7EB;">
+            <button>Search</button>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURED LISTINGS — now pre-rendered HTML, not client-side JS -->
+<section style="background: #F3F4F6;">
+    <div class="container">
+        <p class="section-label">Featured Businesses</p>
+        <h2 class="section-title">Top-Rated This Month</h2>
+        <div class="listings-grid">
+            {listings?.map(item => (
+                <a href={`/${item.country_slug}/${item.city_slug}/${item.area_slug}/${item.business_slug}`} class="listing-card">
+                    <div class="listing-img" style={`background-image: url('${item.image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80'}')`}>
+                        {item.is_featured && <span class="listing-badge">⭐ Featured</span>}
+                    </div>
+                    <div class="listing-body">
+                        <h3>{item.name}</h3>
+                        <div class="listing-meta">
+                            <span class="stars">{'★'.repeat(Math.floor(item.google_rating || 0))}{'☆'.repeat(5 - Math.floor(item.google_rating || 0))}</span>
+                            <span>{item.google_rating || '—'} ({item.google_review_count || 0} reviews)</span>
+                        </div>
+                        <p>{item.description || 'No description available.'}</p>
+                        <div class="listing-tags">
+                            <span>{item.category || 'Local Business'}</span>
+                            <span>📍 {item.area_slug} · {item.city_slug}</span>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- Rest of your homepage sections (How It Works, Pricing, etc.) -->
+<!-- Just paste them here as-is from your original HTML -->
+
+</BaseLayout>
+src/pages/[country]/[city]/[area]/[business].astro (Individual Listing Page)
+This is the key file — it generates /uk/bristol/easton/zamzam:
+
+astro
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { supabase } from '../../../../lib/supabase';
+
+// Tell Astro which pages to generate at build time
+export async function getStaticPaths() {
+    const { data: listings } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('status', 'Published');
+
+    return listings.map(listing => ({
+        params: {
+            country: listing.country_slug,
+            city: listing.city_slug,
+            area: listing.area_slug,
+            business: listing.business_slug,
+        },
+        props: { listing },
+    }));
+}
+
+const { listing } = Astro.props;
+const { country, city, area } = Astro.params;
+
+// Structured data for Google SEO
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": listing.name,
+    "description": listing.description,
+    "address": {
+        "@type": "PostalAddress",
+        "addressLocality": listing.city_slug,
+        "addressRegion": listing.area_slug,
+        "addressCountry": listing.country_slug?.toUpperCase()
+    },
+    "aggregateRating": listing.google_rating ? {
+        "@type": "AggregateRating",
+        "ratingValue": listing.google_rating,
+        "reviewCount": listing.google_review_count || 0
+    } : undefined,
+    "image": listing.image_url,
+    "telephone": listing.phone,
+    "url": listing.website
+};
+---
+
+<BaseLayout 
+    title={`${listing.name} — ${area}, ${city}`} 
+    description={listing.description || `Find ${listing.name} in ${area}, ${city}. View reviews, photos, and contact details.`}
+>
+
+<!-- SEO: Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+<!-- Breadcrumb navigation -->
+<section style="padding: 120px 0 0; background: #F9FAFB;">
+    <div class="container">
+        <nav style="font-size: 0.9rem; color: var(--muted); margin-bottom: 24px;">
+            <a href="/" style="color: var(--primary);">Home</a> /
+            <a href={`/${country}`} style="color: var(--primary); text-transform: uppercase;">{country}</a> /
+            <a href={`/${country}/${city}`} style="color: var(--primary); text-transform: capitalize;">{city}</a> /
+            <a href={`/${country}/${city}/${area}`} style="color: var(--primary); text-transform: capitalize;">{area}</a> /
+            <span style="text-transform: capitalize;">{listing.name}</span>
+        </nav>
+
+        <!-- Listing Hero -->
+        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 32px; padding-bottom: 60px;">
+            <div>
+                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+                    {listing.is_featured && <span class="listing-badge" style="position:static;">⭐ Featured</span>}
+                    <span class="listing-tags"><span>{listing.category || 'Local Business'}</span></span>
+                </div>
+
+                <h1 style="font-size: 2.4rem; font-weight: 800; margin-bottom: 12px;">
+                    {listing.name}
+                </h1>
+
+                <div class="listing-meta" style="font-size: 1rem; margin-bottom: 20px;">
+                    <span class="stars" style="font-size: 1.2rem;">
+                        {'★'.repeat(Math.floor(listing.google_rating || 0))}{'☆'.repeat(5 - Math.floor(listing.google_rating || 0))}
+                    </span>
+                    <span>{listing.google_rating || '—'} ({listing.google_review_count || 0} Google reviews)</span>
+                </div>
+
+                <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.8; margin-bottom: 24px;">
+                    {listing.description || 'No description available.'}
+                </p>
+
+                <!-- Contact Details -->
+                <div style="display: grid; gap: 12px;">
+                    {listing.address && (
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>📍</span>
+                            <span>{listing.address}</span>
+                        </div>
+                    )}
+                    {listing.phone && (
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>📞</span>
+                            <a href={`tel:${listing.phone}`} style="color: var(--primary); font-weight: 600;">{listing.phone}</a>
+                        </div>
+                    )}
+                    {listing.email && (
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>✉️</span>
+                            <a href={`mailto:${listing.email}`} style="color: var(--primary);">{listing.email}</a>
+                        </div>
+                    )}
+                    {listing.website && (
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span>🌐</span>
+                            <a href={listing.website} target="_blank" rel="noopener" style="color: var(--primary);">{listing.website}</a>
+                        </div>
+                    )}
+                </div>
+
+                <div style="margin-top: 28px; display: flex; gap: 12px;">
+                    {listing.phone && <a href={`tel:${listing.phone}`} class="btn btn-primary">📞 Call Now</a>}
+                    {listing.website && <a href={listing.website} target="_blank" class="btn btn-outline">🌐 Visit Website</a>}
+                </div>
+            </div>
+
+            <!-- Image -->
+            <div style={`border-radius: var(--radius); overflow: hidden; min-height: 360px; background-image: url('${listing.image_url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80"}'); background-size: cover; background-position: center;`}>
+            </div>
+        </div>
+    </div>
+</section>
+
+</BaseLayout>
+src/pages/[country]/[city]/[area]/index.astro (Area Page — e.g. /uk/bristol/easton)
+astro
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { supabase } from '../../../../lib/supabase';
+
+export async function getStaticPaths() {
+    const { data: listings } = await supabase
+        .from('listings')
+        .select('country_slug, city_slug, area_slug')
+        .eq('status', 'Published');
+
+    // Get unique area combinations
+    const unique = [...new Set(listings.map(l => 
+        JSON.stringify({ country: l.country_slug, city: l.city_slug, area: l.area_slug })
+    ))].map(s => JSON.parse(s));
+
+    return unique.map(u => ({
+        params: { country: u.country, city: u.city, area: u.area }
+    }));
+}
+
+const { country, city, area } = Astro.params;
+
+const { data: listings } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Published')
+    .eq('country_slug', country)
+    .eq('city_slug', city)
+    .eq('area_slug', area)
+    .order('is_featured', { ascending: false });
+---
+
+<BaseLayout 
+    title={`Businesses in ${area}, ${city}`}
+    description={`Discover local businesses in ${area}, ${city}. Browse reviews, ratings, and contact information.`}
+>
+
+<section style="padding: 140px 0 80px;">
+    <div class="container">
+        <nav style="font-size: 0.9rem; color: var(--muted); margin-bottom: 24px;">
+            <a href="/" style="color: var(--primary);">Home</a> /
+            <a href={`/${country}`} style="color: var(--primary); text-transform: uppercase;">{country}</a> /
+            <a href={`/${country}/${city}`} style="color: var(--primary); text-transform: capitalize;">{city}</a> /
+            <span style="text-transform: capitalize;">{area}</span>
+        </nav>
+
+        <h1 class="section-title" style="text-transform: capitalize;">
+            Local Businesses in {area.replace(/-/g, ' ')}, {city.replace(/-/g, ' ')}
+        </h1>
+        <p class="section-subtitle">{listings?.length || 0} businesses found</p>
+
+        <div class="listings-grid">
+            {listings?.map(item => (
+                <a href={`/${country}/${city}/${area}/${item.business_slug}`} class="listing-card">
+                    <div class="listing-img" style={`background-image: url('${item.image_url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80"}')`}>
+                        {item.is_featured && <span class="listing-badge">⭐ Featured</span>}
+                    </div>
+                    <div class="listing-body">
+                        <h3>{item.name}</h3>
+                        <div class="listing-meta">
+                            <span class="stars">{'★'.repeat(Math.floor(item.google_rating || 0))}{'☆'.repeat(5 - Math.floor(item.google_rating || 0))}</span>
+                            <span>{item.google_rating || '—'}</span>
+                        </div>
+                        <p>{item.description?.substring(0, 120) || 'No description available.'}...</p>
+                    </div>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+</BaseLayout>
+Follow the same pattern for [country]/index.astro and [country]/[city]/index.astro.
+
+Step 5: Astro Config
+astro.config.mjs
+javascript
+import { defineConfig } from 'astro/config';
+
+export default defineConfig({
+    output: 'static',  // Pre-build everything as HTML files
+    site: 'https://meridian.com', // Your actual domain
+    trailingSlash: 'never',
+});
+Step 6: Deploy to Cloudflare Pages
+Push to GitHub first:
+bash
+git init
+git add .
+git commit -m "Initial Astro directory site"
+git remote add origin https://github.com/yourusername/localpulse.git
+git push -u origin main
+Connect to Cloudflare Pages:
+Go to dash.cloudflare.com → Pages → Create a project
+Connect your GitHub repo
+Configure build settings:
+Setting	Value
+Framework preset	Astro
+Build command	npm run build
+Build output directory	dist
+Environment variable	SUPABASE_URL = your URL
+Environment variable	SUPABASE_ANON_KEY = your key
+Click Deploy
+Step 7: Auto-Rebuild When Data Changes
+Since Astro generates static pages at build time, you need to trigger a rebuild when you add/edit listings in Supabase. Two approaches:
+
+Option A: Cloudflare Deploy Hook (Easiest)
+In Cloudflare Pages → Settings → Builds → Deploy hooks
+Create a hook — you get a URL like https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/abc123
+In Supabase, create a Database Webhook or Edge Function that hits this URL when the listings table changes
+Option B: Manual rebuild
+Just push any commit to GitHub, or click "Retry deployment" in Cloudflare.
+
+What You End Up With
+text
+meridian.com/                                    ← Homepage with featured listings
+meridian.com/uk/                                 ← All UK cities
+meridian.com/uk/bristol/                         ← All Bristol areas
+meridian.com/uk/bristol/easton/                  ← All Easton businesses
+meridian.com/uk/bristol/easton/zamzam            ← ZamZam's full page
+meridian.com/uk/bristol/clifton/the-coffee-house ← Coffee House's full page
+meridian.com/uk/bath/oldfield-park/bobs-plumbing ← Bob's full page
+Every single one of these is a real HTML file — Google can crawl and index them all. Each has proper <title>, <meta description>, and structured data (JSON-LD).
+
+Summary: Your Stack
+Layer	Tool	Cost
+Database	Supabase (free tier)	$0
+Framework	Astro (static site generator)	$0
+Hosting	Cloudflare Pages	$0
+Domain	Your registrar	~$10/yr
+Total		~$10/yr
+Run npm run dev locally to preview, push to GitHub to deploy. That's the entire workflow.
+
+
+I don't have a domain yet so can i leave astro.config.mjs as the default?
+I want to add different levels of list ranking starting at the top of the page and decending: Editor's Choice, Recommended, Goolge Ranking and followed by all other scraped listings

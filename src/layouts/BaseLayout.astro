@@ -1,13 +1,12 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
 const { title, description } = Astro.props;
-const pageTitle = title ? `${title} — LocalPulse` : 'LocalPulse — Discover Local Businesses';
-const pageDesc = description || 'Find trusted local businesses with reviews, photos, and direct contact — all in one place.';
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const pageTitle = title ? `${title} — Meridian` : 'Meridian — Discover the people behind your community';
+const pageDesc = description || 'A curated directory of independent local makers, traders, and service providers.';
+const canonicalURL = Astro.site ? new URL(Astro.url.pathname, Astro.site) : Astro.url;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -17,19 +16,17 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc}>
     <link rel="canonical" href={canonicalURL}>
-
-    <!-- Open Graph -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap" rel="stylesheet">
     <meta property="og:title" content={pageTitle}>
     <meta property="og:description" content={pageDesc}>
     <meta property="og:type" content="website">
-    <meta property="og:url" content={canonicalURL}>
-
-    <!-- Smooth page transitions -->
-    <ViewTransitions />
 </head>
 <body>
     <Nav />
-    <main class="page-enter">
+    <div class="page-spacer"></div>
+    <main>
         <slot />
     </main>
     <Footer />

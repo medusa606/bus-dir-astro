@@ -1,162 +1,116 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ListingCard from '../components/ListingCard.astro';
-import { supabase } from '../lib/supabase';
-import { slugToTitle, getEmoji } from '../utils/helpers';
+import TieredListings from '../components/TieredListings.astro';
+import { supabase } from '../lib/supabase.js';
+import { slugToTitle, getEmoji, sortByTier } from '../utils/helpers.js';
 
-// Fetch featured listings
-const { data: listings } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('status', 'Published')
-    .order('is_featured', { ascending: false })
-    .limit(6);
-
-// Fetch all listings for stats and categories
 const { data: allListings } = await supabase
     .from('listings')
-    .select('city_slug, area_slug, category_slug')
+    .select('*')
     .eq('status', 'Published');
 
-// Compute category counts
-const categoryCounts = {};
-allListings?.forEach(l => {
-    if (l.category_slug) {
-        categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1;
-    }
-});
-
-// Compute city counts
 const cityCounts = {};
-allListings?.forEach(l => {
-    if (l.city_slug) {
-        cityCounts[l.city_slug] = (cityCounts[l.city_slug] || 0) + 1;
-    }
-});
+allListings?.forEach(l => { if (l.city_slug) cityCounts[l.city_slug] = (cityCounts[l.city_slug] || 0) + 1; });
+
+const categoryCounts = {};
+allListings?.forEach(l => { if (l.category_slug) categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1; });
 
 const totalListings = allListings?.length || 0;
-const totalCities = Object.keys(cityCounts).length;
-const totalCategories = Object.keys(categoryCounts).length;
+const firstCity = Object.keys(cityCounts)[0];
 ---
 
 <BaseLayout>
 
-<!-- HERO -->
+<!-- Hero -->
 <section class="hero">
-    <div class="container">
-        <p class="section-label">Your City's #1 Business Directory</p>
-        <h1>Discover the <span class="highlight">Best Local Businesses</span> Near You</h1>
-        <p>From restaurants to plumbers, find trusted local businesses with reviews, photos, and direct contact — all in one place.</p>
-        <div class="search-box">
-            <input type="text" placeholder="🔍  What are you looking for?">
-            <input type="text" placeholder="📍  City or area" style="max-width: 160px; border-left: 1px solid #E5E7EB;">
-            <button>Search</button>
+    <div class="hero__content">
+        <div class="hero__text">
+            <h1>Discover the <em>real people</em> behind your community</h1>
+            <p>Meridian is a curated directory of independent local makers, traders, and service providers — the people doing great work, right where you live.</p>
+            <div class="hero__actions">
+                <a href={firstCity ? `/${firstCity}` : '#'} class="btn btn--primary">Explore the Directory</a>
+                <a href="#stories" class="btn btn--outline">Read Stories</a>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search for people, trades, services...">
+                <button>Search</button>
+            </div>
         </div>
-        <div class="hero-tags">
-            {Object.keys(categoryCounts).slice(0, 6).map(cat => (
-                <a href={`/${Object.keys(cityCounts)[0]}/${cat}`}>
-                    {getEmoji(cat)} {slugToTitle(cat)}
-                </a>
-            ))}
+        <div class="hero__mosaic">
+            <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=600&q=80" alt="Local maker at work" class="hero__mosaic-img">
+            <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=400&q=80" alt="Craftsperson in workshop" class="hero__mosaic-img">
+            <img src="https://images.unsplash.com/photo-1607344645866-009c320b63e0?auto=format&fit=crop&w=400&q=80" alt="Fresh local produce" class="hero__mosaic-img">
         </div>
     </div>
 </section>
 
-<!-- STATS -->
-<div class="stats-bar">
+<!-- Featured Listings -->
+<section class="section">
     <div class="container">
-        <div class="stats-grid">
-            <div class="stat-item"><h3>{totalListings}+</h3><p>Listed Businesses</p></div>
-            <div class="stat-item"><h3>{totalCities}</h3><p>Cities Covered</p></div>
-            <div class="stat-item"><h3>{totalCategories}</h3><p>Categories</p></div>
-            <div class="stat-item"><h3>⭐</h3><p>Verified Reviews</p></div>
+        <div class="section-header flex-between">
+            <div>
+                <h2>People doing great work</h2>
+                <div class="divider"></div>
+                <p>Hand-picked from your community — these are the people your neighbours trust and recommend.</p>
+            </div>
+            {firstCity && <a href={`/${firstCity}`} class="btn btn--ghost">View all →</a>}
         </div>
-    </div>
-</div>
 
-<!-- BROWSE BY CITY -->
-<section>
-    <div class="container text-center">
-        <p class="section-label">Browse by City</p>
-        <h2 class="section-title">Explore Your Area</h2>
-        <p class="section-subtitle">Select a city to discover local businesses near you.</p>
+        <TieredListings listings={allListings} />
+    </div>
+</section>
+
+<!-- Browse by City -->
+<section class="section" style="background: var(--white);">
+    <div class="container">
+        <div class="section-header section-header--center">
+            <h2>Browse by city</h2>
+            <div class="divider divider--center"></div>
+            <p>Select a city to discover the people doing great work near you.</p>
+        </div>
         <div class="areas-grid" style="max-width: 800px; margin: 0 auto;">
             {Object.entries(cityCounts).map(([city, count]) => (
                 <a href={`/${city}`} class="area-card">
-                    <h3 style="text-transform: capitalize;">📍 {city.replace(/-/g, ' ')}</h3>
-                    <p>{count} businesses</p>
+                    <div>
+                        <h3 style="text-transform: capitalize;">📍 {city.replace(/-/g, ' ')}</h3>
+                        <p>{count} {count === 1 ? 'person' : 'people'} listed</p>
+                    </div>
                 </a>
             ))}
         </div>
     </div>
 </section>
 
-<!-- CATEGORIES -->
-<section id="categories" style="background: #F3F4F6;">
-    <div class="container text-center">
-        <p class="section-label">Browse by Category</p>
-        <h2 class="section-title">Explore Popular Categories</h2>
-        <p class="section-subtitle">Whatever you need, find the perfect local business in seconds.</p>
-        <div class="categories-grid">
-            {Object.entries(categoryCounts).map(([cat, count]) => (
-                <a href={`/${Object.keys(cityCounts)[0]}/${cat}`} class="category-card">
-                    <div class="category-icon">{getEmoji(cat)}</div>
-                    <h4>{slugToTitle(cat)}</h4>
-                    <p>{count} listings</p>
-                </a>
-            ))}
-        </div>
-    </div>
-</section>
-
-<!-- FEATURED LISTINGS -->
-<section>
+<!-- Categories -->
+<section class="section" id="categories">
     <div class="container">
-        <p class="section-label">Featured Businesses</p>
-        <h2 class="section-title">Top-Rated This Month</h2>
-        <p class="section-subtitle">Premium listings get prominent placement and more customers.</p>
-        <div class="listings-grid">
-            {listings?.map(item => (
-                <ListingCard listing={item} />
-            ))}
+        <div class="section-header section-header--center">
+            <h2>Browse by category</h2>
+            <div class="divider divider--center"></div>
+            <p>Find the right person for what you need — every listing is here because they deserve to be.</p>
         </div>
-    </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section id="how-it-works" style="background: #F3F4F6;">
-    <div class="container text-center">
-        <p class="section-label">How It Works</p>
-        <h2 class="section-title">Simple for Businesses, Easy for Users</h2>
-        <p class="section-subtitle">Getting listed takes just minutes. Getting found takes even less.</p>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;">
-            <div style="text-align: center; padding: 32px 24px;">
-                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">1</div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Claim Your Listing</h3>
-                <p style="font-size: .92rem; color: var(--muted);">Business owners sign up and create a profile with photos, hours, services, and contact info.</p>
-            </div>
-            <div style="text-align: center; padding: 32px 24px;">
-                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">2</div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Get Discovered</h3>
-                <p style="font-size: .92rem; color: var(--muted);">Customers search by category, location, or keyword and find your business instantly.</p>
-            </div>
-            <div style="text-align: center; padding: 32px 24px;">
-                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">3</div>
-                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Grow & Connect</h3>
-                <p style="font-size: .92rem; color: var(--muted);">Collect reviews, respond to inquiries, and upgrade to featured for maximum visibility.</p>
-            </div>
+        <div class="category-grid">
+            {Object.entries(categoryCounts).map(([cat, count]) => (
+                <a href={firstCity ? `/${firstCity}/${cat}` : '#'} class="category-card">
+                    <div class="category-card__icon">{getEmoji(cat)}</div>
+                    <div class="category-card__text">
+                        <h4>{slugToTitle(cat)}</h4>
+                        <p>{count} {count === 1 ? 'person' : 'people'} listed</p>
+                    </div>
+                </a>
+            ))}
         </div>
     </div>
 </section>
 
 <!-- CTA -->
-<section style="background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; text-align: center; padding: 80px 0;">
+<section class="section">
     <div class="container">
-        <h2 style="font-size: 2.4rem; font-weight: 800; margin-bottom: 16px;">Ready to Get Listed?</h2>
-        <p style="font-size: 1.1rem; opacity: .85; max-width: 500px; margin: 0 auto 32px;">Join hundreds of local businesses already growing with LocalPulse.</p>
-        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-            <a href="#" class="btn btn-white">📋 List Your Business Free</a>
-            <a href="#pricing" class="btn btn-accent">💎 See Premium Plans</a>
+        <div class="cta-banner">
+            <h2>Doing great work in your community?</h2>
+            <p>Meridian is for independent people who care about their craft. If that's you, we'd love to include you.</p>
+            <a href="#" class="btn btn--accent">Apply to be listed</a>
         </div>
     </div>
 </section>

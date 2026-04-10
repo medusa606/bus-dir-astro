@@ -1,59 +1,55 @@
 ---
 import StarRating from './StarRating.astro';
-import { getEmoji, truncate, RANKING_TIERS } from '../utils/helpers';
+import SocialIcon from './SocialIcon.astro';
+import { getEmoji, truncate, RANKING_TIERS } from '../utils/helpers.js';
 
 const { listing } = Astro.props;
 const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
 const imgUrl = listing.image_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
-const emoji = getEmoji(listing.category_slug);
 const tier = RANKING_TIERS[listing.ranking_tier] || RANKING_TIERS.standard;
 
-// Check which socials exist
 const socials = [
-    { key: 'social_facebook',  icon: 'f',  color: '#1877F2' },
-    { key: 'social_instagram', icon: '📷', color: '#E4405F' },
-    { key: 'social_twitter',   icon: '𝕏',  color: '#000000' },
-    { key: 'social_tiktok',    icon: '♪',  color: '#000000' },
-    { key: 'social_linkedin',  icon: 'in', color: '#0A66C2' },
-    { key: 'social_youtube',   icon: '▶',  color: '#FF0000' },
+    { key: 'social_facebook',  platform: 'facebook',  label: 'Facebook' },
+    { key: 'social_instagram', platform: 'instagram', label: 'Instagram' },
+    { key: 'social_twitter',   platform: 'twitter',   label: 'X' },
+    { key: 'social_tiktok',    platform: 'tiktok',    label: 'TikTok' },
+    { key: 'social_linkedin',  platform: 'linkedin',  label: 'LinkedIn' },
+    { key: 'social_youtube',   platform: 'youtube',   label: 'YouTube' },
 ].filter(s => listing[s.key]);
 ---
-<div class="listing-card" style={tier.borderColor ? `border-color: ${tier.borderColor}; border-width: 2px;` : ''}>
+<div class="card">
     <a href={href}>
-        <div class="listing-img" style={`background-image: url('${imgUrl}')`}>
-            {tier.label && (
-                <span class="listing-badge" style={`background: ${tier.color};`}>
-                    {tier.icon} {tier.label}
+        <img src={imgUrl} alt={listing.name} class="card__image">
+        <div class="card__body">
+            <div class="card__meta">
+                <span class="tag tag--category">{listing.category || 'Local Business'}</span>
+                {tier.label && (
+                    <span class={`tag tag--tier-${listing.ranking_tier === 'editors_choice' ? 'editors' : listing.ranking_tier === 'recommended' ? 'recommended' : 'google'}`}>
+                        {tier.icon} {tier.label}
+                    </span>
+                )}
+                <span class="tag tag--location" style="text-transform: capitalize;">
+                    📍 {listing.area_slug?.replace(/-/g, ' ')}
                 </span>
-            )}
-            <div style="position:absolute;bottom:16px;left:16px;color:#fff;font-size:2.5rem;text-shadow:0 2px 8px rgba(0,0,0,.3);">
-                {emoji}
             </div>
-        </div>
-        <div class="listing-body">
-            <h3>{listing.name}</h3>
-            <StarRating rating={listing.google_rating} count={listing.google_review_count} />
-            <p>{truncate(listing.description)}</p>
-            <div class="listing-tags">
-                <span>{listing.category || 'Local Business'}</span>
-                <span style="text-transform: capitalize;">📍 {listing.area_slug?.replace(/-/g, ' ')}</span>
-            </div>
+            <h3 class="card__title">{listing.name}</h3>
+            <p class="card__subtitle">
+                {listing.google_rating
+                    ? `★ ${listing.google_rating} (${listing.google_review_count || 0} reviews)`
+                    : 'New to Meridian'}
+            </p>
+            <p class="card__excerpt">{truncate(listing.description)}</p>
         </div>
     </a>
     {socials.length > 0 && (
-        <div style="padding: 0 20px 16px; display: flex; gap: 6px;">
-            {socials.map(s => (
-                <a
-                    href={listing[s.key]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="social-link"
-                    style={`--social-color: ${s.color}; width: 28px; height: 28px;`}
-                    onclick="event.stopPropagation();"
-                >
-                    <span class="social-icon" style="font-size: .7rem;">{s.icon}</span>
-                </a>
-            ))}
+        <div style="padding: 0 var(--space-lg) var(--space-md);">
+            <div class="social-links social-links--sm">
+                {socials.map(s => (
+                    <a href={listing[s.key]} target="_blank" rel="noopener noreferrer" class="social-link" title={s.label}>
+                        <SocialIcon platform={s.platform} size={14} />
+                    </a>
+                ))}
+            </div>
         </div>
     )}
 </div>

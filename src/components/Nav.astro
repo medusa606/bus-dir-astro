@@ -1,14 +1,15 @@
 ---
-// No props needed for now
+const currentPath = Astro.url.pathname;
 ---
-<nav>
-    <div class="container">
-        <a href="/" class="logo">📍 Local<span>Pulse</span></a>
-        <div class="nav-links">
-            <a href="/#categories">Categories</a>
-            <a href="/#how-it-works">How It Works</a>
-            <a href="/#pricing">Pricing</a>
-            <a href="#" class="btn btn-outline">List Your Business</a>
+<nav class="nav">
+    <div class="nav__inner">
+        <a href="/" class="nav__logo">Meridian<span>.</span></a>
+        <div class="nav__links">
+            <a href="/" class={`nav__link ${currentPath === '/' ? 'active' : ''}`}>Home</a>
+            <a href="/#categories" class="nav__link">Browse</a>
+            <a href="/#stories" class="nav__link">Stories</a>
+            <a href="/#noticeboard" class="nav__link">Noticeboard</a>
+            <a href="#" class="btn btn--primary btn--sm">Get Listed</a>
         </div>
     </div>
 </nav>

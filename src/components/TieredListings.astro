@@ -4,48 +4,45 @@ import { groupByTier, RANKING_TIERS } from '../utils/helpers.js';
 
 const { listings } = Astro.props;
 const groups = groupByTier(listings || []);
-
 const tierOrder = ['editors_choice', 'recommended', 'google_ranked', 'standard'];
+
+const tierCssMap = {
+    editors_choice: 'editors',
+    recommended: 'recommended',
+    google_ranked: 'google',
+    standard: 'standard'
+};
 ---
 
 {tierOrder.map(tierKey => {
     const items = groups[tierKey];
     if (!items || items.length === 0) return null;
     const tier = RANKING_TIERS[tierKey];
+    const cssKey = tierCssMap[tierKey];
 
     return (
-        <div style="margin-bottom: 48px;">
-            {tier.label && (
-                <div style={`
-                    display: flex; align-items: center; gap: 12px;
-                    margin-bottom: 20px; padding: 12px 20px;
-                    background: ${tier.bgColor}; border-radius: 8px;
-                    border-left: 4px solid ${tier.color};
-                `}>
-                    <span style="font-size: 1.4rem;">{tier.icon}</span>
-                    <div>
-                        <h3 style={`font-size: 1.1rem; font-weight: 700; color: ${tier.color}; margin: 0;`}>
-                            {tier.label}
-                        </h3>
-                        <p style="font-size: .82rem; color: var(--muted); margin: 0;">
-                            {tier.description}
-                        </p>
+        <div style="margin-bottom: var(--space-2xl);">
+            {tier.label ? (
+                <div class={`tier-header tier-header--${cssKey}`}>
+                    <span class="tier-header__icon">{tier.icon}</span>
+                    <div class="tier-header__text">
+                        <h3>{tier.label}</h3>
+                        <p>{tier.description}</p>
                     </div>
-                    <span style="margin-left: auto; font-size: .85rem; color: var(--muted);">
-                        {items.length} {items.length === 1 ? 'business' : 'businesses'}
+                    <span class="tier-header__count">
+                        {items.length} {items.length === 1 ? 'listing' : 'listings'}
                     </span>
                 </div>
-            )}
-
-            {!tier.label && (
-                <div style="margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB;">
-                    <h3 style="font-size: 1rem; font-weight: 600; color: var(--muted);">
-                        All Listings ({items.length})
-                    </h3>
+            ) : (
+                <div class="tier-header tier-header--standard">
+                    <div class="tier-header__text">
+                        <h3>All Listings</h3>
+                    </div>
+                    <span class="tier-header__count">{items.length} listings</span>
                 </div>
             )}
 
-            <div class="listings-grid">
+            <div class="browse-grid">
                 {items.map(item => (
                     <ListingCard listing={item} />
                 ))}

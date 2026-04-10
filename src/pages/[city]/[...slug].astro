@@ -2,11 +2,10 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import TieredListings from '../../components/TieredListings.astro';
-import ListingCard from '../../components/ListingCard.astro';
 import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
-import { supabase } from '../../lib/supabase';
-import { slugToTitle, getEmoji, truncate } from '../../utils/helpers';
+import { supabase } from '../../lib/supabase.js';
+import { slugToTitle, getEmoji, RANKING_TIERS } from '../../utils/helpers.js';
 
 export async function getStaticPaths() {
     const { data: listings } = await supabase
@@ -16,87 +15,52 @@ export async function getStaticPaths() {
 
     if (!listings) return [];
 
-    // Collect all known category slugs for disambiguation
     const allCategories = new Set(listings.map(l => l.category_slug).filter(Boolean));
-
     const paths = [];
     const seen = new Set();
 
     listings.forEach(l => {
-        // ── /bristol/cafes (city + category) ──
         if (l.category_slug) {
             const key = `cat:${l.city_slug}/${l.category_slug}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 paths.push({
                     params: { city: l.city_slug, slug: [l.category_slug] },
-                    props: {
-                        type: 'city-category',
-                        citySlug: l.city_slug,
-                        categorySlug: l.category_slug,
-                        allCategories: [...allCategories]
-                    }
+                    props: { type: 'city-category', citySlug: l.city_slug, categorySlug: l.category_slug, allCategories: [...allCategories] }
                 });
             }
         }
-
-        // ── /bristol/easton (city + area) ──
         if (l.area_slug && !allCategories.has(l.area_slug)) {
             const key = `area:${l.city_slug}/${l.area_slug}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 paths.push({
                     params: { city: l.city_slug, slug: [l.area_slug] },
-                    props: {
-                        type: 'area',
-                        citySlug: l.city_slug,
-                        areaSlug: l.area_slug,
-                        allCategories: [...allCategories]
-                    }
+                    props: { type: 'area', citySlug: l.city_slug, areaSlug: l.area_slug, allCategories: [...allCategories] }
                 });
             }
         }
-
-        // ── /bristol/easton/cafes (city + area + category) ──
         if (l.area_slug && l.category_slug) {
             const key = `areacat:${l.city_slug}/${l.area_slug}/${l.category_slug}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 paths.push({
                     params: { city: l.city_slug, slug: [l.area_slug, l.category_slug] },
-                    props: {
-                        type: 'area-category',
-                        citySlug: l.city_slug,
-                        areaSlug: l.area_slug,
-                        categorySlug: l.category_slug,
-                        allCategories: [...allCategories]
-                    }
+                    props: { type: 'area-category', citySlug: l.city_slug, areaSlug: l.area_slug, categorySlug: l.category_slug, allCategories: [...allCategories] }
                 });
             }
         }
-
-        // ── /bristol/easton/zamzam (individual listing) ──
         if (l.area_slug && l.business_slug) {
             paths.push({
                 params: { city: l.city_slug, slug: [l.area_slug, l.business_slug] },
-                props: {
-                    type: 'listing',
-                    citySlug: l.city_slug,
-                    areaSlug: l.area_slug,
-                    businessSlug: l.business_slug,
-                    listing: l,
-                    allCategories: [...allCategories]
-                }
+                props: { type: 'listing', citySlug: l.city_slug, areaSlug: l.area_slug, businessSlug: l.business_slug, listing: l, allCategories: [...allCategories] }
             });
         }
     });
-
     return paths;
 }
 
-// ── Determine page type and fetch data accordingly ──
-const { type, citySlug, areaSlug, categorySlug, businessSlug, listing: directListing, allCategories } = Astro.props;
-const { city, slug } = Astro.params;
+const { type, citySlug, areaSlug, categorySlug, businessSlug, listing: directListing } = Astro.props;
 
 let pageTitle = '';
 let pageDescription = '';
@@ -109,60 +73,27 @@ const areaTitle = slugToTitle(areaSlug);
 const catTitle = slugToTitle(categorySlug);
 
 if (type === 'city-category') {
-    // ── /bristol/cafes ──
     pageTitle = `${catTitle} in ${cityTitle}`;
-    pageDescription = `Browse ${catTitle.toLowerCase()} in ${cityTitle}. Ratings, reviews and contact details.`;
-    crumbs = [
-        { label: cityTitle, href: `/${citySlug}` },
-        { label: catTitle }
-    ];
-    const { data } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('status', 'Published')
-        .eq('city_slug', citySlug)
-        .eq('category_slug', categorySlug)
-        .order('is_featured', { ascending: false });
+    pageDescription = `Find the best ${catTitle.toLowerCase()} in ${cityTitle}.`;
+    crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: catTitle }];
+    const { data } = await supabase.from('listings').select('*').eq('status', 'Published').eq('city_slug', citySlug).eq('category_slug', categorySlug);
     listings = data || [];
 
 } else if (type === 'area') {
-    // ── /bristol/easton ──
-    pageTitle = `Businesses in ${areaTitle}, ${cityTitle}`;
-    pageDescription = `Discover local businesses in ${areaTitle}, ${cityTitle}.`;
-    crumbs = [
-        { label: cityTitle, href: `/${citySlug}` },
-        { label: areaTitle }
-    ];
-    const { data } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('status', 'Published')
-        .eq('city_slug', citySlug)
-        .eq('area_slug', areaSlug)
-        .order('is_featured', { ascending: false });
+    pageTitle = `People in ${areaTitle}, ${cityTitle}`;
+    pageDescription = `Discover independent makers and traders in ${areaTitle}, ${cityTitle}.`;
+    crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle }];
+    const { data } = await supabase.from('listings').select('*').eq('status', 'Published').eq('city_slug', citySlug).eq('area_slug', areaSlug);
     listings = data || [];
 
 } else if (type === 'area-category') {
-    // ── /bristol/easton/cafes ──
     pageTitle = `${catTitle} in ${areaTitle}, ${cityTitle}`;
-    pageDescription = `Find the best ${catTitle.toLowerCase()} in ${areaTitle}, ${cityTitle}.`;
-    crumbs = [
-        { label: cityTitle, href: `/${citySlug}` },
-        { label: areaTitle, href: `/${citySlug}/${areaSlug}` },
-        { label: catTitle }
-    ];
-    const { data } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('status', 'Published')
-        .eq('city_slug', citySlug)
-        .eq('area_slug', areaSlug)
-        .eq('category_slug', categorySlug)
-        .order('is_featured', { ascending: false });
+    pageDescription = `Find ${catTitle.toLowerCase()} in ${areaTitle}, ${cityTitle}.`;
+    crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle, href: `/${citySlug}/${areaSlug}` }, { label: catTitle }];
+    const { data } = await supabase.from('listings').select('*').eq('status', 'Published').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug);
     listings = data || [];
 
 } else if (type === 'listing' && listing) {
-    // ── /bristol/easton/zamzam ──
     pageTitle = listing.name;
     pageDescription = listing.description || `Find ${listing.name} in ${areaTitle}, ${cityTitle}.`;
     crumbs = [
@@ -172,7 +103,8 @@ if (type === 'city-category') {
     ];
 }
 
-// JSON-LD structured data for individual listings
+const tier = listing ? (RANKING_TIERS[listing.ranking_tier] || RANKING_TIERS.standard) : null;
+
 const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -203,80 +135,122 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
 {type === 'listing' && listing ? (
     <!-- ════════ INDIVIDUAL LISTING PAGE ════════ -->
-    <section class="listing-detail">
-        <div class="container">
-            <Breadcrumbs crumbs={crumbs} />
+    <div class="listing-hero">
+        <img
+            src={listing.image_url || 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1400&q=80'}
+            alt={listing.name}
+            class="listing-hero__cover"
+        />
+        <div class="listing-hero__overlay"></div>
+    </div>
 
-            <div class="listing-hero-grid">
-                <div>
-                    <!-- Tier + Category badges -->
-                    <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
-                        {tier && tier.label && (
-                            <span style={`display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: .8rem; font-weight: 700; background: ${tier.bgColor}; color: ${tier.color}; border: 1px solid ${tier.borderColor};`}>
-                                {tier.icon} {tier.label}
-                            </span>
-                        )}
-                        {listing.is_featured && (
-                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: .8rem; font-weight: 700; background: #FFFBEB; color: #D97706; border: 1px solid #F59E0B;">
-                                ⭐ Featured
-                            </span>
-                        )}
-                        <span class="listing-tags"><span>{listing.category || 'Local Business'}</span></span>
-                    </div>
-
-                    <h1>{listing.name}</h1>
-                    <StarRating rating={listing.google_rating} count={listing.google_review_count} />
-
-                    <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.8; margin: 20px 0;">
-                        {listing.description || 'No description available.'}
-                    </p>
-
-                    <!-- Contact details -->
-                    <div style="display: grid; gap: 12px;">
-                        {listing.address && (
-                            <div class="contact-row"><span>📍</span><span>{listing.address}</span></div>
-                        )}
-                        {listing.phone && (
-                            <div class="contact-row"><span>📞</span><a href={`tel:${listing.phone}`}>{listing.phone}</a></div>
-                        )}
-                        {listing.email && (
-                            <div class="contact-row"><span>✉️</span><a href={`mailto:${listing.email}`}>{listing.email}</a></div>
-                        )}
-                        {listing.website && (
-                            <div class="contact-row"><span>🌐</span><a href={listing.website} target="_blank" rel="noopener">{listing.website}</a></div>
-                        )}
-                    </div>
-
-                    <!-- Social Links -->
-                    <SocialLinks listing={listing} />
-
-                    <!-- Action buttons -->
-                    <div class="listing-actions">
-                        {listing.phone && <a href={`tel:${listing.phone}`} class="btn btn-primary">📞 Call Now</a>}
-                        {listing.website && <a href={listing.website} target="_blank" class="btn btn-outline">🌐 Visit Website</a>}
-                    </div>
+    <div class="listing-header">
+        <div class="listing-header__inner">
+            <div class="listing-header__info">
+                <div class="tags" style="margin-bottom: var(--space-sm);">
+                    <span class="tag tag--category">{listing.category || 'Local Business'}</span>
+                    {tier && tier.label && (
+                        <span class={`tag tag--tier-${listing.ranking_tier === 'editors_choice' ? 'editors' : listing.ranking_tier === 'recommended' ? 'recommended' : 'google'}`}>
+                            {tier.icon} {tier.label}
+                        </span>
+                    )}
+                    <span class="tag tag--location" style="text-transform: capitalize;">
+                        📍 {listing.area_slug?.replace(/-/g, ' ')}, {cityTitle}
+                    </span>
                 </div>
-
-                <div class="listing-hero-image" style={`background-image: url('${listing.image_url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80"}')`}></div>
+                <h1>{listing.name}</h1>
+                <p class="subtitle">{listing.description?.substring(0, 100) || 'Independent local business'}...</p>
+            </div>
+            <div class="listing-header__actions">
+                {listing.phone && <a href={`tel:${listing.phone}`} class="btn btn--primary btn--sm">📞 Call</a>}
+                {listing.website && <a href={listing.website} target="_blank" rel="noopener" class="btn btn--outline btn--sm">↗ Website</a>}
             </div>
         </div>
-    </section>
-) : (
+    </div>
+
+    <div class="listing-body">
+        <div class="listing-main">
+
+            <!-- About -->
+            <div class="listing-section listing-section--about">
+                <h2>About {listing.name}</h2>
+                <p>{listing.description || 'No description available.'}</p>
+            </div>
+
+            <!-- Reviews -->
+            {listing.google_rating && (
+                <div class="listing-section">
+                    <h2>What people think</h2>
+                    <div class="trust-card">
+                        <h4>Ratings</h4>
+                        <div class="rating-row">
+                            <span class="rating-source">Google Reviews</span>
+                            <span class="rating-value">
+                                <span class="stars">{'★'.repeat(Math.floor(listing.google_rating))}{'☆'.repeat(5 - Math.floor(listing.google_rating))}</span>
+                                {listing.google_rating} ({listing.google_review_count || 0} reviews)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="listing-sidebar">
+
+            <!-- Contact -->
+            <div class="sidebar-widget">
+                <h3>Get in touch</h3>
+                <div style="display: flex; flex-direction: column; gap: var(--space-sm); font-size: 0.9rem;">
+                    {listing.phone && (
+                        <div><strong>Phone:</strong> <a href={`tel:${listing.phone}`} style="color: var(--powder-blush);">{listing.phone}</a></div>
+                    )}
+                    {listing.email && (
+                        <div><strong>Email:</strong> <a href={`mailto:${listing.email}`} style="color: var(--powder-blush);">{listing.email}</a></div>
+                    )}
+                    {listing.address && (
+                        <div><strong>Address:</strong> {listing.address}</div>
+                    )}
+                    {listing.website && (
+                        <div><strong>Website:</strong> <a href={listing.website} target="_blank" rel="noopener" style="color: var(--powder-blush);">{listing.website}</a></div>
+                    )}
+                </div>
+            </div>
+
+            <!-- Social Links -->
+            <div class="sidebar-widget">
+                <h3>Find online</h3>
+                <SocialLinks listing={listing} />
+            </div>
+
+            <!-- Breadcrumbs in sidebar -->
+            <div class="sidebar-widget">
+                <h3>Location</h3>
+                <Breadcrumbs crumbs={crumbs} />
+            </div>
+        </div>
+    </div>
 
 ) : (
-    <!-- ════════ LIST PAGE (area, category, area+category) ════════ -->
-    <section class="listing-detail">
+    <!-- ════════ LIST PAGES (area, category, area+category) ════════ -->
+    <section style="padding: var(--space-3xl) 0 var(--space-xl); background: linear-gradient(135deg, var(--parchment) 0%, var(--blush-light) 100%);">
         <div class="container">
             <Breadcrumbs crumbs={crumbs} />
+            <h1 style="margin-top: var(--space-lg);">{pageTitle}</h1>
+            <div class="divider"></div>
+            <p class="text-secondary" style="font-size: 1.05rem;">
+                {listings.length} {listings.length === 1 ? 'person' : 'people'} found
+            </p>
+        </div>
+    </section>
 
-            <h1 class="section-title">{pageTitle}</h1>
-            <p class="section-subtitle">{listings.length} {listings.length === 1 ? 'business' : 'businesses'} found</p>
+    <section class="section">
+        <div class="container">
 
             {type === 'area' && (
-                <!-- Category filter links for area pages -->
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px;">
+                <div class="browse-filters" style="margin-bottom: var(--space-2xl);">
                     {[...new Set(listings.map(l => l.category_slug).filter(Boolean))].map(cat => (
-                        <a href={`/${citySlug}/${areaSlug}/${cat}`} class="btn btn-outline" style="padding: 6px 16px; font-size: .85rem;">
+                        <a href={`/${citySlug}/${areaSlug}/${cat}`} class="filter-btn">
                             {getEmoji(cat)} {slugToTitle(cat)}
                         </a>
                     ))}
@@ -284,27 +258,35 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             )}
 
             {type === 'city-category' && (
-                <!-- Area filter links for city-category pages -->
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px;">
+                <div class="browse-filters" style="margin-bottom: var(--space-2xl);">
                     {[...new Set(listings.map(l => l.area_slug).filter(Boolean))].map(area => (
-                        <a href={`/${citySlug}/${area}/${categorySlug}`} class="btn btn-outline" style="padding: 6px 16px; font-size: .85rem;">
-                            📍 {slugToTitle(area)}
+                        <a href={`/${citySlug}/${area}/${categorySlug}`} class="filter-btn" style="text-transform: capitalize;">
+                            📍 {area.replace(/-/g, ' ')}
                         </a>
                     ))}
                 </div>
             )}
 
-            <div class="listings-grid">
-                {listings.map(item => (
-                    <ListingCard listing={item} />
-                ))}
-            </div>
+            <TieredListings listings={listings} />
 
             {listings.length === 0 && (
-                <p style="text-align: center; color: var(--muted); padding: 60px 0;">
-                    No listings found. <a href={`/${citySlug}`} style="color: var(--primary);">Browse all in {cityTitle}</a>
-                </p>
+                <div style="text-align: center; padding: var(--space-4xl) 0;">
+                    <p class="text-secondary" style="font-size: 1.1rem;">No listings found.</p>
+                    <a href={`/${citySlug}`} class="btn btn--outline" style="margin-top: var(--space-lg);">
+                        Browse all in {cityTitle}
+                    </a>
+                </div>
             )}
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="cta-banner">
+                <h2>Know someone doing great work here?</h2>
+                <p>Meridian grows through community recommendations. If there's someone who deserves to be listed, let us know.</p>
+                <a href="#" class="btn btn--accent">Suggest someone</a>
+            </div>
         </div>
     </section>
 )}

@@ -1,49 +1,60 @@
 ---
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.js';
 
-// Fetch cities for footer links
 const { data: cityData } = await supabase
     .from('listings')
     .select('city_slug')
     .eq('status', 'Published');
 
 const cities = [...new Set(cityData?.map(l => l.city_slug).filter(Boolean))];
+
+const { data: catData } = await supabase
+    .from('listings')
+    .select('category_slug')
+    .eq('status', 'Published');
+
+const categories = [...new Set(catData?.map(l => l.category_slug).filter(Boolean))].slice(0, 5);
+
+import { slugToTitle } from '../utils/helpers.js';
 ---
-<footer>
-    <div class="container">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <div class="logo">📍 Local<span>Pulse</span></div>
-                <p>Connecting communities with the businesses they love. Your trusted local business directory.</p>
-            </div>
-            <div>
-                <h4>Cities</h4>
-                <ul>
-                    {cities.slice(0, 6).map(city => (
-                        <li><a href={`/${city}`} style="text-transform: capitalize;">{city.replace(/-/g, ' ')}</a></li>
-                    ))}
-                </ul>
-            </div>
-            <div>
-                <h4>For Business</h4>
-                <ul>
-                    <li><a href="#">Add Listing</a></li>
-                    <li><a href="/#pricing">Pricing Plans</a></li>
-                    <li><a href="#">Advertising</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Company</h4>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                </ul>
-            </div>
+<footer class="footer">
+    <div class="footer__grid">
+        <div class="footer__brand">
+            <div class="footer__logo">Meridian<span>.</span></div>
+            <p>A curated community directory — surfacing the real people behind your local economy. No ads, no algorithms, just trust.</p>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} LocalPulse. All rights reserved.</p>
+        <div class="footer__column">
+            <h4>Cities</h4>
+            <ul>
+                {cities.slice(0, 6).map(city => (
+                    <li><a href={`/${city}`} style="text-transform: capitalize;">{city.replace(/-/g, ' ')}</a></li>
+                ))}
+            </ul>
+        </div>
+        <div class="footer__column">
+            <h4>Categories</h4>
+            <ul>
+                {categories.map(cat => (
+                    <li><a href={cities[0] ? `/${cities[0]}/${cat}` : '#'}>{slugToTitle(cat)}</a></li>
+                ))}
+            </ul>
+        </div>
+        <div class="footer__column">
+            <h4>Get Involved</h4>
+            <ul>
+                <li><a href="#">Apply to be listed</a></li>
+                <li><a href="#">Suggest someone</a></li>
+                <li><a href="#">Contact us</a></li>
+                <li><a href="#">Privacy</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer__bottom">
+        <span>&copy; {new Date().getFullYear()} Meridian. Made with care.</span>
+        <div class="footer__bottom-links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Accessibility</a>
         </div>
     </div>
 </footer>

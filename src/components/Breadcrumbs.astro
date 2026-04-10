@@ -1,16 +1,9 @@
 ---
-import { slugToTitle } from '../utils/helpers';
-
-interface Crumb {
-    label: string;
-    href?: string;
-}
-
-const { crumbs } = Astro.props as { crumbs: Crumb[] };
+const { crumbs } = Astro.props;
 ---
 <nav class="breadcrumbs">
     <a href="/">Home</a>
-    {crumbs.map((crumb, i) => (
+    {crumbs.map(crumb => (
         <>
             <span class="separator">/</span>
             {crumb.href
