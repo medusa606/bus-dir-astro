@@ -1,0 +1,37 @@
+---
+import { ViewTransitions } from 'astro:transitions';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+const { title, description } = Astro.props;
+const pageTitle = title ? `${title} — LocalPulse` : 'LocalPulse — Discover Local Businesses';
+const pageDesc = description || 'Find trusted local businesses with reviews, photos, and direct contact — all in one place.';
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc}>
+    <link rel="canonical" href={canonicalURL}>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={pageTitle}>
+    <meta property="og:description" content={pageDesc}>
+    <meta property="og:type" content="website">
+    <meta property="og:url" content={canonicalURL}>
+
+    <!-- Smooth page transitions -->
+    <ViewTransitions />
+</head>
+<body>
+    <Nav />
+    <main class="page-enter">
+        <slot />
+    </main>
+    <Footer />
+</body>
+</html>

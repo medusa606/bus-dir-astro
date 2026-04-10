@@ -1,0 +1,11 @@
+---
+const { rating, count } = Astro.props;
+const full = Math.floor(rating || 0);
+const empty = 5 - full;
+---
+<div class="listing-meta">
+    <span class="stars">
+        {'★'.repeat(full)}{'☆'.repeat(empty)}
+    </span>
+    <span>{rating || '—'} ({count || 0} reviews)</span>
+</div>

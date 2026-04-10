@@ -1,17 +1,164 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ListingCard from '../components/ListingCard.astro';
+import { supabase } from '../lib/supabase';
+import { slugToTitle, getEmoji } from '../utils/helpers';
 
+// Fetch featured listings
+const { data: listings } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Published')
+    .order('is_featured', { ascending: false })
+    .limit(6);
+
+// Fetch all listings for stats and categories
+const { data: allListings } = await supabase
+    .from('listings')
+    .select('city_slug, area_slug, category_slug')
+    .eq('status', 'Published');
+
+// Compute category counts
+const categoryCounts = {};
+allListings?.forEach(l => {
+    if (l.category_slug) {
+        categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1;
+    }
+});
+
+// Compute city counts
+const cityCounts = {};
+allListings?.forEach(l => {
+    if (l.city_slug) {
+        cityCounts[l.city_slug] = (cityCounts[l.city_slug] || 0) + 1;
+    }
+});
+
+const totalListings = allListings?.length || 0;
+const totalCities = Object.keys(cityCounts).length;
+const totalCategories = Object.keys(categoryCounts).length;
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="container">
+        <p class="section-label">Your City's #1 Business Directory</p>
+        <h1>Discover the <span class="highlight">Best Local Businesses</span> Near You</h1>
+        <p>From restaurants to plumbers, find trusted local businesses with reviews, photos, and direct contact — all in one place.</p>
+        <div class="search-box">
+            <input type="text" placeholder="🔍  What are you looking for?">
+            <input type="text" placeholder="📍  City or area" style="max-width: 160px; border-left: 1px solid #E5E7EB;">
+            <button>Search</button>
+        </div>
+        <div class="hero-tags">
+            {Object.keys(categoryCounts).slice(0, 6).map(cat => (
+                <a href={`/${Object.keys(cityCounts)[0]}/${cat}`}>
+                    {getEmoji(cat)} {slugToTitle(cat)}
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item"><h3>{totalListings}+</h3><p>Listed Businesses</p></div>
+            <div class="stat-item"><h3>{totalCities}</h3><p>Cities Covered</p></div>
+            <div class="stat-item"><h3>{totalCategories}</h3><p>Categories</p></div>
+            <div class="stat-item"><h3>⭐</h3><p>Verified Reviews</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- BROWSE BY CITY -->
+<section>
+    <div class="container text-center">
+        <p class="section-label">Browse by City</p>
+        <h2 class="section-title">Explore Your Area</h2>
+        <p class="section-subtitle">Select a city to discover local businesses near you.</p>
+        <div class="areas-grid" style="max-width: 800px; margin: 0 auto;">
+            {Object.entries(cityCounts).map(([city, count]) => (
+                <a href={`/${city}`} class="area-card">
+                    <h3 style="text-transform: capitalize;">📍 {city.replace(/-/g, ' ')}</h3>
+                    <p>{count} businesses</p>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- CATEGORIES -->
+<section id="categories" style="background: #F3F4F6;">
+    <div class="container text-center">
+        <p class="section-label">Browse by Category</p>
+        <h2 class="section-title">Explore Popular Categories</h2>
+        <p class="section-subtitle">Whatever you need, find the perfect local business in seconds.</p>
+        <div class="categories-grid">
+            {Object.entries(categoryCounts).map(([cat, count]) => (
+                <a href={`/${Object.keys(cityCounts)[0]}/${cat}`} class="category-card">
+                    <div class="category-icon">{getEmoji(cat)}</div>
+                    <h4>{slugToTitle(cat)}</h4>
+                    <p>{count} listings</p>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- FEATURED LISTINGS -->
+<section>
+    <div class="container">
+        <p class="section-label">Featured Businesses</p>
+        <h2 class="section-title">Top-Rated This Month</h2>
+        <p class="section-subtitle">Premium listings get prominent placement and more customers.</p>
+        <div class="listings-grid">
+            {listings?.map(item => (
+                <ListingCard listing={item} />
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" style="background: #F3F4F6;">
+    <div class="container text-center">
+        <p class="section-label">How It Works</p>
+        <h2 class="section-title">Simple for Businesses, Easy for Users</h2>
+        <p class="section-subtitle">Getting listed takes just minutes. Getting found takes even less.</p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;">
+            <div style="text-align: center; padding: 32px 24px;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">1</div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Claim Your Listing</h3>
+                <p style="font-size: .92rem; color: var(--muted);">Business owners sign up and create a profile with photos, hours, services, and contact info.</p>
+            </div>
+            <div style="text-align: center; padding: 32px 24px;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">2</div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Get Discovered</h3>
+                <p style="font-size: .92rem; color: var(--muted);">Customers search by category, location, or keyword and find your business instantly.</p>
+            </div>
+            <div style="text-align: center; padding: 32px 24px;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">3</div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;">Grow & Connect</h3>
+                <p style="font-size: .92rem; color: var(--muted);">Collect reviews, respond to inquiries, and upgrade to featured for maximum visibility.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section style="background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; text-align: center; padding: 80px 0;">
+    <div class="container">
+        <h2 style="font-size: 2.4rem; font-weight: 800; margin-bottom: 16px;">Ready to Get Listed?</h2>
+        <p style="font-size: 1.1rem; opacity: .85; max-width: 500px; margin: 0 auto 32px;">Join hundreds of local businesses already growing with LocalPulse.</p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+            <a href="#" class="btn btn-white">📋 List Your Business Free</a>
+            <a href="#pricing" class="btn btn-accent">💎 See Premium Plans</a>
+        </div>
+    </div>
+</section>
+
+</BaseLayout>

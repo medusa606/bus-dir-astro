@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import TieredListings from '../../components/TieredListings.astro';
+import { supabase } from '../../lib/supabase.js';
+import { slugToTitle, getEmoji } from '../../utils/helpers.js';
+
+export async function getStaticPaths() {
+    const { data } = await supabase
+        .from('listings')
+        .select('city_slug')
+        .eq('status', 'Published');
+
+    const cities = [...new Set(data?.map(l => l.city_slug).filter(Boolean))];
+    return cities.map(city => ({ params: { city } }));
+}
+
+const { city } = Astro.params;
+const cityTitle = slugToTitle(city);
+
+// Fetch all published listings for this city
+const { data: listings } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Published')
+    .eq('city_slug', city);
+
+// Count listings per area
+const areaCounts = {};
+listings?.forEach(l => {
+    if (l.area_slug) {
+        areaCounts[l.area_slug] = (areaCounts[l.area_slug] || 0) + 1;
+    }
+});
+
+// Count listings per category
+const categoryCounts = {};
+listings?.forEach(l => {
+    if (l.category_slug) {
+        categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1;
+    }
+});
+
+// Sort areas and categories alphabetically
+const sortedAreas = Object.entries(areaCounts).sort((a, b) => a[0].localeCompare(b[0]));
+const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].localeCompare(b[0]));
+---
+
+<BaseLayout
+    title={`Local Businesses in ${cityTitle}`}
+    description={`Discover the best local businesses in ${cityTitle}. Browse ${Object.keys(areaCounts).length} areas and ${Object.keys(categoryCounts).length} categories.`}
+>
+
+<!-- City Hero -->
+<section style="padding: 140px 0 40px; background: linear-gradient(135deg, #EEF2FF 0%, #FDF4FF 50%, #FEF3C7 100%);">
+    <div class="container">
+        <Breadcrumbs crumbs={[{ label: cityTitle }]} />
+
+        <h1 class="section-title" style="font-size: 2.4rem;">
+            📍 Local Businesses in {cityTitle}
+        </h1>
+        <p class="section-subtitle">
+            {listings?.length || 0} businesses across {Object.keys(areaCounts).length} areas
+            and {Object.keys(categoryCounts).length} categories
+        </p>
+    </div>
+</section>
+
+<!-- Browse by Area -->
+<section>
+    <div class="container">
+        <p class="section-label">Browse by Area</p>
+        <h2 class="section-title" style="font-size: 1.6rem;">Neighbourhoods in {cityTitle}</h2>
+        <p class="section-subtitle">Select an area to see what's nearby.</p>
+
+        <div class="areas-grid">
+            {sortedAreas.map(([area, count]) => (
+                <a href={`/${city}/${area}`} class="area-card">
+                    <h3 style="text-transform: capitalize;">
+                        {area.replace(/-/g, ' ')}
+                    </h3>
+                    <p>{count} {count === 1 ? 'business' : 'businesses'}</p>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- Browse by Category -->
+<section style="background: #F3F4F6;">
+    <div class="container">
+        <p class="section-label">Browse by Category</p>
+        <h2 class="section-title" style="font-size: 1.6rem;">What are you looking for in {cityTitle}?</h2>
+        <p class="section-subtitle">Filter by type of business.</p>
+
+        <div class="categories-grid">
+            {sortedCategories.map(([cat, count]) => (
+                <a href={`/${city}/${cat}`} class="category-card">
+                    <div class="category-icon">{getEmoji(cat)}</div>
+                    <h4>{slugToTitle(cat)}</h4>
+                    <p>{count} {count === 1 ? 'listing' : 'listings'}</p>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- All Listings — Tiered -->
+<section>
+    <div class="container">
+        <p class="section-label">All Listings</p>
+        <h2 class="section-title" style="font-size: 1.6rem;">
+            Every Business in {cityTitle}
+        </h2>
+        <p class="section-subtitle">
+            Sorted by editorial picks, recommendations, and Google ratings.
+        </p>
+
+        <TieredListings listings={listings} />
+
+        {(!listings || listings.length === 0) && (
+            <p style="text-align: center; color: var(--muted); padding: 60px 0;">
+                No listings found in {cityTitle} yet.
+                <a href="/" style="color: var(--primary);"> Browse all cities</a>
+            </p>
+        )}
+    </div>
+</section>
+
+<!-- City CTA -->
+<section style="background: linear-gradient(135deg, var(--primary), #7C3AED); color: #fff; text-align: center; padding: 60px 0;">
+    <div class="container">
+        <h2 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 12px;">
+            Own a business in {cityTitle}?
+        </h2>
+        <p style="font-size: 1rem; opacity: .85; max-width: 480px; margin: 0 auto 24px;">
+            Get found by customers searching in {cityTitle}. List your business for free.
+        </p>
+        <a href="#" class="btn btn-white">📋 List Your Business Free</a>
+    </div>
+</section>
+
+</BaseLayout>
