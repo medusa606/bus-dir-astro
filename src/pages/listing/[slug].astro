@@ -1,0 +1,723 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import StarRating from '../../components/StarRating.astro';
+import SocialLinks from '../../components/SocialLinks.astro';
+import SocialFeed from '../../components/SocialFeed.astro';
+import Map from '../../components/Map.astro';
+import { supabase } from '../../lib/supabase.js';
+import { getEmoji } from '../../utils/helpers.js';
+import { 
+    formatOpeningHours, 
+    isCurrentlyOpen, 
+    getActiveSocialLinks,
+    getListingSEO 
+} from '../../utils/listingHelpers.js';
+
+// Generate static paths for all published listings
+export async function getStaticPaths() {
+    const { data: listings, error } = await supabase
+        .from('listings')
+        .select('business_slug, city_slug')
+        .eq('status', 'Published')
+        .not('business_slug', 'is', null);
+    
+    if (error) {
+        console.error('Supabase error:', error);
+        return [];
+    }
+    
+    if (!listings || listings.length === 0) {
+        console.log('No listings found');
+        return [];
+    }
+    
+    console.log('First listing sample:', listings[0]);
+    
+    // Filter and normalize slug values
+    const validListings = listings
+        .filter(listing => {
+            let slug = listing.business_slug;
+            
+            // If it's an array, take the first element
+            if (Array.isArray(slug)) {
+                slug = slug[0];
+            }
+            
+            // Check if it's a valid string
+            const isValid = slug && typeof slug === 'string' && slug.trim() !== '';
+            if (!isValid) {
+                console.warn('Invalid slug:', slug, 'Type:', typeof slug);
+            }
+            return isValid;
+        })
+        .map(listing => {
+            // Normalize the slug
+            let slug = listing.business_slug;
+            if (Array.isArray(slug)) {
+                slug = slug[0];
+            }
+            
+            const cleanSlug = slug.toString().trim();
+            console.log('Generated route:', cleanSlug);
+            
+            return {
+                params: { slug: cleanSlug },
+                props: { 
+                    slug: cleanSlug,
+                    citySlug: listing.city_slug 
+                }
+            };
+        });
+    
+    console.log('Total valid routes:', validListings.length);
+    return validListings;
+}
+
+const { slug } = Astro.params;
+
+// Fetch business data from Supabase
+const { data: dbBusiness, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('business_slug', slug)
+    .eq('status', 'Published')
+    .single();
+
+if (!dbBusiness || error) {
+    return Astro.redirect('/404');
+}
+
+// Map Supabase fields to template structure
+const business = {
+    id: dbBusiness.id,
+    slug: dbBusiness.business_slug,
+    name: dbBusiness.name,
+    city: dbBusiness.city_slug,
+    city_slug: dbBusiness.city_slug,
+    area: dbBusiness.area_slug,
+    area_slug: dbBusiness.area_slug,
+    category: dbBusiness.category,
+    category_slug: dbBusiness.category_slug,
+    rating: dbBusiness.google_rating,
+    review_count: dbBusiness.google_review_count,
+    main_image: dbBusiness.image_url || dbBusiness.photo_url,
+    tagline: dbBusiness.google_summary,
+    description: dbBusiness.description,
+    owner_writeup: dbBusiness.story_draft,
+    
+    // Contact info
+    address: dbBusiness.address,
+    phone: dbBusiness.phone,
+    email: dbBusiness.email,
+    website: dbBusiness.website,
+    google_maps_url: dbBusiness.google_maps_url,
+    latitude: dbBusiness.latitude,
+    longitude: dbBusiness.longitude,
+    
+    // Opening hours - parse if it's a string, otherwise keep as-is
+    opening_hours: dbBusiness.opening_hours ? 
+        (typeof dbBusiness.opening_hours === 'string' 
+            ? JSON.parse(dbBusiness.opening_hours) 
+            : dbBusiness.opening_hours
+        ) : null,
+    
+    // Services from tags array
+    services_offered: dbBusiness.tags || [],
+    
+    // Photo gallery - currently single image
+    photo_gallery: dbBusiness.image_url ? [dbBusiness.image_url] : [],
+    
+    // Social fields
+    social_facebook: dbBusiness.social_facebook,
+    social_instagram: dbBusiness.social_instagram,
+    social_twitter: dbBusiness.social_twitter,
+    social_tiktok: dbBusiness.social_tiktok,
+    social_youtube: dbBusiness.social_youtube,
+    social_linkedin: dbBusiness.social_linkedin,
+    
+    // Placeholder for reviews - add when review data is available
+    reviews: null,
+    social_feed: null
+};
+---
+
+<BaseLayout title={`${business.name} - Meridian Directory`}>
+    <Breadcrumbs crumbs={[
+        { label: business.city, href: `/` },
+        { label: business.category, href: `/` },
+        { label: business.name }
+    ]} />
+    
+    <!-- Hero with Faded Impressionist Background -->
+    <div class="listing-hero" style={`--bg-image: url('${business.main_image}')`}>
+        <div class="listing-hero__blur"></div>
+        <div class="listing-hero__overlay"></div>
+    </div>
+    
+    <!-- Main Header Card -->
+    <div class="listing-header">
+        <div class="listing-header__inner">
+            <div class="listing-header__info">
+                <h1>{business.name}</h1>
+                <p class="subtitle">{business.tagline}</p>
+                <div class="tags">
+                    {business.category && <span class="tag tag--category">{getEmoji(business.category)} {business.category}</span>}
+                    {business.area && <span class="tag tag--location">{business.area}</span>}
+                </div>
+                {business.review_count > 0 && (
+                    <div class="rating-info">
+                        <StarRating rating={business.rating} />
+                        <span class="rating-count">({business.review_count} reviews)</span>
+                    </div>
+                )}
+            </div>
+            <div class="listing-header__actions">
+                <button class="btn btn--primary">Contact</button>
+                <button class="btn btn--outline">Share</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contact Info Box -->
+    {(business.address || business.phone || business.email || business.website) && (
+        <div class="contact-info-box">
+            <div class="contact-info-container">
+                {business.address && (
+                    <div class="contact-item">
+                        <span class="contact-icon">📍</span>
+                        <div>
+                            <p class="contact-label">Address</p>
+                            <p class="contact-value">{business.address}</p>
+                        </div>
+                    </div>
+                )}
+                {business.phone && (
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <div>
+                            <p class="contact-label">Phone</p>
+                            <a href={`tel:${business.phone}`} class="contact-value contact-link">{business.phone}</a>
+                        </div>
+                    </div>
+                )}
+                {business.email && (
+                    <div class="contact-item">
+                        <span class="contact-icon">✉️</span>
+                        <div>
+                            <p class="contact-label">Email</p>
+                            <a href={`mailto:${business.email}`} class="contact-value contact-link">{business.email}</a>
+                        </div>
+                    </div>
+                )}
+                {business.website && (
+                    <div class="contact-item">
+                        <span class="contact-icon">🌐</span>
+                        <div>
+                            <p class="contact-label">Website</p>
+                            <a href={business.website} target="_blank" rel="noopener noreferrer" class="contact-value contact-link">Visit Website ↗</a>
+                        </div>
+                    </div>
+                )}
+                {(business.address || business.google_maps_url) && (
+                    <a 
+                        href={business.google_maps_url || `https://www.google.com/maps/?q=${encodeURIComponent(business.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn--outline btn--sm google-maps-btn"
+                    >
+                        Open in Google Maps ↗
+                    </a>
+                )}
+            </div>
+        </div>
+    )}
+    
+    <!-- Main Content -->
+    <div class="listing-body">
+        <div class="listing-main">
+            <!-- About Section -->
+            {business.description && (
+                <section class="listing-section listing-section--about">
+                    <h2>About</h2>
+                    <p>{business.description}</p>
+                    {business.owner_writeup && (
+                        <div class="community-piece">
+                            <p>"{business.owner_writeup}"</p>
+                        </div>
+                    )}
+                </section>
+            )}
+            
+            <!-- Services Section -->
+            {business.services_offered && business.services_offered.length > 0 && (
+                <section class="listing-section">
+                    <h2>What They Offer</h2>
+                    <div class="services-list">
+                        {business.services_offered.map(service => (
+                            <div class="service-item">{service}</div>
+                        ))}
+                    </div>
+                </section>
+            )}
+            
+            <!-- Photos Section -->
+            {business.photo_gallery && business.photo_gallery.length > 0 && (
+                <section class="listing-section">
+                    <h2>Photos</h2>
+                    <div class="gallery-grid">
+                        {business.photo_gallery.map(photo => (
+                            <img src={photo} alt={business.name} />
+                        ))}
+                    </div>
+                </section>
+            )}
+            
+            <!-- Reviews Section -->
+            {business.reviews && business.reviews.length > 0 && (
+                <section class="listing-section">
+                    <h2>Reviews</h2>
+                    <div class="reviews-list">
+                        {business.reviews.map(review => (
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <h4>{review.author}</h4>
+                                    <StarRating rating={review.rating} />
+                                </div>
+                                <p class="review-text">{review.text}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="listing-sidebar">
+            <!-- Map Widget -->
+            {business.address && business.latitude && business.longitude && (
+                <div class="sidebar-widget sidebar-widget--map">
+                    <h3>Location</h3>
+                    <Map address={business.address} latitude={business.latitude} longitude={business.longitude} />
+                </div>
+            )}
+            
+            <!-- Hours Widget -->
+            {business.opening_hours && (
+                <div class="sidebar-widget">
+                    <h3>Hours</h3>
+                    <ul class="hours-list">
+                        {Object.entries(business.opening_hours).map(([day, hours]) => (
+                            <li>
+                                <span class="day">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
+                                <span>{hours}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+            
+            <!-- Socials Widget with Feed Wheel -->
+            {business.social_facebook || business.social_instagram || business.social_twitter || 
+             business.social_tiktok || business.social_youtube || business.social_linkedin ? (
+                <div class="sidebar-widget">
+                    <h3>Connect</h3>
+                    <SocialLinks listing={business} />
+                    
+                    <SocialFeed feed={business.social_feed} maxItems={3} />
+                </div>
+            ) : null}
+            
+            <!-- Contact CTA -->
+            <div class="sidebar-widget sidebar-widget--cta">
+                <h3>Get in Touch</h3>
+                <p>Have questions? Contact them directly.</p>
+                <button class="btn btn--primary btn--block">Send Message</button>
+            </div>
+        </div>
+    </div>
+</BaseLayout>
+
+<style>
+    /* Contact Info Box */
+    .contact-info-box {
+        max-width: 1200px;
+        margin: var(--space-3xl) auto 0;
+        padding: 0 var(--space-lg);
+    }
+    
+    .contact-info-container {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-sm);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-lg);
+        align-items: start;
+    }
+    
+    .contact-item {
+        display: flex;
+        gap: var(--space-md);
+        align-items: flex-start;
+    }
+    
+    .contact-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        line-height: 1;
+    }
+    
+    .contact-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--grey-olive);
+        margin-bottom: var(--space-xs);
+    }
+    
+    .contact-value {
+        color: var(--taupe);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+    
+    .contact-link {
+        color: var(--powder-blush);
+        text-decoration: none;
+        transition: var(--transition);
+    }
+    
+    .contact-link:hover {
+        color: var(--taupe);
+        text-decoration: underline;
+    }
+    
+    .google-maps-btn {
+        grid-column: 1 / -1;
+        justify-self: flex-start;
+    }
+    
+    .listing-hero {
+        position: relative;
+        height: 500px;
+        overflow: hidden;
+        background-image: var(--bg-image);
+        background-size: cover;
+        background-position: center;
+    }
+    
+    /* Faded impressionist filter effect */
+    .listing-hero__blur {
+        position: absolute;
+        inset: 0;
+        background-image: var(--bg-image);
+        background-size: cover;
+        background-position: center;
+        filter: blur(40px) opacity(0.4);
+        z-index: 0;
+    }
+    
+    .listing-hero__overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, transparent 30%, rgba(70,63,58,0.6));
+        z-index: 1;
+    }
+    
+    .listing-header {
+        position: relative;
+        max-width: 1200px;
+        margin: -80px auto 0;
+        padding: 0 var(--space-lg);
+        z-index: 10;
+    }
+    
+    .listing-header__inner {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl);
+        box-shadow: var(--shadow-lg);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--space-xl);
+        align-items: start;
+    }
+    
+    .listing-header__info h1 {
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1.05rem;
+        color: var(--grey-olive);
+        margin-bottom: var(--space-md);
+    }
+    
+    .tags {
+        display: flex;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
+        margin-bottom: var(--space-md);
+    }
+    
+    .rating-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+    }
+    
+    .rating-count {
+        font-size: 0.9rem;
+        color: var(--grey-olive);
+    }
+    
+    .listing-header__actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+    
+    .listing-body {
+        max-width: 1200px;
+        margin: var(--space-3xl) auto 0;
+        padding: 0 var(--space-lg) var(--space-4xl);
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-3xl);
+    }
+    
+    .listing-main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3xl);
+    }
+    
+    .listing-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xl);
+    }
+    
+    .listing-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+    
+    .listing-section h2 {
+        font-size: clamp(1.3rem, 2.5vw, 1.6rem);
+        margin-bottom: var(--space-sm);
+    }
+    
+    .listing-section p {
+        color: var(--grey-olive);
+        line-height: 1.7;
+        font-size: 1rem;
+    }
+    
+    .listing-section--about .community-piece {
+        background: var(--parchment);
+        border-left: 3px solid var(--powder-blush);
+        padding: var(--space-lg);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        margin-top: var(--space-lg);
+        font-family: var(--font-serif);
+        font-size: 1.05rem;
+        font-style: italic;
+        line-height: 1.6;
+        color: var(--taupe);
+    }
+    
+    .services-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-sm);
+    }
+    
+    .service-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 0.95rem;
+        color: var(--taupe);
+        padding: var(--space-sm);
+        background: var(--parchment);
+        border-radius: var(--radius-sm);
+    }
+    
+    .service-item::before {
+        content: '·';
+        font-size: 1.5rem;
+        color: var(--powder-blush);
+        font-weight: bold;
+    }
+    
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-sm);
+    }
+    
+    .gallery-grid img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .gallery-grid img:hover {
+        opacity: 0.85;
+        transform: scale(1.02);
+    }
+    
+    .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+    }
+    
+    .review-card {
+        background: var(--parchment);
+        padding: var(--space-lg);
+        border-radius: var(--radius-md);
+    }
+    
+    .review-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .review-header h4 {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .review-text {
+        font-size: 0.95rem;
+        color: var(--grey-olive);
+        line-height: 1.6;
+    }
+    
+    .sidebar-widget {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .sidebar-widget--map {
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    .sidebar-widget--map h3 {
+        padding: var(--space-lg);
+        padding-bottom: var(--space-md);
+        margin: 0;
+    }
+    
+    .sidebar-widget--cta p {
+        color: var(--grey-olive);
+        margin-bottom: var(--space-md);
+        font-size: 0.95rem;
+    }
+    
+    .sidebar-widget h3 {
+        font-family: var(--font-serif);
+        font-size: 1.1rem;
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--parchment);
+    }
+    
+    .hours-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+    
+    .hours-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--space-xs) 0;
+        font-size: 0.9rem;
+        color: var(--grey-olive);
+    }
+    
+    .hours-list .day {
+        font-weight: 500;
+        color: var(--taupe);
+    }
+    
+    .sidebar-widget--cta p {
+        color: var(--grey-olive);
+        margin-bottom: var(--space-md);
+        font-size: 0.95rem;
+    }
+    
+    .btn--block {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .listing-body {
+            grid-template-columns: 1fr;
+        }
+        
+        .listing-sidebar {
+            order: -1;
+        }
+        
+        .services-list {
+            grid-template-columns: 1fr;
+        }
+        
+        .gallery-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .listing-hero {
+            height: 300px;
+        }
+        
+        .listing-header__inner {
+            grid-template-columns: 1fr;
+            text-align: center;
+            justify-items: center;
+        }
+        
+        .listing-header__info h1 {
+            font-size: clamp(1.4rem, 3vw, 1.8rem);
+        }
+        
+        .tags {
+            justify-content: center;
+        }
+        
+        .listing-header__actions {
+            flex-direction: row;
+            width: 100%;
+        }
+        
+        .listing-header__actions .btn {
+            flex: 1;
+        }
+        
+        .gallery-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

@@ -11,4 +11,21 @@ const icons = {
 };
 ---
 
-<Fragment set:html={icons[platform] || ''} />
+<div class="icon-container">
+    <Fragment set:html={icons[platform] || ''} />
+</div>
+
+<style>
+    .icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .icon-container :global(svg) {
+        width: 80%;
+        height: 80%;
+    }
+</style>

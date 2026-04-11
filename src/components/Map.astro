@@ -1,0 +1,112 @@
+---
+interface Props {
+    address: string;
+    latitude: number;
+    longitude: number;
+}
+
+const { address, latitude, longitude } = Astro.props;
+---
+
+<div class="map-container">
+    <div id="map"></div>
+    <p class="map-attribution">Map data © OpenStreetMap contributors</p>
+</div>
+
+<script define:vars={{ lat: latitude, lng: longitude, addressText: address }}>
+    // Load Leaflet from CDN
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = () => {
+        // Initialize map
+        const map = L.map('map').setView([lat, lng], 15);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            zoomControl: true
+        }).addTo(map);
+
+        // Add marker
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(`<strong>${addressText}</strong>`)
+            .openPopup();
+
+        // Make map draggable and zoomable (default behavior)
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+    };
+    document.head.appendChild(script);
+</script>
+
+<style>
+    .map-container {
+        position: relative;
+        width: 100%;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--space-lg);
+    }
+
+    #map {
+        width: 100%;
+        height: 400px;
+        z-index: 1;
+    }
+
+    .map-attribution {
+        font-size: 0.75rem;
+        color: var(--silver);
+        padding: var(--space-xs);
+        background: var(--parchment);
+        margin: 0;
+    }
+
+    /* Leaflet overrides for theme consistency */
+    :global(.leaflet-control-zoom) {
+        border: none;
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-sm);
+    }
+
+    :global(.leaflet-control-zoom-in),
+    :global(.leaflet-control-zoom-out) {
+        background: var(--white);
+        color: var(--taupe);
+        font-weight: bold;
+        border: none;
+    }
+
+    :global(.leaflet-control-zoom-in:hover),
+    :global(.leaflet-control-zoom-out:hover) {
+        background: var(--parchment);
+    }
+
+    :global(.leaflet-popup-content-wrapper) {
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-lg);
+        background: var(--white);
+    }
+
+    :global(.leaflet-popup-content) {
+        margin: 0;
+        color: var(--taupe);
+        font-family: var(--font-sans);
+    }
+
+    @media (max-width: 768px) {
+        #map {
+            height: 300px;
+        }
+    }
+</style>
