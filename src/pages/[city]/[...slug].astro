@@ -4,6 +4,8 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import TieredListings from '../../components/TieredListings.astro';
 import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
+import SocialFeed from '../../components/SocialFeed.astro';
+import Map from '../../components/Map.astro';
 import { supabase } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, RANKING_TIERS } from '../../utils/helpers.js';
 
@@ -15,45 +17,53 @@ export async function getStaticPaths() {
 
     if (!listings) return [];
 
-    const allCategories = new Set(listings.map(l => l.category_slug).filter(Boolean));
+    const allCategories = new Set(listings.map(l => String(l.category_slug)).filter(Boolean));
     const paths = [];
     const seen = new Set();
 
     listings.forEach(l => {
+        const citySlug = String(l.city_slug).toLowerCase().trim();
+
         if (l.category_slug) {
-            const key = `cat:${l.city_slug}/${l.category_slug}`;
+            const categorySlug = String(l.category_slug).toLowerCase().trim();
+            const key = `cat:${citySlug}/${categorySlug}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 paths.push({
-                    params: { city: l.city_slug, slug: [l.category_slug] },
-                    props: { type: 'city-category', citySlug: l.city_slug, categorySlug: l.category_slug, allCategories: [...allCategories] }
+                    params: { city: citySlug, slug: categorySlug },
+                    props: { type: 'city-category', citySlug: l.city_slug, categorySlug: categorySlug, allCategories: [...allCategories] }
                 });
             }
         }
-        if (l.area_slug && !allCategories.has(l.area_slug)) {
-            const key = `area:${l.city_slug}/${l.area_slug}`;
+        if (l.area_slug && !allCategories.has(String(l.area_slug))) {
+            const areaSlug = String(l.area_slug).toLowerCase().trim();
+            const key = `area:${citySlug}/${areaSlug}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 paths.push({
-                    params: { city: l.city_slug, slug: [l.area_slug] },
-                    props: { type: 'area', citySlug: l.city_slug, areaSlug: l.area_slug, allCategories: [...allCategories] }
+                    params: { city: citySlug, slug: areaSlug },
+                    props: { type: 'area', citySlug: l.city_slug, areaSlug: areaSlug, allCategories: [...allCategories] }
                 });
             }
         }
         if (l.area_slug && l.category_slug) {
-            const key = `areacat:${l.city_slug}/${l.area_slug}/${l.category_slug}`;
+            const areaSlug = String(l.area_slug).toLowerCase().trim();
+            const categorySlug = String(l.category_slug).toLowerCase().trim();
+            const key = `areacat:${citySlug}/${areaSlug}/${categorySlug}`;
             if (!seen.has(key)) {
                 seen.add(key);
                 paths.push({
-                    params: { city: l.city_slug, slug: [l.area_slug, l.category_slug] },
-                    props: { type: 'area-category', citySlug: l.city_slug, areaSlug: l.area_slug, categorySlug: l.category_slug, allCategories: [...allCategories] }
+                    params: { city: citySlug, slug: `${areaSlug}/${categorySlug}` },
+                    props: { type: 'area-category', citySlug: l.city_slug, areaSlug: areaSlug, categorySlug: categorySlug, allCategories: [...allCategories] }
                 });
             }
         }
         if (l.area_slug && l.business_slug) {
+            const areaSlug = String(l.area_slug).toLowerCase().trim();
+            const businessSlug = String(l.business_slug).toLowerCase().trim();
             paths.push({
-                params: { city: l.city_slug, slug: [l.area_slug, l.business_slug] },
-                props: { type: 'listing', citySlug: l.city_slug, areaSlug: l.area_slug, businessSlug: l.business_slug, listing: l, allCategories: [...allCategories] }
+                params: { city: citySlug, slug: `${areaSlug}/${businessSlug}` },
+                props: { type: 'listing', citySlug: l.city_slug, areaSlug: areaSlug, businessSlug: businessSlug, listing: l, allCategories: [...allCategories] }
             });
         }
     });
@@ -168,6 +178,50 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         </div>
     </div>
 
+    <!-- Contact Info Box -->
+    {(listing.address || listing.phone || listing.email || listing.website) && (
+        <div class="contact-info-box">
+            <div class="contact-info-container">
+                {listing.address && (
+                    <div class="contact-item">
+                        <span class="contact-icon">📍</span>
+                        <div>
+                            <p class="contact-label">Address</p>
+                            <p class="contact-value">{listing.address}</p>
+                        </div>
+                    </div>
+                )}
+                {listing.phone && (
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <div>
+                            <p class="contact-label">Phone</p>
+                            <a href={`tel:${listing.phone}`} class="contact-value contact-link">{listing.phone}</a>
+                        </div>
+                    </div>
+                )}
+                {listing.email && (
+                    <div class="contact-item">
+                        <span class="contact-icon">✉️</span>
+                        <div>
+                            <p class="contact-label">Email</p>
+                            <a href={`mailto:${listing.email}`} class="contact-value contact-link">{listing.email}</a>
+                        </div>
+                    </div>
+                )}
+                {listing.website && (
+                    <div class="contact-item">
+                        <span class="contact-icon">🌐</span>
+                        <div>
+                            <p class="contact-label">Website</p>
+                            <a href={listing.website} target="_blank" rel="noopener noreferrer" class="contact-value contact-link">Visit Website ↗</a>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    )}
+
     <div class="listing-body">
         <div class="listing-main">
 
@@ -176,6 +230,30 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                 <h2>About {listing.name}</h2>
                 <p>{listing.description || 'No description available.'}</p>
             </div>
+
+            <!-- Services Section -->
+            {listing.services_offered && listing.services_offered.length > 0 && (
+                <section class="listing-section">
+                    <h2>What They Offer</h2>
+                    <div class="services-list">
+                        {listing.services_offered.map(service => (
+                            <div class="service-item">{service}</div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            <!-- Photos Section -->
+            {listing.photo_gallery && listing.photo_gallery.length > 0 && (
+                <section class="listing-section">
+                    <h2>Photos</h2>
+                    <div class="gallery-grid">
+                        {listing.photo_gallery.map(photo => (
+                            <img src={photo} alt={listing.name} />
+                        ))}
+                    </div>
+                </section>
+            )}
 
             <!-- Reviews -->
             {listing.google_rating && (
@@ -198,29 +276,79 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         <!-- Sidebar -->
         <div class="listing-sidebar">
 
-            <!-- Contact -->
-            <div class="sidebar-widget">
-                <h3>Get in touch</h3>
-                <div style="display: flex; flex-direction: column; gap: var(--space-sm); font-size: 0.9rem;">
-                    {listing.phone && (
-                        <div><strong>Phone:</strong> <a href={`tel:${listing.phone}`} style="color: var(--powder-blush);">{listing.phone}</a></div>
-                    )}
-                    {listing.email && (
-                        <div><strong>Email:</strong> <a href={`mailto:${listing.email}`} style="color: var(--powder-blush);">{listing.email}</a></div>
-                    )}
-                    {listing.address && (
-                        <div><strong>Address:</strong> {listing.address}</div>
-                    )}
-                    {listing.website && (
-                        <div><strong>Website:</strong> <a href={listing.website} target="_blank" rel="noopener" style="color: var(--powder-blush);">{listing.website}</a></div>
-                    )}
+            <!-- Map Widget -->
+            {listing.address && listing.latitude && listing.longitude && (
+                <div class="sidebar-widget sidebar-widget--map">
+                    <h3>Location</h3>
+                    <Map address={listing.address} latitude={listing.latitude} longitude={listing.longitude} />
+                    <a 
+                        href={`https://www.google.com/maps/?q=${encodeURIComponent(`${listing.name}, ${listing.address}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn--outline btn--block"
+                        style="margin-top: var(--space-md);"
+                    >
+                        🗺️ See me on Google Maps
+                    </a>
                 </div>
-            </div>
+            )}
+
+            <!-- Hours Widget -->
+            {listing.opening_hours && (
+                <div class="sidebar-widget">
+                    <h3>Hours</h3>
+                    <ul class="hours-list">
+                        {(() => {
+                            let hoursData = listing.opening_hours;
+                            
+                            // Handle if it's a string
+                            if (typeof hoursData === 'string') {
+                                // Try parsing as JSON first
+                                try {
+                                    hoursData = JSON.parse(hoursData);
+                                } catch (e) {
+                                    // Try parsing as pipe-separated format
+                                    // e.g. "Monday: Closed | Tuesday: 4:00 – 9:00 PM | ..."
+                                    if (hoursData.includes('|')) {
+                                        const parsed = {};
+                                        hoursData.split('|').forEach(entry => {
+                                            const firstColonIndex = entry.indexOf(':');
+                                            if (firstColonIndex !== -1) {
+                                                const day = entry.substring(0, firstColonIndex).trim();
+                                                const hours = entry.substring(firstColonIndex + 1).trim();
+                                                if (day && hours) {
+                                                    parsed[day.toLowerCase()] = hours;
+                                                }
+                                            }
+                                        });
+                                        hoursData = parsed;
+                                    } else {
+                                        return <li>Hours information not available</li>;
+                                    }
+                                }
+                            }
+                            
+                            // Handle if it's an object
+                            if (typeof hoursData === 'object' && hoursData !== null) {
+                                return Object.entries(hoursData)
+                                    .map(([day, hours]) => (
+                                        <li>
+                                            <span class="day">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
+                                            <span>{hours}</span>
+                                        </li>
+                                    ));
+                            }
+                            return <li>Hours information not available</li>;
+                        })()}
+                    </ul>
+                </div>
+            )}
 
             <!-- Social Links -->
             <div class="sidebar-widget">
                 <h3>Find online</h3>
                 <SocialLinks listing={listing} />
+                <SocialFeed feed={listing.social_feed} maxItems={3} />
             </div>
 
             <!-- Breadcrumbs in sidebar -->
@@ -292,3 +420,174 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 )}
 
 </BaseLayout>
+
+<style>
+    /* Contact Info Box */
+    .contact-info-box {
+        max-width: 1200px;
+        margin: var(--space-2xl) auto 0;
+        padding: 0 var(--space-lg);
+    }
+
+    .contact-info-container {
+        background: var(--white);
+        border: 1px solid var(--parchment);
+        border-radius: var(--radius-sm);
+        padding: var(--space-lg);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-lg);
+    }
+
+    .contact-item {
+        display: flex;
+        gap: var(--space-md);
+    }
+
+    .contact-icon {
+        font-size: 1.5rem;
+        min-width: 2rem;
+        text-align: center;
+    }
+
+    .contact-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--silver);
+        margin: 0;
+    }
+
+    .contact-value {
+        font-size: 0.95rem;
+        color: var(--taupe);
+        margin: var(--space-xs) 0 0 0;
+    }
+
+    .contact-link {
+        color: var(--powder-blush);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .contact-link:hover {
+        color: var(--taupe);
+    }
+
+    .listing-section {
+        margin-bottom: var(--space-2xl);
+        padding-bottom: var(--space-2xl);
+        border-bottom: 1px solid var(--parchment);
+    }
+
+    .listing-section h2 {
+        margin-bottom: var(--space-lg);
+        color: var(--grey-olive);
+        font-size: 1.3rem;
+    }
+
+    /* Services List */
+    .services-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .service-item {
+        padding: var(--space-md);
+        background: linear-gradient(135deg, rgba(224, 175, 160, 0.08) 0%, rgba(224, 175, 160, 0.04) 100%);
+        border-radius: var(--radius-sm);
+        font-size: 0.95rem;
+        color: var(--taupe);
+        border-left: 3px solid var(--powder-blush);
+    }
+
+    /* Gallery Grid */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: var(--space-md);
+        margin-bottom: var(--space-lg);
+    }
+
+    .gallery-grid img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-radius: var(--radius-sm);
+        transition: transform 0.3s ease;
+    }
+
+    .gallery-grid img:hover {
+        transform: scale(1.05);
+    }
+
+    /* Hours List */
+    .hours-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .hours-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--space-sm) 0;
+        border-bottom: 1px solid var(--parchment);
+        font-size: 0.9rem;
+    }
+
+    .hours-list li:last-child {
+        border-bottom: none;
+    }
+
+    .hours-list .day {
+        font-weight: 600;
+        color: var(--grey-olive);
+    }
+
+    /* Map Widget */
+    .sidebar-widget--map {
+        overflow: hidden;
+    }
+
+    /* Trust Card */
+    .trust-card {
+        background: linear-gradient(135deg, rgba(224, 175, 160, 0.08) 0%, rgba(224, 175, 160, 0.04) 100%);
+        padding: var(--space-lg);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid var(--powder-blush);
+    }
+
+    .trust-card h4 {
+        margin-bottom: var(--space-md);
+        color: var(--grey-olive);
+    }
+
+    .rating-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+
+    .rating-source {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--silver);
+        text-transform: uppercase;
+    }
+
+    .rating-value {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 0.95rem;
+    }
+
+    .stars {
+        color: #ffc107;
+        font-size: 1.1rem;
+    }
+</style>
