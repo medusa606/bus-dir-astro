@@ -276,6 +276,19 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         <!-- Sidebar -->
         <div class="listing-sidebar">
 
+            <!-- Breadcrumbs in sidebar -->
+            <div class="sidebar-widget">
+                <h3>Location</h3>
+                <Breadcrumbs crumbs={crumbs} />
+            </div>
+
+            <!-- Social Links -->
+            <div class="sidebar-widget">
+                <h3>Find online</h3>
+                <SocialLinks listing={listing} />
+                <SocialFeed feed={listing.social_feed} maxItems={3} />
+            </div>
+
             <!-- Map Widget -->
             {listing.address && listing.latitude && listing.longitude && (
                 <div class="sidebar-widget sidebar-widget--map">
@@ -343,19 +356,6 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                     </ul>
                 </div>
             )}
-
-            <!-- Social Links -->
-            <div class="sidebar-widget">
-                <h3>Find online</h3>
-                <SocialLinks listing={listing} />
-                <SocialFeed feed={listing.social_feed} maxItems={3} />
-            </div>
-
-            <!-- Breadcrumbs in sidebar -->
-            <div class="sidebar-widget">
-                <h3>Location</h3>
-                <Breadcrumbs crumbs={crumbs} />
-            </div>
         </div>
     </div>
 
@@ -589,5 +589,49 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
     .stars {
         color: #ffc107;
         font-size: 1.1rem;
+    }
+
+    /* Listing Hero with Extreme Artistic Filters */
+    .listing-hero {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        overflow: hidden;
+        margin-bottom: var(--space-3xl);
+    }
+
+    .listing-hero__cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /* Extreme cell-shaded/posterized illustration effect */
+        filter: 
+            /* Boost colors and contrast dramatically */
+            contrast(1.8)
+            saturate(1.6)
+            brightness(0.9)
+            hue-rotate(-5deg)
+            /* Add edge detection effect */
+            drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+        /* Create posterization effect using multiple text-shadows */
+        image-rendering: pixelated;
+    }
+
+    .listing-hero__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* Bold gradient overlay for illustration effect */
+        background: linear-gradient(
+            135deg,
+            rgba(224, 175, 160, 0.3) 0%,
+            rgba(175, 131, 113, 0.4) 50%,
+            rgba(80, 60, 50, 0.25) 100%
+        );
+        /* Add texture effect */
+        mix-blend-mode: overlay;
+        pointer-events: none;
     }
 </style>
