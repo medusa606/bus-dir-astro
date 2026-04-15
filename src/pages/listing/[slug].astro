@@ -88,7 +88,17 @@ if (!dbBusiness || error) {
     return Astro.redirect('/404');
 }
 
+// Local illustration overrides — keyed by business_slug
+// Used until illustration_url column is added to Supabase
+const LOCAL_ILLUSTRATIONS = {
+    'no12-easton-cafe': '/illustrations/bristol-easton-no12cafe.png',
+};
+
 // Map Supabase fields to template structure
+const illustrationUrl = dbBusiness.illustration_url
+    || LOCAL_ILLUSTRATIONS[dbBusiness.business_slug]
+    || null;
+
 const business = {
     id: dbBusiness.id,
     slug: dbBusiness.business_slug,
@@ -101,7 +111,8 @@ const business = {
     category_slug: dbBusiness.category_slug,
     rating: dbBusiness.google_rating,
     review_count: dbBusiness.google_review_count,
-    main_image: dbBusiness.image_url || dbBusiness.photo_url,
+    illustration_url: illustrationUrl,
+    main_image: illustrationUrl || dbBusiness.image_url || dbBusiness.photo_url,
     tagline: dbBusiness.google_summary,
     description: dbBusiness.description,
     owner_writeup: dbBusiness.story_draft,

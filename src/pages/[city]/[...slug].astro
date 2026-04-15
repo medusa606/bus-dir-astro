@@ -115,6 +115,26 @@ if (type === 'city-category') {
 
 const tier = listing ? (RANKING_TIERS[listing.ranking_tier] || RANKING_TIERS.standard) : null;
 
+// Local overrides — keyed by business_slug
+// Used until columns are added to Supabase
+const LOCAL_ILLUSTRATIONS = {
+    'no12-easton-cafe': '/illustrations/bristol-easton-no12cafe.png',
+};
+const LOCAL_FOUNDERS_IMAGES = {
+    'no12-easton-cafe': '/founders/bristol-easton-no12cafe.webp',
+};
+
+const illustrationUrl = listing
+    ? (listing.illustration_url || LOCAL_ILLUSTRATIONS[listing.business_slug] || null)
+    : null;
+const heroImage = listing
+    ? (illustrationUrl || listing.image_url || 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1400&q=80')
+    : null;
+const foundersImage = listing
+    ? (listing.founders_image || LOCAL_FOUNDERS_IMAGES[listing.business_slug] || null)
+    : null;
+const foundersStory = listing?.founders_story || null;
+
 const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -133,7 +153,7 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             "reviewCount": listing.google_review_count || 0
         }
     }),
-    "image": listing.image_url,
+    "image": illustrationUrl || listing.image_url,
     "telephone": listing.phone,
     "url": listing.website
 }) : null;
@@ -145,13 +165,13 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
 {type === 'listing' && listing ? (
     <!-- ════════ INDIVIDUAL LISTING PAGE ════════ -->
-    <div class="listing-hero">
+    <div class={`listing-hero${illustrationUrl ? ' listing-hero--illustration' : ''}`}>
         <img
-            src={listing.image_url || 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1400&q=80'}
+            src={heroImage}
             alt={listing.name}
             class="listing-hero__cover"
         />
-        <div class="listing-hero__overlay"></div>
+        {!illustrationUrl && <div class="listing-hero__overlay"></div>}
     </div>
 
     <div class="listing-header">
@@ -255,6 +275,23 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                 </section>
             )}
 
+            <!-- Founder's Story -->
+            {(foundersImage || foundersStory) && (
+                <div class="listing-section">
+                    <h2>The story behind {listing.name}</h2>
+                    <div class="founders-card">
+                        {foundersImage && (
+                            <img src={foundersImage} alt={`Founder of ${listing.name}`} class="founders-card__image" />
+                        )}
+                        {foundersStory && (
+                            <div class="founders-card__story">
+                                <p>{foundersStory}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <!-- Reviews -->
             {listing.google_rating && (
                 <div class="listing-section">
@@ -262,11 +299,22 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                     <div class="trust-card">
                         <h4>Ratings</h4>
                         <div class="rating-row">
-                            <span class="rating-source">Google Reviews</span>
-                            <span class="rating-value">
-                                <span class="stars">{'★'.repeat(Math.floor(listing.google_rating))}{'☆'.repeat(5 - Math.floor(listing.google_rating))}</span>
-                                {listing.google_rating} ({listing.google_review_count || 0} reviews)
-                            </span>
+                            {listing.google_maps_url ? (
+                                <a href={listing.google_maps_url} target="_blank" rel="noopener noreferrer" class="rating-source rating-link">Google Reviews ↗</a>
+                            ) : (
+                                <span class="rating-source">Google Reviews</span>
+                            )}
+                            {listing.google_maps_url ? (
+                                <a href={listing.google_maps_url} target="_blank" rel="noopener noreferrer" class="rating-value rating-link">
+                                    <span class="stars">{'★'.repeat(Math.floor(listing.google_rating))}{'☆'.repeat(5 - Math.floor(listing.google_rating))}</span>
+                                    {listing.google_rating} ({listing.google_review_count || 0} reviews)
+                                </a>
+                            ) : (
+                                <span class="rating-value">
+                                    <span class="stars">{'★'.repeat(Math.floor(listing.google_rating))}{'☆'.repeat(5 - Math.floor(listing.google_rating))}</span>
+                                    {listing.google_rating} ({listing.google_review_count || 0} reviews)
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -358,6 +406,14 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             )}
         </div>
     </div>
+
+    <!-- Illustration footer banner -->
+    {illustrationUrl && (
+        <div class="listing-footer-illustration">
+            <img src={illustrationUrl} alt={listing.name} class="listing-footer-illustration__img" />
+            <div class="listing-footer-illustration__fade"></div>
+        </div>
+    )}
 
 ) : (
     <!-- ════════ LIST PAGES (area, category, area+category) ════════ -->
@@ -579,6 +635,15 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         text-transform: uppercase;
     }
 
+    .rating-link {
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .rating-link:hover {
+        color: var(--powder-blush);
+    }
+
     .rating-value {
         display: flex;
         align-items: center;
@@ -591,6 +656,48 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         font-size: 1.1rem;
     }
 
+    /* Founder's Story Card */
+    .founders-card {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: var(--space-xl);
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--parchment);
+    }
+
+    .founders-card__image {
+        width: 100%;
+        height: 100%;
+        min-height: 280px;
+        object-fit: cover;
+    }
+
+    .founders-card__story {
+        padding: var(--space-xl);
+        display: flex;
+        align-items: center;
+    }
+
+    .founders-card__story p {
+        font-size: 1rem;
+        line-height: 1.75;
+        color: var(--taupe);
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .founders-card {
+            grid-template-columns: 1fr;
+        }
+
+        .founders-card__image {
+            min-height: 220px;
+        }
+    }
+
     /* Listing Hero with Extreme Artistic Filters */
     .listing-hero {
         position: relative;
@@ -598,6 +705,42 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         height: 400px;
         overflow: hidden;
         margin-bottom: var(--space-3xl);
+    }
+
+    /* Illustration footer banner */
+    .listing-footer-illustration {
+        position: relative;
+        z-index: 0;
+        width: 100%;
+        height: 800px;                          /* PARAM: total band height */
+        overflow: hidden;
+        margin-top: -450px;                     /* PARAM: how far up behind content */
+        margin-bottom: calc(-1 * var(--space-4xl)); /* eliminates gap before footer */
+    }
+
+    .listing-footer-illustration__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transform: scale(1.15);                 /* PARAM: zoom level */
+    }
+
+    .listing-footer-illustration__fade {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        /* PARAM: gradient stops — parchment rgba(244,243,238) */
+        /* Fade covers top ~80%, image visible at bottom 20% */
+        background: linear-gradient(
+            to bottom,
+            rgba(244, 243, 238, 1)    0%,      /* top: fully opaque */
+            rgba(244, 243, 238, 0.95) 15%,      /* still mostly hidden */
+            rgba(244, 243, 238, 0.8)  35%,      /* starting to reveal */
+            rgba(244, 243, 238, 0.5)  55%,      /* half transparent */
+            rgba(244, 243, 238, 0.15) 80%,      /* mostly visible */
+            rgba(244, 243, 238, 0)    100%      /* bottom: fully visible, hard edge */
+        );
     }
 
     .listing-hero__cover {
@@ -617,6 +760,12 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         image-rendering: pixelated;
     }
 
+    /* When an AI illustration is used, remove all filters — the illustration is already styled */
+    .listing-hero--illustration .listing-hero__cover {
+        filter: none;
+        image-rendering: auto;
+    }
+
     .listing-hero__overlay {
         position: absolute;
         top: 0;
@@ -633,5 +782,9 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         /* Add texture effect */
         mix-blend-mode: overlay;
         pointer-events: none;
+    }
+
+    .listing-hero--illustration .listing-hero__overlay {
+        display: none;
     }
 </style>

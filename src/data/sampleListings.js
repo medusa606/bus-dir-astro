@@ -14,6 +14,14 @@ export const SAMPLE_CAFE = {
     rating: 4.7,
     review_count: 128,
     main_image: 'https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=1200&h=600&fit=crop',
+    
+    // AI-generated illustration fields
+    add_listing_illustration: false,       // Curation flag — set true to queue for illustration generation
+    illustration_url: null,                // URL to the generated illustration (replaces hero if present)
+    illustration_status: null,             // 'pending' | 'queued' | 'generating' | 'completed' | 'failed'
+    illustration_source_photo: null,       // Source photo URL used as input for generation
+    illustration_generated_at: null,       // Timestamp of when the illustration was generated
+    
     tagline: 'Specialty espresso and single-origin beans',
     description: 'Artisan Coffee House is a cozy neighborhood café dedicated to sourcing and roasting the finest single-origin coffees from around the world.',
     owner_writeup: 'We started this café because we believe in crafting the perfect cup of coffee. Every bean is hand-selected and roasted in small batches.',

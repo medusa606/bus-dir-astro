@@ -9,10 +9,12 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "illustrations": "node scripts/generate-illustrations.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
-    "astro": "^6.1.5"
+    "astro": "^6.1.5",
+    "dotenv": "^16.4.7"
   }
 }

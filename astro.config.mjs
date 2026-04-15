@@ -5,5 +5,10 @@ export default defineConfig({
     trailingSlash: 'never',
     prefetch: {
         defaultStrategy: 'hover'
+    },
+    vite: {
+        server: {
+            allowedHosts: true
+        }
     }
 });
