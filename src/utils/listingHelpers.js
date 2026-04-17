@@ -29,32 +29,60 @@ export function formatOpeningHours(hours) {
  */
 export function isCurrentlyOpen(hours) {
     if (!hours) return null;
-    
+
+    // Normalise: if hours is a pipe-delimited string (Google Places scrape format)
+    // e.g. "Monday: 8:00 AM – 3:00 PM | Tuesday: 8:00 AM – 3:00 PM | ..."
+    // convert it to a plain object keyed by lowercase day name.
+    let hoursObj;
+    if (typeof hours === 'string') {
+        hoursObj = {};
+        hours.split('|').forEach(part => {
+            const colonIdx = part.indexOf(':');
+            if (colonIdx === -1) return;
+            const day = part.substring(0, colonIdx).trim().toLowerCase();
+            const timeStr = part.substring(colonIdx + 1).trim();
+            hoursObj[day] = timeStr;
+        });
+    } else {
+        hoursObj = hours;
+    }
+
     const now = new Date();
     const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
     const currentTime = now.getHours() * 100 + now.getMinutes();
-    
-    const todayHours = hours[dayName];
+
+    const todayHours = hoursObj[dayName];
     if (!todayHours || todayHours.toLowerCase() === 'closed') {
         return { isOpen: false, message: 'Currently closed' };
     }
-    
-    // Simple time parsing - assumes format like "9:00 AM - 5:00 PM"
-    const timeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM)\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i;
+
+    // 12-hour format. AM/PM on the open time is optional — Google sometimes omits it
+    // when both times share the same period, e.g. "5:30 – 11:30 PM".
+    // Capture groups: 1=openH, 2=openM, 3=openPeriod(optional), 4=closeH, 5=closeM, 6=closePeriod
+    const timeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM)?\s*[-–]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i;
     const match = todayHours.match(timeRegex);
-    
-    if (!match) return null;
-    
-    const openTime = parse12HourTime(match[1], match[2], match[3]);
-    const closeTime = parse12HourTime(match[4], match[5], match[6]);
-    
-    const isOpen = currentTime >= openTime && currentTime <= closeTime;
-    
-    return {
-        isOpen,
-        message: isOpen ? 'Open now' : 'Currently closed',
-        todayHours
-    };
+
+    if (match) {
+        // If open period is absent, inherit the close period (handles "5:30 – 11:30 PM")
+        const openPeriod = match[3] || match[6];
+        const openTime = parse12HourTime(match[1], match[2], openPeriod);
+        const closeTime = parse12HourTime(match[4], match[5], match[6]);
+        const isOpen = currentTime >= openTime && currentTime <= closeTime;
+        return { isOpen, message: isOpen ? 'Open now' : 'Currently closed', todayHours };
+    }
+
+    // 24-hour format: "09:00 - 17:00" or "9:00–17:00"
+    const time24Regex = /(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})/;
+    const match24 = todayHours.match(time24Regex);
+
+    if (match24) {
+        const openTime = parseInt(match24[1]) * 100 + parseInt(match24[2]);
+        const closeTime = parseInt(match24[3]) * 100 + parseInt(match24[4]);
+        const isOpen = currentTime >= openTime && currentTime <= closeTime;
+        return { isOpen, message: isOpen ? 'Open now' : 'Currently closed', todayHours };
+    }
+
+    return null;
 }
 
 /**

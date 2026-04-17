@@ -1,0 +1,410 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Search — Meridian Directory">
+
+<!-- Search Header -->
+<section class="search-page-header">
+    <div class="container">
+        <h1>Search the directory</h1>
+        <div class="search-bar search-bar--page">
+            <input id="search-input" type="text" placeholder="Business name, category, area, or product…" autocomplete="off">
+            <button id="search-btn">Search</button>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="search-filters">
+            <button id="filter-open-now" class="filter-pill" aria-pressed="false">
+                🕐 Open now
+            </button>
+            <button id="filter-near-me" class="filter-pill" aria-pressed="false">
+                📍 Near me <span class="filter-pill__sub">(800 m)</span>
+            </button>
+            <span id="geo-status" class="geo-status" hidden></span>
+        </div>
+    </div>
+</section>
+
+<!-- Results -->
+<section class="section section--sm">
+    <div class="container">
+        <div id="results-header" class="search-results-header" hidden>
+            <p id="results-count" class="search-results-count"></p>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading-state" class="search-state">
+            <div class="search-spinner"></div>
+            <p>Loading listings…</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="search-state" hidden>
+            <p class="search-state__icon">🔍</p>
+            <h3>No results found</h3>
+            <p>Try a different search term, or remove a filter.</p>
+        </div>
+
+        <!-- Results grid -->
+        <div id="results-grid" class="browse-grid" hidden></div>
+    </div>
+</section>
+
+</BaseLayout>
+
+<script>
+import { browserSupabase } from '../lib/supabaseBrowser.js';
+import { isCurrentlyOpen } from '../utils/listingHelpers.js';
+import { sortByTier, truncate, RANKING_TIERS } from '../utils/helpers.js';
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let allListings: any[] = [];
+let userLat: number | null = null;
+let userLng: number | null = null;
+let filterOpenNow = false;
+let filterNearMe = false;
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const searchInput   = document.getElementById('search-input') as HTMLInputElement;
+const searchBtn     = document.getElementById('search-btn') as HTMLButtonElement;
+const openNowBtn    = document.getElementById('filter-open-now') as HTMLButtonElement;
+const nearMeBtn     = document.getElementById('filter-near-me') as HTMLButtonElement;
+const geoStatus     = document.getElementById('geo-status') as HTMLElement;
+const loadingState  = document.getElementById('loading-state') as HTMLElement;
+const emptyState    = document.getElementById('empty-state') as HTMLElement;
+const resultsGrid   = document.getElementById('results-grid') as HTMLElement;
+const resultsHeader = document.getElementById('results-header') as HTMLElement;
+const resultsCount  = document.getElementById('results-count') as HTMLElement;
+
+// ─── Fetch ────────────────────────────────────────────────────────────────────
+async function fetchListings() {
+    const { data, error } = await browserSupabase
+        .from('listings')
+        .select('*')
+        .eq('status', 'Published');
+    if (error) {
+        console.error('Supabase error:', error.message);
+        return [];
+    }
+    return data || [];
+}
+
+// ─── Haversine distance (metres) ─────────────────────────────────────────────
+function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number) {
+    const R = 6371000;
+    const toRad = (d: number) => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2
+        + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ─── Filters ─────────────────────────────────────────────────────────────────
+function matchesQuery(listing: any, query: string) {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    const fields = [
+        listing.name,
+        listing.category,
+        listing.category_slug,
+        listing.area_slug,
+        listing.city_slug,
+        listing.address,
+        listing.description,
+        listing.google_summary,
+    ];
+    // Check plain string fields
+    if (fields.some(f => f && f.toLowerCase().includes(q))) return true;
+    // Check tags array
+    if (Array.isArray(listing.tags)) {
+        if (listing.tags.some((t: any) => {
+            const tagStr = typeof t === 'string' ? t : (t?.label || t?.name || JSON.stringify(t));
+            return tagStr.toLowerCase().includes(q);
+        })) return true;
+    }
+    return false;
+}
+
+function matchesOpenNow(listing: any) {
+    const result = isCurrentlyOpen(listing.opening_hours);
+    // null means hours exist but couldn't be parsed — include to avoid false negatives
+    if (result === null) return true;
+    return result.isOpen;
+}
+
+function matchesNearMe(listing: any) {
+    if (userLat === null || userLng === null) return false;
+    if (!listing.latitude || !listing.longitude) return false;
+    return haversineMetres(userLat, userLng, listing.latitude, listing.longitude) <= 800;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function formatDistance(listing: any) {
+    if (userLat === null || userLng === null || !listing.latitude) return '';
+    const m = haversineMetres(userLat, userLng, listing.latitude, listing.longitude);
+    return m < 1000
+        ? `<span class="distance-badge">${Math.round(m)} m away</span>`
+        : `<span class="distance-badge">${(m / 1000).toFixed(1)} km away</span>`;
+}
+
+function renderCard(listing: any) {
+    const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
+    const imgUrl = listing.illustration_url
+        || listing.image_url
+        || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
+    const tier = RANKING_TIERS[listing.ranking_tier as keyof typeof RANKING_TIERS] || RANKING_TIERS.standard;
+
+    const tierBadge = tier.label
+        ? (() => {
+            const cls = listing.ranking_tier === 'editors_choice' ? 'editors'
+                : listing.ranking_tier === 'recommended' ? 'recommended' : 'google';
+            return `<span class="tag tag--tier-${cls}">${tier.icon} ${tier.label}</span>`;
+        })()
+        : '';
+
+    const area = listing.area_slug?.replace(/-/g, ' ') || '';
+    const rating = listing.google_rating
+        ? `★ ${listing.google_rating} (${listing.google_review_count || 0} reviews)`
+        : 'New to directory';
+
+    return `
+<div class="card">
+    <a href="${href}">
+        <img src="${imgUrl}" alt="${escHtml(listing.name)}" class="card__image" loading="lazy">
+        <div class="card__body">
+            <div class="card__meta">
+                <span class="tag tag--category">${escHtml(listing.category || 'Local Business')}</span>
+                ${tierBadge}
+                <span class="tag tag--location" style="text-transform:capitalize;">📍 ${escHtml(area)}</span>
+                ${formatDistance(listing)}
+            </div>
+            <h3 class="card__title">${escHtml(listing.name)}</h3>
+            <p class="card__subtitle">${escHtml(rating)}</p>
+            <p class="card__excerpt">${escHtml(truncate(listing.description))}</p>
+        </div>
+    </a>
+</div>`;
+}
+
+function escHtml(str: any) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── Run search ───────────────────────────────────────────────────────────────
+function runSearch() {
+    const query = searchInput.value.trim();
+
+    let results = allListings.filter(l => {
+        if (!matchesQuery(l, query)) return false;
+        if (filterOpenNow && !matchesOpenNow(l)) return false;
+        if (filterNearMe && !matchesNearMe(l)) return false;
+        return true;
+    });
+
+    results = sortByTier(results);
+
+    if (results.length === 0) {
+        resultsGrid.hidden = true;
+        resultsHeader.hidden = true;
+        emptyState.hidden = false;
+    } else {
+        emptyState.hidden = true;
+        resultsHeader.hidden = false;
+        resultsCount.textContent = `${results.length} result${results.length === 1 ? '' : 's'}${query ? ` for "${query}"` : ''}`;
+        resultsGrid.innerHTML = results.map(renderCard).join('');
+        resultsGrid.hidden = false;
+    }
+
+    updateUrl(query);
+}
+
+// ─── URL state ────────────────────────────────────────────────────────────────
+function updateUrl(query: string) {
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    if (filterOpenNow) params.set('openNow', '1');
+    const qs = params.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+}
+
+function restoreFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || '';
+    if (q) searchInput.value = q;
+    if (params.get('openNow') === '1') {
+        filterOpenNow = true;
+        openNowBtn.setAttribute('aria-pressed', 'true');
+        openNowBtn.classList.add('filter-pill--active');
+    }
+}
+
+// ─── Event listeners ─────────────────────────────────────────────────────────
+searchBtn.addEventListener('click', runSearch);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+searchInput.addEventListener('input', runSearch);
+
+openNowBtn.addEventListener('click', () => {
+    filterOpenNow = !filterOpenNow;
+    openNowBtn.setAttribute('aria-pressed', String(filterOpenNow));
+    openNowBtn.classList.toggle('filter-pill--active', filterOpenNow);
+    runSearch();
+});
+
+nearMeBtn.addEventListener('click', () => {
+    if (filterNearMe) {
+        // Turn off
+        filterNearMe = false;
+        nearMeBtn.setAttribute('aria-pressed', 'false');
+        nearMeBtn.classList.remove('filter-pill--active');
+        geoStatus.hidden = true;
+        runSearch();
+        return;
+    }
+
+    if (!('geolocation' in navigator)) {
+        geoStatus.textContent = 'Geolocation not supported by your browser.';
+        geoStatus.hidden = false;
+        return;
+    }
+
+    geoStatus.textContent = 'Locating you…';
+    geoStatus.hidden = false;
+    nearMeBtn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+            filterNearMe = true;
+            nearMeBtn.setAttribute('aria-pressed', 'true');
+            nearMeBtn.classList.add('filter-pill--active');
+            nearMeBtn.disabled = false;
+            geoStatus.hidden = true;
+            runSearch();
+        },
+        err => {
+            nearMeBtn.disabled = false;
+            geoStatus.textContent = err.code === 1
+                ? 'Location permission denied. Please allow access in your browser.'
+                : 'Could not get your location. Please try again.';
+            geoStatus.hidden = false;
+        },
+        { timeout: 10000, maximumAge: 60000 }
+    );
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+restoreFromUrl();
+
+fetchListings().then(data => {
+    allListings = data;
+    loadingState.hidden = true;
+    runSearch();
+});
+</script>
+
+<style>
+/* Ensure [hidden] always wins over display:flex on search-state elements */
+[hidden] { display: none !important; }
+
+.search-page-header {
+    background: var(--taupe);
+    color: var(--parchment);
+    padding: var(--space-3xl) 0 var(--space-2xl);
+}
+.search-page-header h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    margin-bottom: var(--space-xl);
+    color: var(--parchment);
+}
+.search-bar--page {
+    max-width: 700px;
+    margin-top: 0;
+}
+.search-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-top: var(--space-lg);
+}
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    background: transparent;
+    color: var(--parchment);
+    font-size: 0.9rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.filter-pill:hover {
+    border-color: var(--powder-blush);
+    background: rgba(255,255,255,0.08);
+}
+.filter-pill--active {
+    background: var(--powder-blush);
+    border-color: var(--powder-blush);
+    color: var(--taupe);
+    font-weight: 600;
+}
+.filter-pill:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+.filter-pill__sub {
+    font-size: 0.8em;
+    opacity: 0.75;
+}
+.geo-status {
+    font-size: 0.85rem;
+    color: var(--blush-light);
+    padding: 0.25rem 0;
+}
+.search-results-header {
+    margin-bottom: var(--space-xl);
+}
+.search-results-count {
+    font-size: 0.95rem;
+    color: var(--grey-olive);
+}
+.search-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-4xl) 0;
+    color: var(--grey-olive);
+    text-align: center;
+}
+.search-state__icon {
+    font-size: 2.5rem;
+}
+.search-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--silver);
+    border-top-color: var(--taupe);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.distance-badge {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid #bae6fd;
+}
+</style>
