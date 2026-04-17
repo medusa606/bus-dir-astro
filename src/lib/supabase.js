@@ -16,3 +16,15 @@ export function getIllustrationUrl(fileName) {
         .getPublicUrl(fileName);
     return data?.publicUrl || null;
 }
+
+/**
+ * Get the public URL for a file in the area-heroes storage bucket.
+ * @param {string} fileName - e.g. 'bristol-easton.jpg'
+ * @returns {string} Public URL
+ */
+export function getAreaHeroUrl(fileName) {
+    const { data } = supabase.storage
+        .from('area-heroes')
+        .getPublicUrl(fileName);
+    return data?.publicUrl || null;
+}
