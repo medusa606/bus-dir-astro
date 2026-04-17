@@ -151,8 +151,7 @@ function formatDistance(listing: any) {
 
 function renderCard(listing: any) {
     const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
-    const imgUrl = listing.illustration_url
-        || listing.image_url
+    const imgUrl = listing.image_url
         || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
     const tier = RANKING_TIERS[listing.ranking_tier as keyof typeof RANKING_TIERS] || RANKING_TIERS.standard;
 
