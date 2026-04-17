@@ -184,15 +184,15 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         <div class="listing-header__inner">
             <div class="listing-header__info">
                 <div class="tags" style="margin-bottom: var(--space-sm);">
-                    <span class="tag tag--category">{listing.category || 'Local Business'}</span>
+                    <a href={`/${listing.city_slug}/${listing.category_slug}`} class="tag tag--category tag--link">{listing.category || 'Local Business'}</a>
                     {tier && tier.label && (
-                        <span class={`tag tag--tier-${listing.ranking_tier === 'editors_choice' ? 'editors' : listing.ranking_tier === 'recommended' ? 'recommended' : 'google'}`}>
+                        <a href={`/${listing.city_slug}#${tier.anchorSlug}`} class={`tag tag--tier-${listing.ranking_tier === 'editors_choice' ? 'editors' : listing.ranking_tier === 'recommended' ? 'recommended' : 'google'} tag--link`}>
                             {tier.icon} {tier.label}
-                        </span>
+                        </a>
                     )}
-                    <span class="tag tag--location" style="text-transform: capitalize;">
+                    <a href={`/${listing.city_slug}/${listing.area_slug}`} class="tag tag--location tag--link" style="text-transform: capitalize;">
                         📍 {listing.area_slug?.replace(/-/g, ' ')}, {cityTitle}
-                    </span>
+                    </a>
                 </div>
                 <h1>{listing.name}</h1>
                 <p class="subtitle">{listing.description?.substring(0, 100) || 'Independent local business'}...</p>

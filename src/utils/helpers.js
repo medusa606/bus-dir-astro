@@ -1,23 +1,37 @@
 export function getEmoji(catKey) {
     const map = {
         "restaurants-cafes": "🍕",
+        "restaurants-and-cafes": "🍕",
         "food-produce": "🍎",
+        "food-and-produce": "🍎",
         "drinks-brewing": "🍺",
+        "drinks-and-brewing": "🍺",
         "craft-makers": "🎨",
+        "craft-and-makers": "🎨",
         "home-interiors": "🏠",
+        "home-and-interiors": "🏠",
         "health-wellbeing": "🧘",
+        "health-and-wellbeing": "🧘",
         "hair-beauty": "💇",
+        "hair-and-beauty": "💇",
         "building-trades": "🔧",
+        "building-and-trades": "🔧",
         "tech-digital": "💻",
+        "tech-and-digital": "💻",
         "cafes": "☕",
         "pubs-bars": "🍺",
+        "pubs-and-bars": "🍺",
         "shops": "🛍️",
         "gyms-fitness": "🏋️",
+        "gyms-and-fitness": "🏋️",
         "pet-services": "🐾",
+        "pet-and-services": "🐾",
         "education": "📚",
         "legal": "⚖️",
         "automotive": "🚗",
-        "events": "🎉"
+        "events": "🎉",
+        "plants-garden": "🌱",
+        "plants-and-garden": "🌱",
     };
     return map[catKey] || "📍";
 }
@@ -45,6 +59,7 @@ export const RANKING_TIERS = {
         color: '#7C3AED',
         bgColor: '#F5F3FF',
         borderColor: '#7C3AED',
+        anchorSlug: 'editors-choice',
         description: 'Hand-picked by our editorial team'
     },
     recommended: {
@@ -53,6 +68,7 @@ export const RANKING_TIERS = {
         color: '#D97706',
         bgColor: '#FFFBEB',
         borderColor: '#F59E0B',
+        anchorSlug: 'recommended',
         description: 'Verified and trusted businesses'
     },
     google_ranked: {
@@ -61,6 +77,7 @@ export const RANKING_TIERS = {
         color: '#059669',
         bgColor: '#F0FDF4',
         borderColor: '#10B981',
+        anchorSlug: 'google-ranked',
         description: 'Highest rated on Google'
     },
     standard: {
@@ -69,6 +86,7 @@ export const RANKING_TIERS = {
         color: null,
         bgColor: null,
         borderColor: '#E5E7EB',
+        anchorSlug: null,
         description: null
     }
 };

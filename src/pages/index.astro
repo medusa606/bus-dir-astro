@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ListingCard from '../components/ListingCard.astro';
 import TieredListings from '../components/TieredListings.astro';
 import { supabase } from '../lib/supabase.js';
-import { slugToTitle, getEmoji, sortByTier } from '../utils/helpers.js';
+import { slugToTitle, getEmoji, sortByTier, groupByTier } from '../utils/helpers.js';
 
 const { data: allListings } = await supabase
     .from('listings')
@@ -18,6 +18,8 @@ allListings?.forEach(l => { if (l.category_slug) categoryCounts[l.category_slug]
 
 const totalListings = allListings?.length || 0;
 const firstCity = Object.keys(cityCounts)[0];
+const allGroups = groupByTier(allListings || []);
+const standardListings = (allGroups.standard || []).slice(0, 18);
 ---
 
 <BaseLayout>
@@ -57,9 +59,52 @@ const firstCity = Object.keys(cityCounts)[0];
             {firstCity && <a href={`/${firstCity}`} class="btn btn--ghost">View all →</a>}
         </div>
 
-        <TieredListings listings={allListings} />
+        <TieredListings listings={allListings} excludeTiers={['standard']} />
     </div>
 </section>
+
+<!-- Categories -->
+<section class="section" id="categories" style="background: var(--white);">
+    <div class="container">
+        <div class="section-header section-header--center">
+            <h2>Browse by category</h2>
+            <div class="divider divider--center"></div>
+            <p>Find the right person for what you need — every listing is here because they deserve to be.</p>
+        </div>
+        <div class="category-grid">
+            {Object.entries(categoryCounts).map(([cat, count]) => (
+                <a href={firstCity ? `/${firstCity}/${cat}` : '#'} class="category-card">
+                    <div class="category-card__icon">{getEmoji(cat)}</div>
+                    <div class="category-card__text">
+                        <h4>{slugToTitle(cat)}</h4>
+                        <p>{count} {count === 1 ? 'person' : 'people'} listed</p>
+                    </div>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+
+<!-- Standard listings (capped at 18) -->
+{standardListings.length > 0 && (
+<section class="section">
+    <div class="container">
+        <div class="section-header flex-between">
+            <div>
+                <h2>More from the community</h2>
+                <div class="divider"></div>
+                <p>More independent people doing great work near you.</p>
+            </div>
+            {firstCity && <a href={`/${firstCity}`} class="btn btn--ghost">View all →</a>}
+        </div>
+        <div class="browse-grid">
+            {standardListings.map(item => (
+                <ListingCard listing={item} />
+            ))}
+        </div>
+    </div>
+</section>
+)}
 
 <!-- Browse by City -->
 <section class="section" style="background: var(--white);">
@@ -74,28 +119,6 @@ const firstCity = Object.keys(cityCounts)[0];
                 <a href={`/${city}`} class="area-card">
                     <div>
                         <h3 style="text-transform: capitalize;">📍 {city.replace(/-/g, ' ')}</h3>
-                        <p>{count} {count === 1 ? 'person' : 'people'} listed</p>
-                    </div>
-                </a>
-            ))}
-        </div>
-    </div>
-</section>
-
-<!-- Categories -->
-<section class="section" id="categories">
-    <div class="container">
-        <div class="section-header section-header--center">
-            <h2>Browse by category</h2>
-            <div class="divider divider--center"></div>
-            <p>Find the right person for what you need — every listing is here because they deserve to be.</p>
-        </div>
-        <div class="category-grid">
-            {Object.entries(categoryCounts).map(([cat, count]) => (
-                <a href={firstCity ? `/${firstCity}/${cat}` : '#'} class="category-card">
-                    <div class="category-card__icon">{getEmoji(cat)}</div>
-                    <div class="category-card__text">
-                        <h4>{slugToTitle(cat)}</h4>
                         <p>{count} {count === 1 ? 'person' : 'people'} listed</p>
                     </div>
                 </a>

@@ -2,9 +2,10 @@
 import ListingCard from './ListingCard.astro';
 import { groupByTier, RANKING_TIERS } from '../utils/helpers.js';
 
-const { listings } = Astro.props;
+const { listings, excludeTiers = [] } = Astro.props;
 const groups = groupByTier(listings || []);
-const tierOrder = ['editors_choice', 'recommended', 'google_ranked', 'standard'];
+const allTierOrder = ['editors_choice', 'recommended', 'google_ranked', 'standard'];
+const tierOrder = allTierOrder.filter(t => !excludeTiers.includes(t));
 
 const tierCssMap = {
     editors_choice: 'editors',
@@ -20,8 +21,10 @@ const tierCssMap = {
     const tier = RANKING_TIERS[tierKey];
     const cssKey = tierCssMap[tierKey];
 
+    const anchorId = tier.anchorSlug || tierKey;
+
     return (
-        <div style="margin-bottom: var(--space-2xl);">
+        <div id={anchorId} style="margin-bottom: var(--space-2xl);">
             {tier.label ? (
                 <div class={`tier-header tier-header--${cssKey}`}>
                     <span class="tier-header__icon">{tier.icon}</span>
@@ -29,9 +32,7 @@ const tierCssMap = {
                         <h3>{tier.label}</h3>
                         <p>{tier.description}</p>
                     </div>
-                    <span class="tier-header__count">
-                        {items.length} {items.length === 1 ? 'listing' : 'listings'}
-                    </span>
+                    <span class="tier-header__count">{`${items.length} ${items.length === 1 ? 'listing' : 'listings'}`}</span>
                 </div>
             ) : (
                 <div class="tier-header tier-header--standard">
