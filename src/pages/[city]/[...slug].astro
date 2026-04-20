@@ -7,13 +7,25 @@ import SocialLinks from '../../components/SocialLinks.astro';
 import SocialFeed from '../../components/SocialFeed.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
-import { slugToTitle, getEmoji, RANKING_TIERS } from '../../utils/helpers.js';
+import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
 
 export async function getStaticPaths() {
-    const { data: listings } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('status', 'Published');
+    // Paginate to fetch all listings past Supabase's 1000-row default limit
+    const PAGE_SIZE = 1000;
+    let allListings: any[] = [];
+    let from = 0;
+    while (true) {
+        const { data } = await supabase
+            .from('listings')
+            .select('*')
+            .or('status.not.in.(closed,unverified),status.is.null')
+            .range(from, from + PAGE_SIZE - 1);
+        if (!data || data.length === 0) break;
+        allListings = allListings.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+    }
+    const listings = allListings;
 
     if (!listings) return [];
 
@@ -87,14 +99,14 @@ if (type === 'city-category') {
     pageTitle = `${catTitle} in ${cityTitle}`;
     pageDescription = `Find the best ${catTitle.toLowerCase()} in ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: catTitle }];
-    const { data } = await supabase.from('listings').select('*').eq('status', 'Published').eq('city_slug', citySlug).eq('category_slug', categorySlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug);
     listings = data || [];
 
 } else if (type === 'area') {
     pageTitle = `People in ${areaTitle}, ${cityTitle}`;
     pageDescription = `Discover independent makers and traders in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle }];
-    const { data } = await supabase.from('listings').select('*').eq('status', 'Published').eq('city_slug', citySlug).eq('area_slug', areaSlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug);
     listings = data || [];
     const { data: areaData } = await supabase
         .from('areas')
@@ -110,7 +122,7 @@ if (type === 'city-category') {
     pageTitle = `${catTitle} in ${areaTitle}, ${cityTitle}`;
     pageDescription = `Find ${catTitle.toLowerCase()} in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle, href: `/${citySlug}/${areaSlug}` }, { label: catTitle }];
-    const { data } = await supabase.from('listings').select('*').eq('status', 'Published').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug);
     listings = data || [];
 
 } else if (type === 'listing' && listing) {
@@ -141,7 +153,7 @@ const illustrationUrl = listing
     ? (listing.illustration_url || LOCAL_ILLUSTRATIONS[listing.business_slug] || null)
     : null;
 const heroImage = listing
-    ? (illustrationUrl || listing.image_url || 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=1400&q=80')
+    ? (illustrationUrl || listing.image_url || '/placeholders/default.svg')
     : null;
 const foundersImage = listing
     ? (listing.founders_image || LOCAL_FOUNDERS_IMAGES[listing.business_slug] || null)
@@ -279,10 +291,12 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         <div class="listing-main">
 
             <!-- About -->
+            {listing.description && (
             <div class="listing-section listing-section--about">
                 <h2>About {listing.name}</h2>
-                <p>{listing.description || 'No description available.'}</p>
+                <p>{listing.description}</p>
             </div>
+            )}
 
             <!-- Services Section -->
             {listing.services_offered && listing.services_offered.length > 0 && (
@@ -477,7 +491,7 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
             {type === 'area' && (
                 <div class="browse-filters" style="margin-bottom: var(--space-2xl);">
-                    {[...new Set(listings.map(l => l.category_slug).filter(Boolean))].map(cat => (
+                    {[...new Set(listings.map(l => normaliseCategory(l.category_slug)).filter(Boolean))].sort().map(cat => (
                         <a href={`/${citySlug}/${areaSlug}/${cat}`} class="filter-btn">
                             {getEmoji(cat)} {slugToTitle(cat)}
                         </a>
@@ -487,7 +501,7 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
             {type === 'city-category' && (
                 <div class="browse-filters" style="margin-bottom: var(--space-2xl);">
-                    {[...new Set(listings.map(l => l.area_slug).filter(Boolean))].map(area => (
+                    {[...new Set(listings.map(l => l.area_slug).filter(Boolean))].sort().map(area => (
                         <a href={`/${citySlug}/${area}/${categorySlug}`} class="filter-btn" style="text-transform: capitalize;">
                             📍 {area.replace(/-/g, ' ')}
                         </a>

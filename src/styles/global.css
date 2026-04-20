@@ -274,6 +274,14 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 .area-card:hover { border-color: var(--powder-blush); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .area-card h3 { font-size: 1.1rem; margin-bottom: 2px; }
 .area-card p { font-size: 0.85rem; color: var(--grey-olive); }
+.area-card--sm { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); }
+.area-card--sm div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); width: 100%; }
+.area-card--sm span { font-size: 0.85rem; color: var(--taupe); text-transform: capitalize; }
+.area-card--sm .area-card--sm__count { font-size: 0.75rem; color: var(--silver); background: var(--parchment); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.area-pills { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
+.area-pill { display: inline-flex; align-items: center; gap: var(--space-xs); padding: 6px 14px; background: var(--white); border: 1.5px solid transparent; border-radius: 999px; font-size: 0.85rem; color: var(--taupe); text-decoration: none; transition: var(--transition); }
+.area-pill:hover { border-color: var(--powder-blush); color: var(--grey-olive); }
+.area-pill__count { font-size: 0.75rem; color: var(--silver); background: var(--parchment); border-radius: 999px; padding: 1px 7px; }
 
 /* ========================================
    BROWSE / LISTINGS GRID

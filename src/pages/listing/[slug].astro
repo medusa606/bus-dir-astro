@@ -19,7 +19,7 @@ export async function getStaticPaths() {
     const { data: listings, error } = await supabase
         .from('listings')
         .select('business_slug, city_slug')
-        .eq('status', 'Published')
+        .or('status.not.in.(closed,unverified),status.is.null')
         .not('business_slug', 'is', null);
     
     if (error) {

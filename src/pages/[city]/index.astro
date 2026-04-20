@@ -3,13 +3,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import TieredListings from '../../components/TieredListings.astro';
 import { supabase } from '../../lib/supabase.js';
-import { slugToTitle, getEmoji } from '../../utils/helpers.js';
+import { slugToTitle, getEmoji, normaliseCategory } from '../../utils/helpers.js';
 
 export async function getStaticPaths() {
     const { data } = await supabase
         .from('listings')
         .select('city_slug')
-        .eq('status', 'Published');
+        .or('status.not.in.(closed,unverified),status.is.null');
     const cities = [...new Set(data?.map(l => l.city_slug).filter(Boolean))];
     return cities.map(city => ({ params: { city } }));
 }
@@ -20,16 +20,24 @@ const cityTitle = slugToTitle(city);
 const { data: listings } = await supabase
     .from('listings')
     .select('*')
-    .eq('status', 'Published')
-    .eq('city_slug', city);
+    .eq('city_slug', city)
+    .or('status.not.in.(closed,unverified),status.is.null');
 
-const areaCounts = {};
+const areaCounts: Record<string, number> = {};
 listings?.forEach(l => { if (l.area_slug) areaCounts[l.area_slug] = (areaCounts[l.area_slug] || 0) + 1; });
 
-const categoryCounts = {};
-listings?.forEach(l => { if (l.category_slug) categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1; });
+const categoryCounts: Record<string, number> = {};
+listings?.forEach(l => {
+    const cat = normaliseCategory(l.category_slug);
+    if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+});
 
-const sortedAreas = Object.entries(areaCounts).sort((a, b) => a[0].localeCompare(b[0]));
+// Top 10 areas by listing count, rest alphabetically
+const allAreaEntries = Object.entries(areaCounts) as [string, number][];
+const topAreas = [...allAreaEntries].sort((a, b) => b[1] - a[1]).slice(0, 10);
+const topAreaSlugs = new Set(topAreas.map(([a]) => a));
+const moreAreas = allAreaEntries.filter(([a]) => !topAreaSlugs.has(a)).sort((a, b) => a[0].localeCompare(b[0]));
+
 const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].localeCompare(b[0]));
 ---
 
@@ -56,7 +64,7 @@ const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].loca
             <p>Select a neighbourhood to see what's nearby.</p>
         </div>
         <div class="areas-grid">
-            {sortedAreas.map(([area, count]) => (
+            {topAreas.map(([area, count]) => (
                 <a href={`/${city}/${area}`} class="area-card">
                     <div>
                         <h3 style="text-transform: capitalize;">{area.replace(/-/g, ' ')}</h3>
@@ -65,6 +73,16 @@ const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].loca
                 </a>
             ))}
         </div>
+        {moreAreas.length > 0 && (
+            <div class="area-pills">
+                {moreAreas.map(([area, count]) => (
+                    <a href={`/${city}/${area}`} class="area-pill">
+                        <span style="text-transform: capitalize;">{area.replace(/-/g, ' ')}</span>
+                        <span class="area-pill__count">{count}</span>
+                    </a>
+                ))}
+            </div>
+        )}
     </div>
 </section>
 

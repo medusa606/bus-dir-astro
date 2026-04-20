@@ -1,39 +1,37 @@
+const SLUG_ALIASES = {
+    'health-wellbeing': 'health-and-wellbeing',
+};
+
+export function normaliseCategory(slug) {
+    if (!slug) return slug;
+    return SLUG_ALIASES[slug] || slug;
+}
+
 export function getEmoji(catKey) {
     const map = {
-        "restaurants-cafes": "🍕",
-        "restaurants-and-cafes": "🍕",
-        "food-produce": "🍎",
         "food-and-produce": "🍎",
-        "drinks-brewing": "🍺",
         "drinks-and-brewing": "🍺",
-        "craft-makers": "🎨",
         "craft-and-makers": "🎨",
-        "home-interiors": "🏠",
-        "home-and-interiors": "🏠",
-        "health-wellbeing": "🧘",
         "health-and-wellbeing": "🧘",
-        "hair-beauty": "💇",
+        "fitness-and-sports": "🏋️",
+        "plants-and-garden": "🌱",
+        "services": "🔧",
+        "entertainment": "🎉",
+        "restaurants-and-cafes": "🍕",
+        "home-and-interiors": "🏠",
         "hair-and-beauty": "💇",
-        "building-trades": "🔧",
         "building-and-trades": "🔧",
-        "tech-digital": "💻",
         "tech-and-digital": "💻",
         "cafes": "☕",
-        "pubs-bars": "🍺",
         "pubs-and-bars": "🍺",
         "shops": "🛍️",
-        "gyms-fitness": "🏋️",
-        "gyms-and-fitness": "🏋️",
         "pet-services": "🐾",
-        "pet-and-services": "🐾",
         "education": "📚",
         "legal": "⚖️",
         "automotive": "🚗",
         "events": "🎉",
-        "plants-garden": "🌱",
-        "plants-and-garden": "🌱",
     };
-    return map[catKey] || "📍";
+    return map[normaliseCategory(catKey)] || "📍";
 }
 
 export function renderStars(rating) {
@@ -48,7 +46,7 @@ export function slugToTitle(slug) {
 }
 
 export function truncate(str, len = 120) {
-    if (!str) return 'No description available.';
+    if (!str) return '';
     return str.length > len ? str.substring(0, len) + '...' : str;
 }
 

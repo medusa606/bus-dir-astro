@@ -8,7 +8,7 @@ import { slugToTitle, getEmoji, sortByTier, groupByTier } from '../utils/helpers
 const { data: allListings } = await supabase
     .from('listings')
     .select('*')
-    .eq('status', 'Published');
+    .or('status.not.in.(closed,unverified),status.is.null');
 
 const cityCounts = {};
 allListings?.forEach(l => { if (l.city_slug) cityCounts[l.city_slug] = (cityCounts[l.city_slug] || 0) + 1; });
