@@ -7,3 +7,16 @@ Draw the attached photo in a cell-shaded, hip-magazine illustration style, colou
 --white: #ffffff;
 --blush-light: #f0d5cd;
 --taupe-light: #5a524c;
+
+
+I need a set of drawings done. They should match the attached example done in a cell-shaded, hip-magazine illustration style, coloured to match the colour palette below. Do not add any additional text.
+--taupe: #463f3a;
+--grey-olive: #8a817c;
+--silver: #bcb8b1;
+--parchment: #f4f3ee;
+--powder-blush: #e0afa0;
+--white: #ffffff;4
+--blush-light: #f0d5cd;
+--taupe-light: #5a524c;
+
+I need one for each of the following categories

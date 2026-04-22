@@ -8,6 +8,7 @@ import SocialFeed from '../../components/SocialFeed.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
+import { getCategoryFallbackImage } from '../../utils/categoryImages.js';
 
 export async function getStaticPaths() {
     // Paginate to fetch all listings past Supabase's 1000-row default limit
@@ -153,7 +154,7 @@ const illustrationUrl = listing
     ? (listing.illustration_url || LOCAL_ILLUSTRATIONS[listing.business_slug] || null)
     : null;
 const heroImage = listing
-    ? (illustrationUrl || listing.image_url || '/placeholders/default.svg')
+    ? (illustrationUrl || listing.image_url || getCategoryFallbackImage(listing.category_slug, listing.business_slug) || '/placeholders/default.svg')
     : null;
 const foundersImage = listing
     ? (listing.founders_image || LOCAL_FOUNDERS_IMAGES[listing.business_slug] || null)
@@ -849,23 +850,6 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         width: 100%;
         height: 100%;
         object-fit: cover;
-        /* Extreme cell-shaded/posterized illustration effect */
-        filter: 
-            /* Boost colors and contrast dramatically */
-            contrast(1.8)
-            saturate(1.6)
-            brightness(0.9)
-            hue-rotate(-5deg)
-            /* Add edge detection effect */
-            drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
-        /* Create posterization effect using multiple text-shadows */
-        image-rendering: pixelated;
-    }
-
-    /* When an AI illustration is used, remove all filters — the illustration is already styled */
-    .listing-hero--illustration .listing-hero__cover {
-        filter: none;
-        image-rendering: auto;
     }
 
     .listing-hero__overlay {

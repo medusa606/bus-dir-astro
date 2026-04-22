@@ -1,0 +1,10 @@
+health-and-wellbeing 893
+restaurants-and-cafes 839
+food-and-produce 826
+drinks-and-brewing 448
+home-and-interiors 150
+craft-and-makers 79
+services 70
+entertainment 55
+art-and-design 37
+
