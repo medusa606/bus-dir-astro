@@ -97,9 +97,12 @@ const LOCAL_ILLUSTRATIONS = {
 import { getTagBasedImage } from '../../utils/categoryImages.js';
 
 // Map Supabase fields to template structure
-const illustrationUrl = dbBusiness.illustration_url
-    || LOCAL_ILLUSTRATIONS[dbBusiness.business_slug]
-    || null;
+// illustration_url is only used as the hero when the illustration is complete.
+// All other statuses (pending, queued, generating, failed, null) fall through
+// to the tag-based or manual-override image.
+const illustrationUrl = (dbBusiness.illustration_status === 'completed' && dbBusiness.illustration_url)
+    ? dbBusiness.illustration_url
+    : LOCAL_ILLUSTRATIONS[dbBusiness.business_slug] || null;
 
 const tagBasedImage = getTagBasedImage(
     dbBusiness.tags,

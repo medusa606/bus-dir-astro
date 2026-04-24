@@ -15,6 +15,8 @@ import { normaliseCategory } from './helpers.js';
  */
 export const TAG_TO_IMAGE_RULES = [
     // ── Health & Wellbeing ────────────────────────────────────────────────
+    { tags: ['dentist', 'dental'],                                                     prefix: 'health-and-wellbeing/dentist' },
+    { tags: ['pharmacy', 'chemist', 'dispensary'],                                     prefix: 'health-and-wellbeing/pharmacy' },
     { tags: ['yoga', 'pilates', 'meditation', 'wellness'],                              prefix: 'health-and-wellbeing/yoga' },
     { tags: ['nail_salon', 'nails', 'manicure', 'pedicure'],                           prefix: 'health-and-wellbeing/nail-salon' },
     { tags: ['barbershop', 'barber'],                                                   prefix: 'health-and-wellbeing/barbershop' },
@@ -23,13 +25,16 @@ export const TAG_TO_IMAGE_RULES = [
     // ── Food & Produce ────────────────────────────────────────────────────
     { tags: ['cheesemonger', 'cheese'],                                                 prefix: 'food-and-produce/cheesemonger' },
     { tags: ['deli', 'delicatessen'],                                                   prefix: 'food-and-produce/deli' },
+    { tags: ['sweet_shop', 'sweets', 'confectionery', 'candy'],                        prefix: 'food-and-produce/sweet-shop' },
     { tags: ['bakery', 'cake', 'donut', 'flapjacks'],                                  prefix: 'food-and-produce/bakery' },
     { tags: ['supermarket'],                                                            prefix: 'food-and-produce/supermarket' },
+    { tags: ['greengrocer', 'produce', 'veg', 'vegetables', 'fruit'],                  prefix: 'food-and-produce/greengrocer' },
     { tags: ['corner_shop', 'convenience_store'],                                       prefix: 'food-and-produce/corner-shop' },
 
     // ── Drinks & Brewing ──────────────────────────────────────────────────
     { tags: ['wine_bar', 'wine', 'cocktail_bar', 'cellar'],                            prefix: 'drinks-and-brewing/wine-bar' },
-    { tags: ['pub', 'bar', 'tavern', 'brewery', 'taproom'],                            prefix: 'drinks-and-brewing/pub' },
+    { tags: ['brewery', 'microbrewery'],                                               prefix: 'drinks-and-brewing/brewery' },
+    { tags: ['pub', 'bar', 'tavern', 'taproom'],                                       prefix: 'drinks-and-brewing/pub' },
 
     // ── Cafes ─────────────────────────────────────────────────────────────
     { tags: ['cafe', 'coffee_shop', 'coffee', 'tea', 'bubble_tea', 'brunch', 'juice'], prefix: 'cafes/cafe' },
@@ -44,7 +49,8 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['gym', 'fitness', 'crossfit', 'personal_trainer'],                        prefix: 'fitness-and-sports/fitness-studio' },
 
     // ── Entertainment ─────────────────────────────────────────────────────
-    { tags: ['theatre', 'theater', 'cinema'],                                          prefix: 'entertainment/theater' },
+    { tags: ['cinema'],                                                                prefix: 'entertainment/cinema' },
+    { tags: ['theatre', 'theater'],                                                    prefix: 'entertainment/theater' },
     { tags: ['live_music', 'music_venue'],                                              prefix: 'entertainment/live-music' },
     { tags: ['nightclub', 'club'],                                                     prefix: 'entertainment/nightclub' },
 
@@ -53,6 +59,8 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['garden_centre', 'nursery', 'garden'],                                    prefix: 'plants-and-garden/garden-centre' },
 
     // ── Services ──────────────────────────────────────────────────────────
+    { tags: ['shoe_shop', 'shoes', 'footwear', 'cobbler'],                             prefix: 'services/shoe-shop' },
+    { tags: ['charity_shop', 'charity', 'thrift'],                                     prefix: 'services/charity-shop' },
     { tags: ['dry_cleaning'],                                                           prefix: 'services/dry-cleaning' },
     { tags: ['tailor', 'alterations'],                                                 prefix: 'services/tailors' },
     { tags: ['launderette', 'laundromat', 'laundrette'],                               prefix: 'services/launderette' },
@@ -62,10 +70,16 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['weaving', 'textiles', 'knitting', 'sewing'],                             prefix: 'craft-and-makers/weaver' },
 
     // ── Art & Design ──────────────────────────────────────────────────────
+    { tags: ['photography', 'photographer', 'photography_studio'],                     prefix: 'art-and-design/photography-studio' },
     { tags: ['arts_centre', 'gallery', 'studio'],                                      prefix: 'art-and-design/gallery' },
     { tags: ['painter', 'artist'],                                                     prefix: 'art-and-design/painter' },
 
     // ── Home & Interiors ──────────────────────────────────────────────────
+    { tags: ['antiques', 'vintage', 'secondhand'],                                     prefix: 'home-and-interiors/antiques' },
+    { tags: ['carpet', 'carpet_shop', 'rugs', 'flooring'],                             prefix: 'home-and-interiors/carpet-shop' },
+    { tags: ['lighting', 'lighting_shop', 'lamps'],                                    prefix: 'home-and-interiors/lighting-shop' },
+    { tags: ['paint_supplies', 'paint_shop', 'decorating'],                            prefix: 'home-and-interiors/paint-supplies' },
+    { tags: ['tile_shop', 'tiles', 'tiling'],                                          prefix: 'home-and-interiors/tile-shop' },
     { tags: ['interiors', 'furniture', 'home_goods', 'homeware'],                      prefix: 'home-and-interiors/home' },
 ];
 
