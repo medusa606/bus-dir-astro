@@ -1,5 +1,6 @@
 ---
 import SocialIcon from './SocialIcon.astro';
+import { normalizeSocialUrl } from '../utils/helpers.js';
 
 const { listing, small = false } = Astro.props;
 
@@ -19,7 +20,7 @@ const iconSize = small ? 14 : 18;
     <div class={`social-links ${small ? 'social-links--sm' : ''}`}>
         {socials.map(s => (
             <a
-                href={listing[s.key]}
+                href={normalizeSocialUrl(s.platform, listing[s.key])}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="social-link"

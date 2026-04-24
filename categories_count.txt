@@ -17,21 +17,12 @@ WHERE (address IS NULL OR TRIM(address) = '')
   
   309
 
-carpet shop
-paint supplies
-lighting shop
-tile shop
-antiques and brocante
-charity shop
-sofa shop
+
+
+
+
 landscaping
-shoe shop
-gig venue
-jazz club
-cinema
 off licence
-brewery
-seet shop
 
 remove 'new to meridian'
 fill in details for the footer
@@ -41,4 +32,10 @@ Some of the tags are irrelevant or a business falls between or is composed of tw
 
 Some listing tags are just wrong. For example Schuh is a high street shoe shop but on our db it is listed under service category. http://localhost:4321/bristol/city-centre/schuh for this listing it isn't clear from the name that it is a show store but reading the website https://www.schuh.co.uk/stores/bristol-cabot-circus/ might give a better idea of the category or confirm what already exists in the db.
 
+socials scraping - use backup-02.csv
 
+best xxx in xxx landing pages
+
+seo strategy
+
+open claw or hermes agent

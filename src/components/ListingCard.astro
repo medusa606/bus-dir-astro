@@ -1,7 +1,7 @@
 ---
 import StarRating from './StarRating.astro';
 import SocialIcon from './SocialIcon.astro';
-import { getEmoji, truncate, RANKING_TIERS } from '../utils/helpers.js';
+import { getEmoji, truncate, RANKING_TIERS, normalizeSocialUrl } from '../utils/helpers.js';
 import { getTagBasedImage } from '../utils/categoryImages.js';
 
 const { listing } = Astro.props;
@@ -49,7 +49,7 @@ const socials = [
         <div style="padding: 0 var(--space-lg) var(--space-md);">
             <div class="social-links social-links--sm">
                 {socials.map(s => (
-                    <a href={listing[s.key]} target="_blank" rel="noopener noreferrer" class="social-link" title={s.label}>
+                    <a href={normalizeSocialUrl(s.platform, listing[s.key])} target="_blank" rel="noopener noreferrer" class="social-link" title={s.label}>
                         <SocialIcon platform={s.platform} size={14} />
                     </a>
                 ))}

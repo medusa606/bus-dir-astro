@@ -57,6 +57,7 @@ export const TAG_TO_IMAGE_RULES = [
     // ── Plants & Garden ───────────────────────────────────────────────────
     { tags: ['florist', 'flowers', 'floristry'],                                       prefix: 'plants-and-garden/florist' },
     { tags: ['garden_centre', 'nursery', 'garden'],                                    prefix: 'plants-and-garden/garden-centre' },
+    { tags: ['landscaping', 'landscaper', 'groundskeeper', 'lawn'],                   prefix: 'plants-and-garden/landscaping' },
 
     // ── Services ──────────────────────────────────────────────────────────
     { tags: ['shoe_shop', 'shoes', 'footwear', 'cobbler'],                             prefix: 'services/shoe-shop' },
@@ -80,6 +81,7 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['lighting', 'lighting_shop', 'lamps'],                                    prefix: 'home-and-interiors/lighting-shop' },
     { tags: ['paint_supplies', 'paint_shop', 'decorating'],                            prefix: 'home-and-interiors/paint-supplies' },
     { tags: ['tile_shop', 'tiles', 'tiling'],                                          prefix: 'home-and-interiors/tile-shop' },
+    { tags: ['sofa', 'sofa_shop', 'sofas', 'couch'],                                   prefix: 'home-and-interiors/sofa-shop' },
     { tags: ['interiors', 'furniture', 'home_goods', 'homeware'],                      prefix: 'home-and-interiors/home' },
 ];
 

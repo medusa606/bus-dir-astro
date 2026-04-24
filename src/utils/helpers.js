@@ -52,6 +52,27 @@ export function truncate(str, len = 120) {
     return str.length > len ? str.substring(0, len) + '...' : str;
 }
 
+const SOCIAL_BASE_URLS = {
+    instagram: 'https://www.instagram.com/',
+    facebook:  'https://www.facebook.com/',
+    twitter:   'https://x.com/',
+    tiktok:    'https://www.tiktok.com/@',
+    linkedin:  'https://www.linkedin.com/company/',
+    youtube:   'https://www.youtube.com/@',
+};
+
+export function normalizeSocialUrl(platform, value) {
+    if (!value) return value;
+    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    const base = SOCIAL_BASE_URLS[platform];
+    if (!base) return value;
+    // Strip a leading '@' for platforms whose base URL already includes it
+    const handle = (platform === 'tiktok' || platform === 'youtube')
+        ? value.replace(/^@/, '')
+        : value;
+    return base + handle;
+}
+
 export const RANKING_TIERS = {
     editors_choice: {
         label: "Editor's Choice",
