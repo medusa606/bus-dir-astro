@@ -9,8 +9,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { readFileSync, readdirSync } from 'fs';
+import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -44,57 +44,100 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ── Build typeImageMap from the actual illustration files on disk ─────────────
+// Mirrors the import.meta.glob + typeImageMap logic in categoryImages.js.
+function buildTypeImageMap() {
+    const map = {};
+    const base = resolve(__dirname, '../public/illustrations/category-slug');
+    let folders;
+    try { folders = readdirSync(base, { withFileTypes: true }).filter(d => d.isDirectory()); }
+    catch { return map; }
+
+    for (const folder of folders) {
+        const folderPath = join(base, folder.name);
+        let files;
+        try { files = readdirSync(folderPath); } catch { continue; }
+        for (const filename of files) {
+            if (!/\.(webp|png)$/i.test(filename)) continue;
+            const stem = filename.replace(/\.[^.]+$/, '');
+            const prefixMatch = stem.match(/^(.*)-\d+$/);
+            const namePrefix = prefixMatch ? prefixMatch[1] : stem;
+            const key = `${folder.name}/${namePrefix}`;
+            const publicUrl = `/illustrations/category-slug/${folder.name}/${filename}`;
+            if (!map[key]) map[key] = [];
+            map[key].push(publicUrl);
+        }
+    }
+    return map;
+}
+
+const typeImageMap = buildTypeImageMap();
+
 // ── Replicated matching logic (mirrors categoryImages.js) ────────────────────
 // Keep in sync with TAG_TO_IMAGE_RULES in src/utils/categoryImages.js
 
 const TAG_TO_IMAGE_RULES = [
-    { tags: ['yoga', 'pilates', 'meditation', 'wellness'],                              image: '/illustrations/category-slug/health-and-wellbeing/yoga-01.webp' },
-    { tags: ['nail_salon', 'nails', 'manicure', 'pedicure'],                           image: '/illustrations/category-slug/health-and-wellbeing/nail-salon-01.webp' },
-    { tags: ['barbershop', 'barber'],                                                   image: '/illustrations/category-slug/health-and-wellbeing/barbershop-01.webp' },
-    { tags: ['hairdresser', 'hair_salon', 'salon'],                                     image: '/illustrations/category-slug/health-and-wellbeing/hairdresser-01.webp' },
-    { tags: ['cheesemonger', 'cheese'],                                                 image: '/illustrations/category-slug/food-and-produce/cheesemonger-01.webp' },
-    { tags: ['deli', 'delicatessen'],                                                   image: '/illustrations/category-slug/food-and-produce/deli.webp' },
-    { tags: ['bakery', 'cake', 'donut', 'flapjacks'],                                  image: '/illustrations/category-slug/food-and-produce/bakery-01.webp' },
-    { tags: ['supermarket'],                                                            image: '/illustrations/category-slug/food-and-produce/supermarket-01.webp' },
-    { tags: ['corner_shop', 'convenience_store'],                                       image: '/illustrations/category-slug/food-and-produce/corner-shop-01.webp' },
-    { tags: ['wine_bar', 'wine', 'cocktail_bar', 'cellar'],                            image: '/illustrations/category-slug/drinks-and-brewing/wine-bar-01.webp' },
-    { tags: ['pub', 'bar', 'tavern', 'brewery', 'taproom'],                            image: '/illustrations/category-slug/drinks-and-brewing/pub-01.webp' },
-    { tags: ['cafe', 'coffee_shop', 'coffee', 'tea', 'bubble_tea', 'brunch', 'juice'], image: '/illustrations/category-slug/cafes/cafe-01.webp' },
-    { tags: ['ice_cream', 'frozen_yogurt', 'dessert'],                                 image: '/illustrations/category-slug/restaurants/ice-cream-01.webp' },
-    { tags: ['restaurant', 'fast_food', 'takeaway'],                                   image: '/illustrations/category-slug/restaurants/restaurant-01.webp' },
-    { tags: ['golf', 'golf_course'],                                                   image: '/illustrations/category-slug/fitness-and-sports/golf-course-01.webp' },
-    { tags: ['swimming', 'pool', 'swimming_pool'],                                     image: '/illustrations/category-slug/fitness-and-sports/swimming-pool-01.webp' },
-    { tags: ['gym', 'fitness', 'crossfit', 'personal_trainer'],                        image: '/illustrations/category-slug/fitness-and-sports/fitness-studio-01.webp' },
-    { tags: ['theatre', 'theater', 'cinema'],                                          image: '/illustrations/category-slug/entertainment/theater-01.webp' },
-    { tags: ['live_music', 'music_venue'],                                              image: '/illustrations/category-slug/entertainment/live-music-01.webp' },
-    { tags: ['nightclub', 'club'],                                                     image: '/illustrations/category-slug/entertainment/nightclub-01.webp' },
-    { tags: ['florist', 'flowers', 'floristry'],                                       image: '/illustrations/category-slug/plants-and-garden/florist-01.webp' },
-    { tags: ['garden_centre', 'nursery', 'garden'],                                    image: '/illustrations/category-slug/plants-and-garden/garden-centre-01.webp' },
-    { tags: ['dry_cleaning'],                                                           image: '/illustrations/category-slug/services/dry-cleaning-01.webp' },
-    { tags: ['tailor', 'alterations'],                                                 image: '/illustrations/category-slug/services/tailors-01.webp' },
-    { tags: ['launderette', 'laundromat', 'laundrette'],                               image: '/illustrations/category-slug/services/launderette-01.webp' },
-    { tags: ['pottery', 'ceramics'],                                                   image: '/illustrations/category-slug/craft-and-makers/pottery-01.webp' },
-    { tags: ['weaving', 'textiles', 'knitting', 'sewing'],                             image: '/illustrations/category-slug/craft-and-makers/weaver-01.webp' },
-    { tags: ['arts_centre', 'gallery', 'studio'],                                      image: '/illustrations/category-slug/art-and-design/gallery-01.webp' },
-    { tags: ['painter', 'artist'],                                                     image: '/illustrations/category-slug/art-and-design/painter-01.webp' },
-    { tags: ['interiors', 'furniture', 'home_goods', 'homeware'],                      image: '/illustrations/category-slug/home-and-interiors/home-01.webp' },
+    { tags: ['yoga', 'pilates', 'meditation', 'wellness'],                              prefix: 'health-and-wellbeing/yoga' },
+    { tags: ['nail_salon', 'nails', 'manicure', 'pedicure'],                           prefix: 'health-and-wellbeing/nail-salon' },
+    { tags: ['barbershop', 'barber'],                                                   prefix: 'health-and-wellbeing/barbershop' },
+    { tags: ['hairdresser', 'hair_salon', 'salon'],                                     prefix: 'health-and-wellbeing/hairdresser' },
+    { tags: ['cheesemonger', 'cheese'],                                                 prefix: 'food-and-produce/cheesemonger' },
+    { tags: ['deli', 'delicatessen'],                                                   prefix: 'food-and-produce/deli' },
+    { tags: ['bakery', 'cake', 'donut', 'flapjacks'],                                  prefix: 'food-and-produce/bakery' },
+    { tags: ['supermarket'],                                                            prefix: 'food-and-produce/supermarket' },
+    { tags: ['corner_shop', 'convenience_store'],                                       prefix: 'food-and-produce/corner-shop' },
+    { tags: ['wine_bar', 'wine', 'cocktail_bar', 'cellar'],                            prefix: 'drinks-and-brewing/wine-bar' },
+    { tags: ['pub', 'bar', 'tavern', 'brewery', 'taproom'],                            prefix: 'drinks-and-brewing/pub' },
+    { tags: ['cafe', 'coffee_shop', 'coffee', 'tea', 'bubble_tea', 'brunch', 'juice'], prefix: 'cafes/cafe' },
+    { tags: ['ice_cream', 'frozen_yogurt', 'dessert'],                                 prefix: 'restaurants/ice-cream' },
+    { tags: ['restaurant', 'fast_food', 'takeaway'],                                   prefix: 'restaurants/restaurant' },
+    { tags: ['golf', 'golf_course'],                                                   prefix: 'fitness-and-sports/golf-course' },
+    { tags: ['swimming', 'pool', 'swimming_pool'],                                     prefix: 'fitness-and-sports/swimming-pool' },
+    { tags: ['gym', 'fitness', 'crossfit', 'personal_trainer'],                        prefix: 'fitness-and-sports/fitness-studio' },
+    { tags: ['theatre', 'theater', 'cinema'],                                          prefix: 'entertainment/theater' },
+    { tags: ['live_music', 'music_venue'],                                              prefix: 'entertainment/live-music' },
+    { tags: ['nightclub', 'club'],                                                     prefix: 'entertainment/nightclub' },
+    { tags: ['florist', 'flowers', 'floristry'],                                       prefix: 'plants-and-garden/florist' },
+    { tags: ['garden_centre', 'nursery', 'garden'],                                    prefix: 'plants-and-garden/garden-centre' },
+    { tags: ['dry_cleaning'],                                                           prefix: 'services/dry-cleaning' },
+    { tags: ['tailor', 'alterations'],                                                 prefix: 'services/tailors' },
+    { tags: ['launderette', 'laundromat', 'laundrette'],                               prefix: 'services/launderette' },
+    { tags: ['pottery', 'ceramics'],                                                   prefix: 'craft-and-makers/pottery' },
+    { tags: ['weaving', 'textiles', 'knitting', 'sewing'],                             prefix: 'craft-and-makers/weaver' },
+    { tags: ['arts_centre', 'gallery', 'studio'],                                      prefix: 'art-and-design/gallery' },
+    { tags: ['painter', 'artist'],                                                     prefix: 'art-and-design/painter' },
+    { tags: ['interiors', 'furniture', 'home_goods', 'homeware'],                      prefix: 'home-and-interiors/home' },
 ];
 
 function normaliseTag(tag) {
     return tag.toLowerCase().replace(/[_-]/g, '');
 }
 
-function getTagBasedImage(tags, categorySlug) {
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+}
+
+function getTagBasedImage(tags, categorySlug, businessSlug) {
     if (Array.isArray(tags) && tags.length > 0) {
         const normalisedListingTags = tags.map(normaliseTag);
         for (const rule of TAG_TO_IMAGE_RULES) {
             const normalisedRuleTags = rule.tags.map(normaliseTag);
             if (normalisedListingTags.some(lt => normalisedRuleTags.includes(lt))) {
-                return { image: rule.image, source: 'tag' };
+                const variants = typeImageMap[rule.prefix];
+                if (variants && variants.length > 0) {
+                    const index = simpleHash(businessSlug || rule.prefix) % variants.length;
+                    return { image: variants[index], variantCount: variants.length, source: 'tag' };
+                }
+                // prefix exists in rules but no files on disk yet
+                return { image: `(missing: ${rule.prefix})`, variantCount: 0, source: 'tag-missing' };
             }
         }
     }
-    return { image: `(category folder: ${categorySlug})`, source: 'fallback' };
+    return { image: `(category folder: ${categorySlug})`, variantCount: 0, source: 'fallback' };
 }
 
 // ── Fetch & report ────────────────────────────────────────────────────────────
@@ -127,13 +170,14 @@ async function run() {
         }
 
         for (const listing of data || []) {
-            const { image, source } = getTagBasedImage(listing.tags, listing.category_slug);
+            const { image, variantCount, source } = getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug);
             if (source === 'tag') tagMatched++; else fallback++;
             rows.push({
                 name: listing.name?.slice(0, 30).padEnd(30),
                 category: (listing.category_slug || '').slice(0, 22).padEnd(22),
                 tags: (listing.tags || []).join(', ').slice(0, 40).padEnd(40),
                 image: image.split('/').pop(),
+                variants: variantCount,
                 source,
             });
         }
@@ -147,35 +191,37 @@ async function run() {
         .limit(5);
 
     for (const listing of noTagListings || []) {
-        const { image, source } = getTagBasedImage(listing.tags, listing.category_slug);
+        const { image, variantCount, source } = getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug);
         fallback++;
         rows.push({
             name: (listing.name || '').slice(0, 30).padEnd(30),
             category: (listing.category_slug || '').slice(0, 22).padEnd(22),
             tags: '(no tags)'.padEnd(40),
             image: image.split('/').pop(),
+            variants: variantCount,
             source,
         });
     }
 
     const total = tagMatched + fallback;
 
-    console.log('\n' + '─'.repeat(130));
+    console.log('\n' + '─'.repeat(140));
     console.log(
         'NAME'.padEnd(32) +
         'CATEGORY'.padEnd(24) +
         'TAGS (truncated)'.padEnd(42) +
         'ASSIGNED IMAGE'.padEnd(28) +
+        'VARIANTS'.padEnd(10) +
         'SOURCE'
     );
-    console.log('─'.repeat(130));
+    console.log('─'.repeat(140));
 
     for (const r of rows) {
-        const sourceLabel = r.source === 'tag' ? '✓ tag' : '  fallback';
-        console.log(`${r.name}  ${r.category}  ${r.tags}  ${r.image.padEnd(26)}  ${sourceLabel}`);
+        const sourceLabel = r.source === 'tag' ? '✓ tag' : r.source === 'tag-missing' ? '⚠ missing' : '  fallback';
+        console.log(`${r.name}  ${r.category}  ${r.tags}  ${r.image.padEnd(26)}  ${String(r.variants).padEnd(8)}  ${sourceLabel}`);
     }
 
-    console.log('─'.repeat(130));
+    console.log('─'.repeat(140));
     console.log(`\nTotal sampled: ${total}  |  Tag-matched: ${tagMatched} (${Math.round(tagMatched / total * 100)}%)  |  Fallback: ${fallback} (${Math.round(fallback / total * 100)}%)\n`);
 }
 
