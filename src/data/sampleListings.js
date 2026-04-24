@@ -10,7 +10,7 @@ export const SAMPLE_CAFE = {
     city: 'Portland',
     city_slug: 'portland',
     area: 'Pearl District',
-    category: 'Cafés & Coffee',
+    category: 'Cafes & Coffee',
     rating: 4.7,
     review_count: 128,
     main_image: 'https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=1200&h=600&fit=crop',
@@ -102,7 +102,7 @@ export const SAMPLE_RESTAURANT = {
     city: 'Portland',
     city_slug: 'portland',
     area: 'Hawthorne',
-    category: 'Restaurant',
+    category: 'Restaurants & Fast Food',
     rating: 4.5,
     review_count: 287,
     main_image: 'https://images.unsplash.com/photo-1517521318897-c21b40cb7146?w=1200&h=600&fit=crop',
@@ -311,7 +311,7 @@ export const BUSINESS_TYPES = {
 
 export const CATEGORIES = [
     'Restaurants',
-    'Cafés & Coffee',
+    'Cafes & Coffee',
     'Bars & Nightlife',
     'Salons & Spas',
     'Fitness & Wellness',

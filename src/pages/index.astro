@@ -5,18 +5,36 @@ import TieredListings from '../components/TieredListings.astro';
 import { supabase } from '../lib/supabase.js';
 import { slugToTitle, getEmoji, sortByTier, groupByTier } from '../utils/helpers.js';
 
+// Paginate to get accurate counts — PostgREST max-rows cap means a single request won't exceed 1000
+const PAGE_SIZE = 1000;
+let allForCounts: { category_slug: string; city_slug: string }[] = [];
+let page = 0;
+while (true) {
+    const { data: chunk } = await supabase
+        .from('listings')
+        .select('category_slug, city_slug')
+        .or('status.not.in.(closed,unverified),status.is.null')
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (!chunk || chunk.length === 0) break;
+    allForCounts = allForCounts.concat(chunk);
+    if (chunk.length < PAGE_SIZE) break;
+    page++;
+}
+
+const cityCounts = {};
+allForCounts?.forEach(l => { if (l.city_slug) cityCounts[l.city_slug] = (cityCounts[l.city_slug] || 0) + 1; });
+
+const categoryCounts = {};
+allForCounts?.forEach(l => { if (l.category_slug) categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1; });
+
+const totalListings = allForCounts?.length || 0;
+
+// Full listing data for display (featured/premier + standard preview)
 const { data: allListings } = await supabase
     .from('listings')
     .select('*')
-    .or('status.not.in.(closed,unverified),status.is.null');
-
-const cityCounts = {};
-allListings?.forEach(l => { if (l.city_slug) cityCounts[l.city_slug] = (cityCounts[l.city_slug] || 0) + 1; });
-
-const categoryCounts = {};
-allListings?.forEach(l => { if (l.category_slug) categoryCounts[l.category_slug] = (categoryCounts[l.category_slug] || 0) + 1; });
-
-const totalListings = allListings?.length || 0;
+    .or('status.not.in.(closed,unverified),status.is.null')
+    .limit(1000);
 const firstCity = Object.keys(cityCounts)[0];
 const allGroups = groupByTier(allListings || []);
 const standardListings = (allGroups.standard || []).slice(0, 18);

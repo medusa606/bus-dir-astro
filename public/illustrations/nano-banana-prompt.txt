@@ -9,7 +9,7 @@ Draw the attached photo in a cell-shaded, hip-magazine illustration style, colou
 --taupe-light: #5a524c;
 
 
-I need a set of drawings done. They should match the attached example done in a cell-shaded, hip-magazine illustration style, coloured to match the colour palette below. Do not add any additional text.
+I need a set of drawings done for a directory website and i want to use images to represent certain types of businesses to create an attractive and welcoming space. Attached is a sample of the illustration style I want you to use, being a cell-shaded, hip-magazine illustration style, coloured to match the colour palette below. Do not add any additional text.
 --taupe: #463f3a;
 --grey-olive: #8a817c;
 --silver: #bcb8b1;
@@ -19,4 +19,19 @@ I need a set of drawings done. They should match the attached example done in a 
 --blush-light: #f0d5cd;
 --taupe-light: #5a524c;
 
-I need one for each of the following categories
+I need a drawing for each of the following categories:
+
+health-and-wellbeing 
+restaurants 
+cafes 
+food-and-produce 
+drinks-and-brewing 
+home-and-interiors 
+craft-and-makers
+services
+entertainment
+art-and-design 
+
+Each design should be distinct enough to be recognisable as the category it is trying to represent, therefore for the selected category (below) ensure there is minimal overlap with the other categories.
+
+Draw an image for the category 'food-and-produce'.

@@ -100,14 +100,14 @@ if (type === 'city-category') {
     pageTitle = `${catTitle} in ${cityTitle}`;
     pageDescription = `Find the best ${catTitle.toLowerCase()} in ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: catTitle }];
-    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug).not('address', 'is', null);
     listings = data || [];
 
 } else if (type === 'area') {
     pageTitle = `People in ${areaTitle}, ${cityTitle}`;
     pageDescription = `Discover independent makers and traders in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle }];
-    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).not('address', 'is', null);
     listings = data || [];
     const { data: areaData } = await supabase
         .from('areas')
@@ -123,7 +123,7 @@ if (type === 'city-category') {
     pageTitle = `${catTitle} in ${areaTitle}, ${cityTitle}`;
     pageDescription = `Find ${catTitle.toLowerCase()} in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle, href: `/${citySlug}/${areaSlug}` }, { label: catTitle }];
-    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug).not('address', 'is', null);
     listings = data || [];
 
 } else if (type === 'listing' && listing) {
@@ -501,12 +501,15 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             )}
 
             {type === 'city-category' && (
-                <div class="browse-filters" style="margin-bottom: var(--space-2xl);">
-                    {[...new Set(listings.map(l => l.area_slug).filter(Boolean))].sort().map(area => (
-                        <a href={`/${citySlug}/${area}/${categorySlug}`} class="filter-btn" style="text-transform: capitalize;">
-                            📍 {area.replace(/-/g, ' ')}
-                        </a>
-                    ))}
+                <div class="neighbourhood-filter">
+                    <p class="neighbourhood-filter__label">Filter by neighbourhood</p>
+                    <div class="browse-filters browse-filters--compact">
+                        {[...new Set(listings.map(l => l.area_slug).filter(Boolean))].sort().map(area => (
+                            <a href={`/${citySlug}/${area}/${categorySlug}`} class="filter-btn filter-btn--sm" style="text-transform: capitalize;">
+                                {area.replace(/-/g, ' ')}
+                            </a>
+                        ))}
+                    </div>
                 </div>
             )}
 

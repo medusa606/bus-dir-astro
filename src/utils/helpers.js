@@ -1,5 +1,6 @@
 const SLUG_ALIASES = {
     'health-wellbeing': 'health-and-wellbeing',
+    'restaurants-and-cafes': 'restaurants',
 };
 
 export function normaliseCategory(slug) {
@@ -18,6 +19,7 @@ export function getEmoji(catKey) {
         "services": "🔧",
         "entertainment": "🎉",
         "restaurants-and-cafes": "🍕",
+        "restaurants": "🍽️",
         "home-and-interiors": "🏠",
         "hair-and-beauty": "💇",
         "building-and-trades": "🔧",

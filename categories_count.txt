@@ -1,10 +1,44 @@
-health-and-wellbeing 893
-restaurants-and-cafes 839
-food-and-produce 826
-drinks-and-brewing 448
-home-and-interiors 150
-craft-and-makers 79
-services 70
-entertainment 55
-art-and-design 37
+Count active listings per category excluding closed/unverified (without address):
+
+health-and-wellbeing 893 (123)
+restaurants-and-cafes 839 (78)
+food-and-produce 826 (13)
+drinks-and-brewing 448 (20)
+home-and-interiors 150 (21)
+craft-and-makers 79 (12)
+services 70 (0)
+entertainment 55 (11)
+art-and-design 37 (0)
+
+SELECT COUNT(*) AS listings_without_address
+FROM listings
+WHERE (address IS NULL OR TRIM(address) = '')
+  AND (status NOT IN ('closed', 'unverified') OR status IS NULL);
+  
+  309
+
+carpet shop
+paint supplies
+lighting shop
+tile shop
+antiques and brocante
+charity shop
+sofa shop
+landscaping
+shoe shop
+gig venue
+jazz club
+cinema
+off licence
+brewery
+seet shop
+
+remove 'new to meridian'
+fill in details for the footer
+
+re-tagging the listing: 
+Some of the tags are irrelevant or a business falls between or is composed of two category types. For example a backery that sells coffee is principally a bakery but it should still be tagged under cafe as you can but a coffee there.
+
+Some listing tags are just wrong. For example Schuh is a high street shoe shop but on our db it is listed under service category. http://localhost:4321/bristol/city-centre/schuh for this listing it isn't clear from the name that it is a show store but reading the website https://www.schuh.co.uk/stores/bristol-cabot-circus/ might give a better idea of the category or confirm what already exists in the db.
+
 

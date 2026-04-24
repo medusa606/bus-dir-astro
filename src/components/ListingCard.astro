@@ -2,12 +2,13 @@
 import StarRating from './StarRating.astro';
 import SocialIcon from './SocialIcon.astro';
 import { getEmoji, truncate, RANKING_TIERS } from '../utils/helpers.js';
-import { getCategoryFallbackImage } from '../utils/categoryImages.js';
+import { getTagBasedImage } from '../utils/categoryImages.js';
 
 const { listing } = Astro.props;
 const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
 const imgUrl = listing.image_url
-    || getCategoryFallbackImage(listing.category_slug, listing.business_slug)
+    || listing.image_key
+    || getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug)
     || '/placeholders/default.svg';
 const tier = RANKING_TIERS[listing.ranking_tier] || RANKING_TIERS.standard;
 

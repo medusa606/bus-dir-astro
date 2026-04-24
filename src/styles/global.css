@@ -294,6 +294,10 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 }
 .filter-btn:hover, .filter-btn.active { border-color: var(--taupe); color: var(--taupe); background: var(--white); }
 .filter-btn.active { background: var(--taupe); color: var(--parchment); border-color: var(--taupe); }
+.browse-filters--compact { gap: 0.35rem; margin-bottom: var(--space-2xl); }
+.filter-btn--sm { padding: 0.25rem 0.65rem; font-size: 0.75rem; border-width: 1px; }
+.neighbourhood-filter { margin-bottom: var(--space-2xl); }
+.neighbourhood-filter__label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--silver); margin-bottom: var(--space-sm); }
 .browse-count { font-size: 0.9rem; color: var(--grey-olive); margin-bottom: var(--space-lg); }
 
 /* ========================================
