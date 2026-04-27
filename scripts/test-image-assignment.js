@@ -79,6 +79,7 @@ const typeImageMap = buildTypeImageMap();
 const TAG_TO_IMAGE_RULES = [
     { tags: ['dentist', 'dental'],                                                     prefix: 'health-and-wellbeing/dentist' },
     { tags: ['pharmacy', 'chemist', 'dispensary'],                                     prefix: 'health-and-wellbeing/pharmacy' },
+    { tags: ['sauna', 'spa', 'steam_room'],                                            prefix: 'health-and-wellbeing/sauna' },
     { tags: ['yoga', 'pilates', 'meditation', 'wellness'],                              prefix: 'health-and-wellbeing/yoga' },
     { tags: ['nail_salon', 'nails', 'manicure', 'pedicure'],                           prefix: 'health-and-wellbeing/nail-salon' },
     { tags: ['barbershop', 'barber'],                                                   prefix: 'health-and-wellbeing/barbershop' },
@@ -91,6 +92,7 @@ const TAG_TO_IMAGE_RULES = [
     { tags: ['greengrocer', 'produce', 'veg', 'vegetables', 'fruit'],                  prefix: 'food-and-produce/greengrocer' },
     { tags: ['corner_shop', 'convenience_store'],                                       prefix: 'food-and-produce/corner-shop' },
     { tags: ['wine_bar', 'wine', 'cocktail_bar', 'cellar'],                            prefix: 'drinks-and-brewing/wine-bar' },
+    { tags: ['off_license', 'off_licence', 'bottle_shop', 'liquor_store'],             prefix: 'drinks-and-brewing/off-license' },
     { tags: ['brewery', 'microbrewery'],                                               prefix: 'drinks-and-brewing/brewery' },
     { tags: ['pub', 'bar', 'tavern', 'taproom'],                                       prefix: 'drinks-and-brewing/pub' },
     { tags: ['cafe', 'coffee_shop', 'coffee', 'tea', 'bubble_tea', 'brunch', 'juice'], prefix: 'cafes/cafe' },

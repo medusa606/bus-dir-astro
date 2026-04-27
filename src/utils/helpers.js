@@ -1,6 +1,7 @@
 const SLUG_ALIASES = {
     'health-wellbeing': 'health-and-wellbeing',
     'restaurants-and-cafes': 'restaurants',
+    'fitness-and-sports': 'sports-and-recreation',
 };
 
 export function normaliseCategory(slug) {
@@ -14,10 +15,13 @@ export function getEmoji(catKey) {
         "drinks-and-brewing": "🍺",
         "craft-and-makers": "🎨",
         "health-and-wellbeing": "🧘",
+        "sports-and-recreation": "🏃",
         "fitness-and-sports": "🏋️",
         "plants-and-garden": "🌱",
         "services": "🔧",
         "entertainment": "🎉",
+        "accommodation": "🏨",
+        "retail-and-fashion": "👗",
         "restaurants-and-cafes": "🍕",
         "restaurants": "🍽️",
         "home-and-interiors": "🏠",

@@ -14,23 +14,14 @@ SELECT COUNT(*) AS listings_without_address
 FROM listings
 WHERE (address IS NULL OR TRIM(address) = '')
   AND (status NOT IN ('closed', 'unverified') OR status IS NULL);
-  
-  309
 
 
+TODO:
 
-
-
-landscaping
-off licence
+nails shops have yoga image and vice versa
 
 remove 'new to meridian'
 fill in details for the footer
-
-re-tagging the listing: 
-Some of the tags are irrelevant or a business falls between or is composed of two category types. For example a backery that sells coffee is principally a bakery but it should still be tagged under cafe as you can but a coffee there.
-
-Some listing tags are just wrong. For example Schuh is a high street shoe shop but on our db it is listed under service category. http://localhost:4321/bristol/city-centre/schuh for this listing it isn't clear from the name that it is a show store but reading the website https://www.schuh.co.uk/stores/bristol-cabot-circus/ might give a better idea of the category or confirm what already exists in the db.
 
 socials scraping - use backup-02.csv
 
