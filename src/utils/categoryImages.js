@@ -27,11 +27,14 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['leisure_centre', 'leisure_center'],                                       prefix: 'sports-and-recreation/leisure-centre' },
     { tags: ['golf', 'golf_course'],                                                   prefix: 'sports-and-recreation/golf-course' },
     { tags: ['swimming', 'pool', 'swimming_pool'],                                     prefix: 'sports-and-recreation/swimming-pool' },
-    { tags: ['gym', 'fitness', 'crossfit', 'personal_trainer'],                        prefix: 'sports-and-recreation/fitness-studio' },
+    { tags: ['gym', 'fitness', 'crossfit', 'personal_trainer', 'fitness_centre'],     prefix: 'sports-and-recreation/fitness-studio' },
 
     // ── Health & Wellbeing ────────────────────────────────────────────────
     // (Wellness-specific: massage, spa, yoga, pilates, etc.)
-    { tags: ['massage', 'therapist'],                                                   prefix: 'health-and-wellbeing/massage' },
+    { tags: ['massage', 'therapist', 'physiotherapist'],                                prefix: 'health-and-wellbeing/massage' },
+    { tags: ['beauty', 'cosmetics'],                                                    prefix: 'health-and-wellbeing/hairdresser' },
+    { tags: ['clinic', 'medical_centre', 'health_centre'],                              prefix: 'health-and-wellbeing/dentist' },
+    { tags: ['herbalist', 'herbalism'],                                                 prefix: 'health-and-wellbeing/pharmacy' },
     { tags: ['acupuncture'],                                                            prefix: 'health-and-wellbeing/acupuncture' },
     { tags: ['chiropractor'],                                                           prefix: 'health-and-wellbeing/chiropractor' },
     { tags: ['osteopath'],                                                              prefix: 'health-and-wellbeing/osteopath' },
@@ -50,7 +53,8 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['bakery', 'cake', 'donut', 'flapjacks'],                                  prefix: 'food-and-produce/bakery' },
     { tags: ['supermarket'],                                                            prefix: 'food-and-produce/supermarket' },
     { tags: ['greengrocer', 'produce', 'veg', 'vegetables', 'fruit'],                  prefix: 'food-and-produce/greengrocer' },
-    { tags: ['corner_shop', 'convenience_store'],                                       prefix: 'food-and-produce/corner-shop' },
+    { tags: ['corner_shop', 'convenience_store', 'convenience'],                        prefix: 'food-and-produce/corner-shop' },
+    { tags: ['butcher', 'butchery', 'meat'],                                           prefix: 'food-and-produce/deli' },
 
     // ── Drinks & Brewing ──────────────────────────────────────────────────
     { tags: ['wine_bar', 'wine', 'cocktail_bar', 'cellar'],                            prefix: 'drinks-and-brewing/wine-bar' },
@@ -59,28 +63,28 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['pub', 'bar', 'tavern', 'taproom'],                                       prefix: 'drinks-and-brewing/pub' },
 
     // ── Cafes ─────────────────────────────────────────────────────────────
-    { tags: ['cafe', 'coffee_shop', 'coffee', 'tea', 'bubble_tea', 'brunch', 'juice'], prefix: 'cafes/cafe' },
+    { tags: ['cafe', 'coffee_shop', 'coffee', 'tea', 'bubble_tea', 'brunch', 'juice', 'sandwich'], prefix: 'cafes/cafe' },
 
     // ── Restaurants ───────────────────────────────────────────────────────
     // (Cuisine-specific rules before generic restaurant rule)
     { tags: ['sushi', 'sashimi'],                                                       prefix: 'restaurants/sushi' },
-    { tags: ['ramen', 'noodle', 'pho'],                                                 prefix: 'restaurants/noodle' },
+    { tags: ['ramen', 'noodle', 'pho', 'korean'],                                       prefix: 'restaurants/noodle' },
     { tags: ['pizza'],                                                                  prefix: 'restaurants/pizza' },
-    { tags: ['burger', 'hamburger'],                                                    prefix: 'restaurants/burger' },
-    { tags: ['kebab', 'shawarma', 'doner'],                                             prefix: 'restaurants/kebab' },
-    { tags: ['tapas', 'spanish'],                                                       prefix: 'restaurants/tapas' },
-    { tags: ['indian'],                                                                 prefix: 'restaurants/indian' },
-    { tags: ['thai'],                                                                   prefix: 'restaurants/thai' },
-    { tags: ['chinese'],                                                                prefix: 'restaurants/chinese' },
+    { tags: ['burger', 'hamburger', 'chicken'],                                         prefix: 'restaurants/burger' },
+    { tags: ['kebab', 'shawarma', 'doner', 'falafel', 'middle_eastern', 'lebanese'],   prefix: 'restaurants/kebab' },
+    { tags: ['tapas', 'spanish', 'iberian'],                                            prefix: 'restaurants/tapas' },
+    { tags: ['indian', 'south_asian'],                                                  prefix: 'restaurants/indian' },
+    { tags: ['thai', 'southeast_asian'],                                                prefix: 'restaurants/thai' },
+    { tags: ['chinese', 'dim_sum'],                                                     prefix: 'restaurants/chinese' },
     { tags: ['vietnamese', 'asian'],                                                    prefix: 'restaurants/asian' },
-    { tags: ['mexican'],                                                                prefix: 'restaurants/mexican' },
-    { tags: ['italian'],                                                                prefix: 'restaurants/italian' },
-    { tags: ['japanese'],                                                               prefix: 'restaurants/japanese' },
-    { tags: ['turkish', 'turkish_kitchen'],                                             prefix: 'restaurants/turkish' },
+    { tags: ['mexican', 'latin', 'caribbean', 'jamaican'],                              prefix: 'restaurants/mexican' },
+    { tags: ['italian', 'mediterranean', 'persian'],                                    prefix: 'restaurants/italian' },
+    { tags: ['japanese', 'anime'],                                                      prefix: 'restaurants/japanese' },
+    { tags: ['turkish', 'turkish_kitchen', 'moroccan'],                                 prefix: 'restaurants/turkish' },
     { tags: ['greek', 'greek_kitchen'],                                                 prefix: 'restaurants/greek' },
-    { tags: ['fish_and_chips'],                                                         prefix: 'restaurants/fish-and-chips' },
-    { tags: ['ice_cream', 'frozen_yogurt', 'dessert'],                                 prefix: 'restaurants/ice-cream' },
-    { tags: ['restaurant', 'fast_food', 'takeaway'],                                   prefix: 'restaurants/restaurant' },
+    { tags: ['fish_and_chips', 'seafood', 'steak_house'],                               prefix: 'restaurants/fish-and-chips' },
+    { tags: ['ice_cream', 'frozen_yogurt', 'dessert', 'pie'],                          prefix: 'restaurants/ice-cream' },
+    { tags: ['restaurant', 'fast_food', 'takeaway', 'breakfast', 'british', 'american'], prefix: 'restaurants/restaurant' },
 
     // ── Entertainment ─────────────────────────────────────────────────────
     { tags: ['cinema'],                                                                prefix: 'entertainment/cinema' },
@@ -126,7 +130,8 @@ export const TAG_TO_IMAGE_RULES = [
     { tags: ['charity_shop', 'charity', 'thrift'],                                     prefix: 'services/charity-shop' },
     { tags: ['dry_cleaning'],                                                           prefix: 'services/dry-cleaning' },
     { tags: ['tailor', 'alterations'],                                                 prefix: 'services/tailors' },
-    { tags: ['launderette', 'laundromat', 'laundrette'],                               prefix: 'services/launderette' },
+    { tags: ['launderette', 'laundromat', 'laundrette', 'laundry'],                   prefix: 'services/launderette' },
+    { tags: ['jewelry', 'jeweller', 'jewelry_store'],                                   prefix: 'retail-and-fashion/shoes' },
 ];
 
 /** Normalise a tag for comparison: lowercase, underscores and hyphens stripped. */
@@ -161,6 +166,24 @@ export function getTagBasedImage(tags, categorySlug, deterministicKey) {
         }
     }
     return getCategoryFallbackImage(categorySlug, deterministicKey);
+}
+
+/**
+ * Return an image URL based on an explicitly set image_category.
+ * Used when a listing has been manually assigned to a specific image type.
+ * Always returns the same image for the same (imageCategory, key) pair.
+ * Returns null if the category doesn't exist or has no images.
+ *
+ * @param {string} imageCategory - e.g. 'services/tailors' or 'restaurants/pizza'
+ * @param {string} deterministicKey - e.g. listing.business_slug
+ * @returns {string|null}
+ */
+export function getImageByCategory(imageCategory, deterministicKey) {
+    if (!imageCategory) return null;
+    const variants = typeImageMap[imageCategory];
+    if (!variants || variants.length === 0) return null;
+    const index = simpleHash(deterministicKey || imageCategory) % variants.length;
+    return variants[index];
 }
 
 // Discover all category illustration webps at build time.

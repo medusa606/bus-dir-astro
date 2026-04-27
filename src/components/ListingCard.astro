@@ -2,12 +2,13 @@
 import StarRating from './StarRating.astro';
 import SocialIcon from './SocialIcon.astro';
 import { getEmoji, truncate, RANKING_TIERS, normalizeSocialUrl } from '../utils/helpers.js';
-import { getTagBasedImage } from '../utils/categoryImages.js';
+import { getTagBasedImage, getImageByCategory } from '../utils/categoryImages.js';
 
 const { listing } = Astro.props;
 const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
 const imgUrl = listing.image_url
     || listing.image_key
+    || (listing.image_category && getImageByCategory(listing.image_category, listing.business_slug))
     || getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug)
     || '/placeholders/default.svg';
 const tier = RANKING_TIERS[listing.ranking_tier] || RANKING_TIERS.standard;
@@ -37,11 +38,11 @@ const socials = [
                 </span>
             </div>
             <h3 class="card__title">{listing.name}</h3>
-            <p class="card__subtitle">
-                {listing.google_rating
-                    ? `★ ${listing.google_rating} (${listing.google_review_count || 0} reviews)`
-                    : 'New to Meridian'}
-            </p>
+            {listing.google_rating && (
+                <p class="card__subtitle">
+                    ★ {listing.google_rating} ({listing.google_review_count || 0} reviews)
+                </p>
+            )}
             {listing.description && <p class="card__excerpt">{truncate(listing.description)}</p>}
         </div>
     </a>

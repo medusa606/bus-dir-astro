@@ -8,7 +8,7 @@ import SocialFeed from '../../components/SocialFeed.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
-import { getCategoryFallbackImage } from '../../utils/categoryImages.js';
+import { getCategoryFallbackImage, getTagBasedImage, getImageByCategory } from '../../utils/categoryImages.js';
 
 export async function getStaticPaths() {
     // Paginate to fetch all listings past Supabase's 1000-row default limit
@@ -153,8 +153,11 @@ const LOCAL_LOGOS = {
 const illustrationUrl = listing
     ? (listing.illustration_url || LOCAL_ILLUSTRATIONS[listing.business_slug] || null)
     : null;
+const imageCategoryImage = listing
+    ? (listing.image_category && getImageByCategory(listing.image_category, listing.business_slug))
+    : null;
 const heroImage = listing
-    ? (illustrationUrl || listing.image_url || getCategoryFallbackImage(listing.category_slug, listing.business_slug) || '/placeholders/default.svg')
+    ? (illustrationUrl || listing.image_key || imageCategoryImage || getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug) || listing.image_url || getCategoryFallbackImage(listing.category_slug, listing.business_slug) || '/placeholders/default.svg')
     : null;
 const foundersImage = listing
     ? (listing.founders_image || LOCAL_FOUNDERS_IMAGES[listing.business_slug] || null)

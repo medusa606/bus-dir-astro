@@ -57,7 +57,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { browserSupabase } from '../lib/supabaseBrowser.js';
 import { isCurrentlyOpen } from '../utils/listingHelpers.js';
 import { sortByTier, truncate, RANKING_TIERS } from '../utils/helpers.js';
-import { getTagBasedImage } from '../utils/categoryImages.js';
+import { getTagBasedImage, getImageByCategory } from '../utils/categoryImages.js';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let allListings: any[] = [];
@@ -164,6 +164,7 @@ function renderCard(listing: any) {
     const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
     const imgUrl = listing.illustration_url
         || listing.image_key
+        || (listing.image_category && getImageByCategory(listing.image_category, listing.business_slug))
         || getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug)
         || listing.image_url
         || '/placeholders/default.svg';
@@ -178,9 +179,9 @@ function renderCard(listing: any) {
         : '';
 
     const area = listing.area_slug?.replace(/-/g, ' ') || '';
-    const rating = listing.google_rating
-        ? `★ ${listing.google_rating} (${listing.google_review_count || 0} reviews)`
-        : 'New to directory';
+    const ratingHtml = listing.google_rating
+        ? `<p class="card__subtitle">★ ${listing.google_rating} (${listing.google_review_count || 0} reviews)</p>`
+        : '';
 
     return `
 <div class="card">
@@ -194,7 +195,7 @@ function renderCard(listing: any) {
                 ${formatDistance(listing)}
             </div>
             <h3 class="card__title">${escHtml(listing.name)}</h3>
-            <p class="card__subtitle">${escHtml(rating)}</p>
+            ${ratingHtml}
             <p class="card__excerpt">${escHtml(truncate(listing.description))}</p>
         </div>
     </a>
