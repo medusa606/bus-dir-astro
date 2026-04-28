@@ -1,0 +1,163 @@
+Free Traffic Growth Strategies
+1. Google Search Console (do this today)
+This is Google's free tool for website owners. It's not optional.
+
+text
+1. Go to search.google.com/search-console
+2. Add your property (your domain)
+3. Verify ownership (DNS TXT record is easiest)
+4. Submit your sitemap: https://meridian.directory/sitemap-index.xml
+5. Request indexing of your key pages
+What it gives you:
+
+Which search queries are showing your pages (even before people click)
+Which pages are indexed (and which aren't, and why)
+Core Web Vitals scores
+Mobile usability issues
+Crawl errors
+Check it weekly. It takes 2-4 weeks for Google to fully crawl a new site with 4,000 pages.
+
+2. Google Business Profile (free, immediate local impact)
+Create a Google Business Profile for Meridian Directory itself. This sounds circular but it establishes you as a local entity. Select category "Business Directory" or "Business to Business Service."
+
+3. Backlink strategy (the biggest lever)
+Every link from another website to yours is a vote of confidence in Google's eyes. Quality matters far more than quantity. Ten links from respected Bristol websites beats 1,000 links from random directories.
+
+Bristol-specific link opportunities:
+
+Source	How to get the link	Difficulty
+Bristol247 / Secret Bristol	Your content partnership outreach — ask for a "useful local resources" link or a feature about your directory	Medium
+Bristol City Council	They maintain business resource pages. Email the economic development team	Medium
+Destination Bristol (tourism board)	Pitch as a local discovery resource for visitors	Medium
+Bristol Independent Traders (BITA)	You're literally promoting their members	Easy
+Local business networks (North Bristol Enterprise, Easton Business Improvement District)	Offer the directory as a member resource	Easy
+University of Bristol / UWE	Student union "local area guides" often link to useful resources	Medium
+Bristol subreddit / Bristol forums	Share genuinely useful pages (not spam) when relevant to discussions	Easy
+Businesses in your directory	Many will link to their own listing from their website — add an embeddable badge	Easy
+The embeddable badge strategy is particularly powerful at your scale. Give listed businesses a reason to link to you:
+
+html
+<!-- Provide this to listed businesses -->
+<a href="https://meridian.directory/bristol/easton/geppettos-pizza" 
+   title="Find us on Meridian Directory">
+  <img src="https://meridian.directory/badges/listed-on-meridian.svg" 
+       alt="Listed on Meridian Directory" 
+       width="180" height="48" />
+</a>
+
+<!-- Or a simpler text version -->
+<a href="https://meridian.directory/bristol/easton/geppettos-pizza">
+  Find us on Meridian Directory
+</a>
+If even 5% of your 4,000 listings put this on their website, that's 200 backlinks from relevant, local business websites. That's a massive authority signal.
+
+4. Content marketing (free, compounds over time)
+Your editorial/magazine angle is a content marketing strategy in disguise. Create pages that people search for and want to share:
+
+text
+/bristol/guides/best-bakeries-easton          ← "best bakeries Easton"
+/bristol/guides/independent-coffee-shops       ← "independent coffee shops Bristol"
+/bristol/guides/saturday-morning-st-nicks      ← "St Nicholas Market Bristol Saturday"
+/bristol/guides/vegan-restaurants-bedminster    ← "vegan restaurants Bedminster"
+These guide pages:
+
+Target long-tail search queries with real volume
+Are highly shareable on social media
+Give you editorial space to add real value (not just listings)
+Cross-link to your business pages (passing authority to them)
+text
+src/pages/
+└── [city]/
+    └── guides/
+        └── [guide-slug].astro
+Write 2-4 guides per month. Each one should be 800-1500 words of genuine editorial content, linking to the relevant businesses in your directory. This is exactly the "magazine-style" positioning from your business model.
+
+5. Social media (free, drives direct traffic)
+You don't need to be on every platform. Pick two:
+
+Instagram — Your directory is visual. Post:
+
+Photos of listed businesses (ask permission or reshare theirs)
+"Did you know?" posts about local makers
+Area spotlights ("5 reasons to visit Easton this weekend")
+Behind-the-scenes of you curating the directory
+One local community platform — Bristol has active:
+
+r/bristol (Reddit)
+Bristol community Facebook groups
+Nextdoor Bristol areas
+Don't spam links. Share useful information and let people discover the directory naturally.
+
+6. Email newsletter (free, owned audience)
+Start collecting emails from day one. A fortnightly "What's New in [Area]" email:
+
+New businesses added to the directory
+Seasonal highlights
+Links to your guide content
+Press mentions you've found
+This drives repeat traffic and engagement signals that Google notices (returning visitors, time on site, low bounce rate).
+
+Add a simple signup to your area pages:
+
+astro
+<section class="newsletter-signup">
+  <h2>Stay in the loop</h2>
+  <p>Get a fortnightly email about what's new and noteworthy in {area}.</p>
+  <form action="/api/subscribe" method="POST">
+    <input type="email" name="email" placeholder="your@email.com" required />
+    <input type="hidden" name="area" value={area.slug} />
+    <button type="submit">Subscribe</button>
+  </form>
+</section>
+Use a free tier of Buttondown, Mailchimp, or Listmonk (self-hosted, completely free).
+
+7. Leverage your 4,000 listings for outreach at launch
+You have a built-in launch audience: the businesses themselves. At launch, email every business with an approved listing:
+
+text
+Subject: You're listed on Meridian Directory
+
+Hi [business name],
+
+We've just launched Meridian Directory — a curated guide to 
+independent businesses in Bristol.
+
+Your listing is live here: [link to their page]
+
+If anything needs updating, just reply to this email. And if you 
+like what we're doing, we'd love it if you shared your listing 
+or added a link from your website.
+
+[Your name]
+Meridian Directory
+Even a 10% engagement rate means 400 businesses knowing you exist, some sharing on social media, some linking from their websites. That's your launch momentum.
+
+Monitoring & Measurement
+Set up these free tools to track progress:
+
+Tool	What it tells you	Cost
+Google Search Console	Search impressions, clicks, indexing status, keyword rankings	Free
+Google Analytics 4	Traffic volume, sources, popular pages, user behaviour	Free
+Plausible/Fathom	Privacy-friendly alternative to GA (simpler, GDPR-compliant)	Free tier / ~£7/mo
+Key metrics to watch monthly:
+
+Indexed pages (Search Console → Pages) — should climb towards 4,000+
+Total impressions (Search Console → Performance) — how often you appear in search
+Click-through rate — are your titles/descriptions compelling?
+Top queries — what are people finding you for? Create more content around those terms
+Referring domains (Search Console → Links) — how many sites link to you?
+Priority Action List
+Here's what to do, in order:
+
+Priority	Action	Time	Impact
+🔴 1	Set up Google Search Console + submit sitemap	30 min	Foundation
+🔴 2	Add proper meta tags, structured data, canonical URLs to all page types	2-3 hours	Foundation
+🔴 3	Write editorial intro content for your top 10 area pages	3-4 hours	High
+🟡 4	Create the embeddable badge + listing notification email	2 hours	High (compounds)
+🟡 5	Set up analytics (GA4 or Plausible)	30 min	Measurement
+🟡 6	Publish 2-3 guide pages before launch	4-6 hours	Medium-high
+🟢 7	Contact Bristol247 / Secret Bristol about content partnership	1 hour	Medium (takes time)
+🟢 8	Set up newsletter collection	1-2 hours	Long-term
+🟢 9	Reach out to Bristol council, BITA, local networks	2 hours	Medium
+🟢 10	Create Instagram account, post first 10 pieces of content	3-4 hours	Medium
+The beautiful thing about your Astro + directory model is that it's structurally SEO-friendly from day one. The 4,000 listings give you a massive content footprint that most new sites don't have. Your main job now is making sure Google can read it all (technical SEO), each page has enough unique content to rank (on-page), and other people know you exist (off-page). The organic growth compounds — month 1 will be slow, months 3-6 will pick up noticeably, and by month 12 you should be ranking for hundreds of local search terms.

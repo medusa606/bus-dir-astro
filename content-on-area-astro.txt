@@ -1,0 +1,57 @@
+---
+// src/pages/[city]/[area]/index.astro
+
+// ... getStaticPaths, fetch listings for this area
+
+const areaName = 'Easton';  // from params
+const listings = /* fetched from supabase */;
+const categories = [...new Set(listings.map(l => l.category))];
+---
+
+<BaseLayout
+  title={`Easton, Bristol — Independent Businesses & Local Makers`}
+  description={`Discover ${listings.length} independent businesses in Easton, Bristol. From bakeries and cafés to craft makers and artists — find the real Easton.`}
+>
+  <article class="area-page">
+    <h1>Easton</h1>
+    
+    <!-- EDITORIAL INTRO: This is what makes you rank above Yell/Google Maps -->
+    <div class="area-intro">
+      <p>
+        Easton is one of Bristol's most vibrant and culturally diverse 
+        neighbourhoods, running along St Mark's Road from the M32 to 
+        Stapleton Road. It's home to a thriving independent food scene, 
+        from Eritrean restaurants and South Asian sweet marts to 
+        sourdough pizzerias and zero-waste grocers.
+      </p>
+      <p>
+        We've found {listings.length} independent businesses in Easton 
+        worth knowing about.
+      </p>
+    </div>
+    
+    <!-- CATEGORY NAVIGATION: Internal links + helps users + helps Google -->
+    <nav class="area-categories" aria-label="Categories in Easton">
+      <h2>Browse by category</h2>
+      <ul>
+        {categories.map(cat => (
+          <li>
+            <a href={`/bristol/easton/${cat.slug}/`}>
+              {cat.label} ({listings.filter(l => l.category === cat.label).length})
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    
+    <!-- LISTING GRID -->
+    <section>
+      <h2>All businesses in Easton</h2>
+      <div class="listing-grid">
+        {listings.map(listing => (
+          <ListingCard listing={listing} />
+        ))}
+      </div>
+    </section>
+  </article>
+</BaseLayout>	

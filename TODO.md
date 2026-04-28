@@ -8,14 +8,11 @@
 - [ ] Implement GDPR compliance features (e.g., cookie consent, data processing disclosures) → See `GDPR_IMPLEMENTATION_PLAN.md` for roadmap
 
 ## Google Maps Integration
-- [ ] Extract Google rating from Google Maps URLs
-- [ ] Extract review count from Google Maps URLs
 - [ ] Display Google rating and review count on listing pages
 
-## Restaurant Category Page Enhancements
-- [ ] Add cuisine type filtering section below area pills
-- [ ] Display available cuisine types from restaurant listings
-- [ ] Implement cuisine type filter functionality
+## Sub-Category Enhancements
+- [ ] Add sub-category filtering section below area pills
+- [ ] Implement cuisine type filter functionality for search
 
 ## User Actions & Navigation
 - [ ] Create contact/inquiry page for businesses to "List a Business"
@@ -93,3 +90,27 @@
 - Ensure all external links (booking, ordering, shop) are properly validated
 - Plan affiliate program terms and conditions
 - Coordinate with business owners on new features
+
+
+# Other feedback to consider
+- The reason: your current [...slug].astro catch-all is flexible, but it means your code has to disambiguate at runtime whether bristol/easton is a city+area or a city+category. Explicit routes make each page type's data requirements and metadata clear. With 4,000 listings, this clarity prevents bugs and makes your getStaticPaths() functions much cleaner:
+src/pages/
+├── index.astro                                    → /
+└── [city]/
+    ├── index.astro                                → /bristol/
+    ├── [area]/
+    │   ├── index.astro                            → /bristol/easton/
+    │   ├── [category]/
+    │   │   └── index.astro                        → /bristol/easton/food-and-produce/
+    │   └── [business].astro                       → /bristol/easton/geppettos-pizza
+    └── [category]/
+        └── index.astro                            → /bristol/food-and-produce/
+
+- at the bottom of the listing page, link to related listings and nearby listings
+
+- [category] near me	"cafes near me"	Area page (if local pack)
+- best [category] [area]	"best restaurants Bedminster"	Category+area page
+- things to do in [area]	"things to do in Easton Bristol"	Area page
+- These are your highest-value SEO pages because they target the searches with the most volume ("bakeries in Easton", "best cafes Bedminster"). Don't make them just a bare grid of listing cards: see @content-on-area-astro.txt
+- explore @Free Traffic Growth Strategies.txt
+- 

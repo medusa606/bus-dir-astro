@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import SubCategoryFilter from '../../components/SubCategoryFilter.astro';
 import TieredListings from '../../components/TieredListings.astro';
 import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
@@ -9,6 +10,7 @@ import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
 import { getCategoryFallbackImage, getTagBasedImage, getImageByCategory } from '../../utils/categoryImages.js';
+import { getSubCategories, filterBySubCategory } from '../../utils/subCategoryHelpers.js';
 
 export async function getStaticPaths() {
     // Paginate to fetch all listings past Supabase's 1000-row default limit
@@ -92,6 +94,9 @@ let listing = directListing || null;
 let crumbs = [];
 let areaHeroUrl: string | null = null;
 
+// Get sub-category filter from URL parameters
+const subCategorySlug = Astro.url.searchParams.get('subCategory');
+
 const cityTitle = slugToTitle(citySlug);
 const areaTitle = slugToTitle(areaSlug);
 const catTitle = slugToTitle(categorySlug);
@@ -102,6 +107,10 @@ if (type === 'city-category') {
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: catTitle }];
     const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug).not('address', 'is', null);
     listings = data || [];
+    // Apply sub-category filter if provided
+    if (subCategorySlug) {
+        listings = filterBySubCategory(listings, subCategorySlug);
+    }
 
 } else if (type === 'area') {
     pageTitle = `People in ${areaTitle}, ${cityTitle}`;
@@ -109,6 +118,10 @@ if (type === 'city-category') {
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle }];
     const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).not('address', 'is', null);
     listings = data || [];
+    // Apply sub-category filter if provided
+    if (subCategorySlug) {
+        listings = filterBySubCategory(listings, subCategorySlug);
+    }
     const { data: areaData } = await supabase
         .from('areas')
         .select('use_hero_image, hero_image_url')
@@ -125,6 +138,10 @@ if (type === 'city-category') {
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle, href: `/${citySlug}/${areaSlug}` }, { label: catTitle }];
     const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug).not('address', 'is', null);
     listings = data || [];
+    // Apply sub-category filter if provided
+    if (subCategorySlug) {
+        listings = filterBySubCategory(listings, subCategorySlug);
+    }
 
 } else if (type === 'listing' && listing) {
     pageTitle = listing.name;
@@ -514,6 +531,14 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                         ))}
                     </div>
                 </div>
+            )}
+
+            {(type === 'city-category' || type === 'area-category') && getSubCategories(listings).length > 0 && (
+                <SubCategoryFilter 
+                    category={catTitle}
+                    subCategories={getSubCategories(listings)}
+                    selectedSubCategory={subCategorySlug}
+                />
             )}
 
             <TieredListings listings={listings} />
