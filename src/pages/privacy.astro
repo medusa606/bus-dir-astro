@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Privacy Policy | Meridian">
+    <div class="legal-page">
+        <h1>Privacy Policy</h1>
+        <p class="last-updated">Last updated: {new Date().toLocaleDateString('en-UK', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+        <section>
+            <h2>Introduction</h2>
+            <p>Meridian ("we", "us", "our", or "Company") operates the meridian-directory.com website (the "Service").</p>
+            <p>This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data.</p>
+        </section>
+
+        <section>
+            <h2>Information Collection and Use</h2>
+            <p>We collect several different types of information for various purposes to provide and improve our Service to you.</p>
+            
+            <h3>Types of Data Collected:</h3>
+            <ul>
+                <li><strong>Personal Data:</strong> While using our Service, we may ask you to provide us with certain personally identifiable information that can be used to contact or identify you ("Personal Data"). This may include, but is not limited to:
+                    <ul>
+                        <li>Email address</li>
+                        <li>First name and last name</li>
+                        <li>Phone number</li>
+                        <li>Address, Post code</li>
+                        <li>Cookies and Usage Data</li>
+                    </ul>
+                </li>
+                <li><strong>Usage Data:</strong> We may also collect information on how the Service is accessed and used ("Usage Data"). This may include information such as your computer's Internet Protocol address (e.g. IP address), browser type, browser version, the pages you visit, the time and date of your visit, the time spent on those pages, and other diagnostic data.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Use of Data</h2>
+            <p>Meridian uses the collected data for various purposes:</p>
+            <ul>
+                <li>To provide and maintain our Service</li>
+                <li>To notify you about changes to our Service</li>
+                <li>To provide customer support</li>
+                <li>To gather analysis or valuable information so that we can improve our Service</li>
+                <li>To monitor the usage of our Service</li>
+                <li>To detect, prevent and address technical issues</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Security of Data</h2>
+            <p>The security of your data is important to us but remember that no method of transmission over the Internet or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.</p>
+        </section>
+
+        <section>
+            <h2>Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, please contact us at:</p>
+            <ul>
+                <li>By email: [email to be filled in]</li>
+                <li>By visiting: [contact page to be filled in]</li>
+            </ul>
+        </section>
+    </div>
+</BaseLayout>
+
+<style>
+    .legal-page {
+        max-width: 800px;
+        margin: 3rem auto;
+        padding: 2rem;
+    }
+
+    .legal-page h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .last-updated {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
+
+    .legal-page section {
+        margin: 2rem 0;
+    }
+
+    .legal-page h2 {
+        font-size: 1.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .legal-page h3 {
+        font-size: 1.1rem;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .legal-page p {
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .legal-page ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .legal-page li {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+</style>

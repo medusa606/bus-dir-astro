@@ -1,11 +1,11 @@
 # Meridian Directory - Development Todo
 
 ## Footer & Legal
-- [ ] Fill in privacy policy link
-- [ ] Fill in terms of service link
-- [ ] Fill in accessibility statement link
-- [ ] Research and document GDPR requirements for the site
-- [ ] Implement GDPR compliance features (e.g., cookie consent, data processing disclosures)
+- [x] Fill in privacy policy link → `/privacy`
+- [x] Fill in terms of service link → `/terms`
+- [x] Fill in accessibility statement link → `/accessibility`
+- [x] Research and document GDPR requirements for the site → See `GDPR_REQUIREMENTS.md`
+- [ ] Implement GDPR compliance features (e.g., cookie consent, data processing disclosures) → See `GDPR_IMPLEMENTATION_PLAN.md` for roadmap
 
 ## Google Maps Integration
 - [ ] Extract Google rating from Google Maps URLs
