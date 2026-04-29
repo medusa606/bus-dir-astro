@@ -533,7 +533,7 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                 </div>
             )}
 
-            {(type === 'city-category' || type === 'area-category') && getSubCategories(listings).length > 0 && (
+            {(type === 'city-category' || type === 'area-category') && categorySlug === 'restaurants' && getSubCategories(listings).length > 0 && (
                 <SubCategoryFilter 
                     category={catTitle}
                     subCategories={getSubCategories(listings)}
