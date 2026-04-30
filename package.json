@@ -13,6 +13,7 @@
     "illustrations": "node scripts/generate-illustrations.js"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.2",
     "@supabase/supabase-js": "^2.103.0",
     "astro": "^6.1.5",
     "csv-parse": "^6.2.1",

@@ -8,11 +8,14 @@
 - [ ] Implement GDPR compliance features (e.g., cookie consent, data processing disclosures) → See `GDPR_IMPLEMENTATION_PLAN.md` for roadmap
 
 ## Google Maps Integration
-- [ ] Display Google rating and review count on listing pages
+- [X] Display Google rating and review count on listing pages
 
 ## Sub-Category Enhancements
-- [ ] Add sub-category filtering section below area pills
+- [X] Add sub-category filtering section below area pills
 - [ ] Implement cuisine type filter functionality for search
+- [ ] combine similar sub_cat for food eg fish and fish and chips
+- [ ] set limit to number of sub_cats showing
+- [ ] set limit to areas
 
 ## User Actions & Navigation
 - [ ] Create contact/inquiry page for businesses to "List a Business"

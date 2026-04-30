@@ -146,7 +146,14 @@ const business = {
     // Opening hours - parse if it's a string, otherwise keep as-is
     opening_hours: dbBusiness.opening_hours ? 
         (typeof dbBusiness.opening_hours === 'string' 
-            ? JSON.parse(dbBusiness.opening_hours) 
+            ? (() => {
+                try {
+                    return JSON.parse(dbBusiness.opening_hours);
+                } catch (e) {
+                    // If it's not valid JSON, return null (will be handled in template)
+                    return null;
+                }
+            })()
             : dbBusiness.opening_hours
         ) : null,
     

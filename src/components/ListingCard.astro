@@ -22,7 +22,7 @@ const socials = [
     { key: 'social_youtube',   platform: 'youtube',   label: 'YouTube' },
 ].filter(s => listing[s.key]);
 ---
-<div class="card">
+<div class="card" data-sub-category={listing.sub_category ? listing.sub_category.toLowerCase() : ''}>
     <a href={href}>
         <img src={imgUrl} alt={listing.name} class="card__image">
         <div class="card__body">

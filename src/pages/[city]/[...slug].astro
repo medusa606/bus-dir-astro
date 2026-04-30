@@ -101,12 +101,15 @@ const cityTitle = slugToTitle(citySlug);
 const areaTitle = slugToTitle(areaSlug);
 const catTitle = slugToTitle(categorySlug);
 
+let allListings: any[] = [];
+
 if (type === 'city-category') {
     pageTitle = `${catTitle} in ${cityTitle}`;
     pageDescription = `Find the best ${catTitle.toLowerCase()} in ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: catTitle }];
     const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug).not('address', 'is', null);
-    listings = data || [];
+    allListings = data || [];
+    listings = allListings;
     // Apply sub-category filter if provided
     if (subCategorySlug) {
         listings = filterBySubCategory(listings, subCategorySlug);
@@ -117,7 +120,8 @@ if (type === 'city-category') {
     pageDescription = `Discover independent makers and traders in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle }];
     const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).not('address', 'is', null);
-    listings = data || [];
+    allListings = data || [];
+    listings = allListings;
     // Apply sub-category filter if provided
     if (subCategorySlug) {
         listings = filterBySubCategory(listings, subCategorySlug);
@@ -137,7 +141,8 @@ if (type === 'city-category') {
     pageDescription = `Find ${catTitle.toLowerCase()} in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle, href: `/${citySlug}/${areaSlug}` }, { label: catTitle }];
     const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug).not('address', 'is', null);
-    listings = data || [];
+    allListings = data || [];
+    listings = allListings;
     // Apply sub-category filter if provided
     if (subCategorySlug) {
         listings = filterBySubCategory(listings, subCategorySlug);
@@ -533,10 +538,10 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                 </div>
             )}
 
-            {(type === 'city-category' || type === 'area-category') && categorySlug === 'restaurants' && getSubCategories(listings).length > 0 && (
+            {(type === 'city-category' || type === 'area-category') && categorySlug === 'restaurants' && getSubCategories(allListings).length > 0 && (
                 <SubCategoryFilter 
                     category={catTitle}
-                    subCategories={getSubCategories(listings)}
+                    subCategories={getSubCategories(allListings)}
                     selectedSubCategory={subCategorySlug}
                 />
             )}
@@ -553,6 +558,44 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             )}
         </div>
     </section>
+
+    <script>
+        // Client-side sub-category filtering
+        function applySubCategoryFilter() {
+            const params = new URLSearchParams(window.location.search);
+            const selectedSubCategory = params.get('subCategory');
+            
+            if (!selectedSubCategory) return; // No filter active
+            
+            const cards = document.querySelectorAll('[data-sub-category]');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const cardSubCategory = card.getAttribute('data-sub-category');
+                const shouldShow = cardSubCategory === selectedSubCategory;
+                
+                // Hide/show the card and its parent containers
+                if (shouldShow) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Update the listings count display
+            const tierHeaderCount = document.querySelector('.tier-header__count');
+            if (tierHeaderCount) {
+                const pluralLabel = visibleCount === 1 ? 'listing' : 'listings';
+                tierHeaderCount.textContent = `${visibleCount} ${pluralLabel}`;
+            }
+        }
+        
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', applySubCategoryFilter);
+        // Also run immediately in case DOM is already ready
+        applySubCategoryFilter();
+    </script>
 
     <section class="section">
         <div class="container">
