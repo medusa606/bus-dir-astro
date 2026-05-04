@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import SubCategoryFilter from '../../components/SubCategoryFilter.astro';
+import AreaFilter from '../../components/AreaFilter.astro';
 import TieredListings from '../../components/TieredListings.astro';
 import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
@@ -526,16 +527,7 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             )}
 
             {type === 'city-category' && (
-                <div class="neighbourhood-filter">
-                    <p class="neighbourhood-filter__label">Filter by neighbourhood</p>
-                    <div class="browse-filters browse-filters--compact">
-                        {[...new Set(listings.map(l => l.area_slug).filter(Boolean))].sort().map(area => (
-                            <a href={`/${citySlug}/${area}/${categorySlug}`} class="filter-btn filter-btn--sm" style="text-transform: capitalize;">
-                                {area.replace(/-/g, ' ')}
-                            </a>
-                        ))}
-                    </div>
-                </div>
+                <AreaFilter listings={listings} citySlug={citySlug} categorySlug={categorySlug} />
             )}
 
             {(type === 'city-category' || type === 'area-category') && categorySlug === 'restaurants' && getSubCategories(allListings).length > 0 && (
