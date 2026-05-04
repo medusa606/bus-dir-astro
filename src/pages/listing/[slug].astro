@@ -4,6 +4,7 @@ import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
 import SocialFeed from '../../components/SocialFeed.astro';
+import DeliveryLinks from '../../components/DeliveryLinks.astro';
 import Map from '../../components/Map.astro';
 import { supabase } from '../../lib/supabase.js';
 import { getEmoji } from '../../utils/helpers.js';
@@ -170,6 +171,11 @@ const business = {
     social_tiktok: dbBusiness.social_tiktok,
     social_youtube: dbBusiness.social_youtube,
     social_linkedin: dbBusiness.social_linkedin,
+    
+    // Delivery platform links
+    delivery_deliveroo: dbBusiness.delivery_deliveroo,
+    delivery_ubereats: dbBusiness.delivery_ubereats,
+    delivery_opentable: dbBusiness.delivery_opentable,
     
     // Placeholder for reviews - add when review data is available
     reviews: null,
@@ -354,12 +360,20 @@ const business = {
             
             <!-- Socials Widget with Feed Wheel -->
             {business.social_facebook || business.social_instagram || business.social_twitter || 
-             business.social_tiktok || business.social_youtube || business.social_linkedin ? (
+             business.social_tiktok || business.social_youtube || business.social_linkedin ||
+             business.delivery_deliveroo || business.delivery_ubereats || business.delivery_opentable ? (
                 <div class="sidebar-widget">
                     <h3>Connect</h3>
                     <SocialLinks listing={business} />
                     
                     <SocialFeed feed={business.social_feed} maxItems={3} />
+                    
+                    {(business.delivery_deliveroo || business.delivery_ubereats || business.delivery_opentable) && (
+                        <>
+                            <h3 style="margin-top: var(--space-lg); margin-bottom: var(--space-md);">Order Online</h3>
+                            <DeliveryLinks listing={business} />
+                        </>
+                    )}
                 </div>
             ) : null}
             

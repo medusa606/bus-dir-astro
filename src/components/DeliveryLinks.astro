@@ -1,0 +1,71 @@
+---
+import DeliveryIcon from './DeliveryIcon.astro';
+
+const { listing, small = false } = Astro.props;
+
+// Delivery platform fields
+const deliveryPlatforms = [
+    { key: 'delivery_deliveroo', platform: 'deliveroo', label: 'Deliveroo' },
+    { key: 'delivery_ubereats', platform: 'ubereats', label: 'Uber Eats' },
+    { key: 'delivery_opentable', platform: 'opentable', label: 'OpenTable' },
+].filter(d => listing[d.key]);
+
+const iconSize = small ? 14 : 18;
+---
+
+{deliveryPlatforms.length > 0 && (
+    <div class={`delivery-links ${small ? 'delivery-links--sm' : ''}`}>
+        {deliveryPlatforms.map(d => (
+            <a
+                href={listing[d.key]}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="delivery-link"
+                title={d.label}
+            >
+                <DeliveryIcon platform={d.platform} size={iconSize} />
+            </a>
+        ))}
+    </div>
+)}
+
+<style>
+    .delivery-links {
+        display: flex;
+        gap: var(--space-md);
+        padding: var(--space-md) 0;
+        border-top: 1px solid var(--parchment);
+        margin-top: var(--space-md);
+    }
+
+    .delivery-links--sm {
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+        padding: var(--space-sm) 0;
+    }
+
+    .delivery-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        color: var(--powder-blush);
+        text-decoration: none;
+        border-radius: var(--radius-sm);
+        transition: var(--transition);
+        background: rgba(224, 175, 160, 0.08);
+        border: 1px solid rgba(224, 175, 160, 0.2);
+    }
+
+    .delivery-link:hover {
+        background: rgba(224, 175, 160, 0.16);
+        border-color: var(--powder-blush);
+        transform: translateY(-2px);
+    }
+
+    .delivery-links--sm .delivery-link {
+        width: 28px;
+        height: 28px;
+    }
+</style>

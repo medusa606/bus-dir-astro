@@ -56,6 +56,11 @@ export const SAMPLE_CAFE = {
     social_youtube: null,
     social_linkedin: null,
     
+    // Delivery platform links
+    delivery_deliveroo: 'https://deliveroo.co.uk/menu/portland/pearl-district/artisan-coffee-house',
+    delivery_ubereats: null,
+    delivery_opentable: null,
+    
     reviews: [
         {
             author: 'Sarah M.',
@@ -141,6 +146,11 @@ export const SAMPLE_RESTAURANT = {
     social_tiktok: null,
     social_youtube: null,
     social_linkedin: null,
+    
+    // Delivery platform links
+    delivery_deliveroo: 'https://deliveroo.co.uk/menu/portland/hawthorne/terra-mediterranean',
+    delivery_ubereats: 'https://www.ubereats.com/gb/restaurant/terra-mediterranean',
+    delivery_opentable: 'https://www.opentable.com/r/terra-mediterranean-portland',
     
     reviews: [
         {
