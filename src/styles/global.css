@@ -233,7 +233,7 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 .card__subtitle { font-size: 0.9rem; color: var(--grey-olive); }
 .card__excerpt {
   font-size: 0.9rem; color: var(--grey-olive); line-height: 1.5;
-  margin-top: var(--space-sm); display: -webkit-box;
+  margin-top: var(--space-sm); margin-bottom: var(--space-lg); display: -webkit-box;
   -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 
@@ -552,8 +552,8 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 /* ========================================
    SOCIAL LINKS & ICONS
    ======================================== */
-.social-links { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
-.social-links--sm { gap: 6px; }
+.social-links { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin: 0; padding: 0; }
+.social-links--sm { gap: 6px; margin: 0; padding: 0; }
 
 .social-link {
     width: 42px;
@@ -568,8 +568,8 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 }
 
 .social-links--sm .social-link {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
 }
 
 /* THIS is the key fix — control SVG size via CSS, not attributes */

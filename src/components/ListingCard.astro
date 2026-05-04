@@ -43,7 +43,7 @@ const cardClasses = [
         )}
         {listing.ranking_tier === 'editors_choice' && (
             <div class="card-marker card-marker--editors" aria-hidden="true">
-                <img src="/awards/rosette-gpt-scl.png" alt="" class="card-marker__image">
+                <img src="/awards/rosette-vector-sml.png" alt="" class="card-marker__image">
             </div>
         )}
     </div>
@@ -68,20 +68,20 @@ const cardClasses = [
                 </p>
             )}
             {listing.description && <p class="card__excerpt">{truncate(listing.description)}</p>}
+            {socials.length > 0 && (
+                <div style="margin: var(--space-lg) var(--space-lg) 0 0;">
+                    <div class="social-links social-links--sm">
+                        {socials.map(s => (
+                            <a href={normalizeSocialUrl(s.platform, listing[s.key])} target="_blank" rel="noopener noreferrer" class="social-link" title={s.label}>
+                                <SocialIcon platform={s.platform} size={14} />
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     </a>
     </div>
-    {socials.length > 0 && (
-        <div style="padding: 0 var(--space-lg) var(--space-md);">
-            <div class="social-links social-links--sm">
-                {socials.map(s => (
-                    <a href={normalizeSocialUrl(s.platform, listing[s.key])} target="_blank" rel="noopener noreferrer" class="social-link" title={s.label}>
-                        <SocialIcon platform={s.platform} size={14} />
-                    </a>
-                ))}
-            </div>
-        </div>
-    )}
     {listing.ranking_tier === 'editors_choice' && listing.editors_notes && (
         <aside class="editor-note">
             <p class="editor-note__eyebrow">Locale says...</p>
