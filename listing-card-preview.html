@@ -319,6 +319,95 @@
         max-width: 520px;
       }
     }
+
+    /* ── Delivery buttons section ─────────────────────────────── */
+    .delivery-section {
+      margin-top: 64px;
+    }
+
+    .delivery-section h2 {
+      margin: 16px 0 8px;
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 400;
+    }
+
+    .delivery-section > p {
+      margin: 0 0 32px;
+      font-size: 1rem;
+      color: var(--grey-olive);
+      line-height: 1.65;
+    }
+
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 400px));
+      gap: 28px;
+    }
+
+    .delivery-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(188, 184, 177, 0.45);
+      box-shadow: var(--shadow-sm);
+      padding: 24px;
+    }
+
+    .delivery-card__label {
+      margin: 0 0 6px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--grey-olive);
+      font-weight: 600;
+    }
+
+    .delivery-card__title {
+      margin: 0 0 16px;
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      line-height: 1.2;
+    }
+
+    .delivery-links {
+      display: flex;
+      gap: 12px;
+      padding: 14px 0 0;
+      border-top: 1px solid var(--parchment);
+      margin-top: 4px;
+    }
+
+    .delivery-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      color: var(--powder-blush);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      background: rgba(224, 175, 160, 0.08);
+      border: 1px solid rgba(224, 175, 160, 0.2);
+    }
+
+    .delivery-link:hover {
+      background: rgba(224, 175, 160, 0.16);
+      border-color: var(--powder-blush);
+      transform: translateY(-2px);
+    }
+
+    .delivery-link svg {
+      width: 80%;
+      height: 80%;
+      fill: currentColor;
+    }
+
+    @media (max-width: 860px) {
+      .delivery-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -418,6 +507,63 @@
         <p class="caption">This is the richer treatment: stronger border, rosette marker, and a distinct editorial note beneath.</p>
       </article>
     </section>
+
+    <!-- ── Delivery buttons preview ──────────────────────────── -->
+    <section class="delivery-section">
+      <div class="eyebrow">Delivery links · Deliveroo &amp; Uber Eats</div>
+      <h2>Order Online buttons</h2>
+      <p>
+        Delivery platform icons appear below the social row when a listing has at least one delivery URL in the database.
+        Only populated platforms are shown — buttons are hidden entirely if no delivery links exist.
+      </p>
+
+      <div class="delivery-grid">
+
+        <!-- Deliveroo only -->
+        <div class="delivery-card">
+          <p class="delivery-card__label">Deliveroo only</p>
+          <p class="delivery-card__title">Parsons Bakery</p>
+          <div class="delivery-links">
+            <a href="https://deliveroo.co.uk/menu/bristol/clifton/parsons-bakery-ltd"
+               target="_blank" rel="noopener noreferrer"
+               class="delivery-link" title="Order on Deliveroo">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+                <rect width="128" height="128" rx="24" fill="none"/>
+                <path fill="currentColor" d="M40 32c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V40c0-4.4-3.6-8-8-8H40zm24 16c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8zm-16 24c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8zm32 0c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Deliveroo + Uber Eats -->
+        <div class="delivery-card">
+          <p class="delivery-card__label">Deliveroo + Uber Eats</p>
+          <p class="delivery-card__title">Hatter House Cafe</p>
+          <div class="delivery-links">
+            <a href="https://deliveroo.co.uk/menu/bristol/broadmead-and-cabot-circus/hatter-house-cafe"
+               target="_blank" rel="noopener noreferrer"
+               class="delivery-link" title="Order on Deliveroo">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+                <rect width="128" height="128" rx="24" fill="none"/>
+                <path fill="currentColor" d="M40 32c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V40c0-4.4-3.6-8-8-8H40zm24 16c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8zm-16 24c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8zm32 0c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8z"/>
+              </svg>
+            </a>
+            <a href="https://www.ubereats.com/gb/store/hatter-house-cafe/sh-wsytnS82zr3490O4fUQ"
+               target="_blank" rel="noopener noreferrer"
+               class="delivery-link" title="Order on Uber Eats">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+                <g fill="currentColor">
+                  <circle cx="64" cy="40" r="12"/>
+                  <path d="M64 56c-8.8 0-16 7.2-16 16v32h8V72c0-4.4 3.6-8 8-8s8 3.6 8 8v32h8V72c0-8.8-7.2-16-16-16z"/>
+                </g>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 </body>
 </html>
