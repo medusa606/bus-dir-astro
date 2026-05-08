@@ -7,6 +7,7 @@ import TieredListings from '../../components/TieredListings.astro';
 import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
 import SocialFeed from '../../components/SocialFeed.astro';
+import DeliveryLinks from '../../components/DeliveryLinks.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
@@ -414,6 +415,14 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                 <SocialLinks listing={listing} />
                 <SocialFeed feed={listing.social_feed} maxItems={3} />
             </div>
+
+            <!-- Order Online -->
+            {(listing.delivery_deliveroo || listing.delivery_ubereats || listing.delivery_opentable) && (
+                <div class="sidebar-widget">
+                    <h3>Order Online</h3>
+                    <DeliveryLinks listing={listing} />
+                </div>
+            )}
 
             <!-- Map Widget -->
             {listing.address && listing.latitude && listing.longitude && (

@@ -74,22 +74,30 @@ export async function getStaticPaths() {
     console.log('Total valid routes:', validListings.length);
     return validListings;
 }
-
 const { slug } = Astro.params;
+
+console.log('🔍 [DEBUG] Fetching listing for slug:', slug);
 
 // Fetch business data from Supabase
 const { data: dbBusiness, error } = await supabase
     .from('listings')
-    .select('*')
+    .select('id, name, business_slug, status, delivery_deliveroo, delivery_ubereats, delivery_opentable, social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin, phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, rating, review_count, city, category, area, illustration_status, illustration_url, category_slug, google_maps_url, google_summary')
     .eq('business_slug', slug)
-    .eq('status', 'Published')
+    .or('status.not.in.(closed,unverified),status.is.null')
     .single();
 
+console.log('🔍 [DEBUG] Query error:', error);
+console.log('🔍 [DEBUG] Raw dbBusiness:', JSON.stringify(dbBusiness, null, 2));
+
 if (!dbBusiness || error) {
+    console.error('❌ Listing fetch error for slug:', slug, error);
     return Astro.redirect('/404');
 }
 
-// Local illustration overrides — keyed by business_slug
+console.log('🔍 [DEBUG] delivery_deliveroo:', dbBusiness.delivery_deliveroo);
+console.log('🔍 [DEBUG] delivery_ubereats:', dbBusiness.delivery_ubereats);
+console.log('🔍 [DEBUG] delivery_opentable:', dbBusiness.delivery_opentable);
+
 // Used until illustration_url column is added to Supabase
 const LOCAL_ILLUSTRATIONS = {
     'no12-easton-cafe': '/illustrations/bristol-easton-no12cafe.webp',

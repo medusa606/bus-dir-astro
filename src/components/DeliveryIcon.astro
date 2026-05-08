@@ -2,9 +2,14 @@
 const { platform, size = 18 } = Astro.props;
 
 const icons = {
-    deliveroo: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="24" fill="none"/><path fill="currentColor" d="M40 32c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V40c0-4.4-3.6-8-8-8H40zm24 16c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8zm-16 24c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8zm32 0c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8 3.6-8 8-8z"/></svg>`,
-    ubereats: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><g fill="currentColor"><circle cx="64" cy="40" r="12"/><path d="M64 56c-8.8 0-16 7.2-16 16v32h8V72c0-4.4 3.6-8 8-8s8 3.6 8 8v32h8V72c0-8.8-7.2-16-16-16z"/></g></svg>`,
-    opentable: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><path fill="currentColor" d="M64 16c26.5 0 48 21.5 48 48s-21.5 48-48 48-48-21.5-48-48 21.5-48 48-48m0-8C35.1 8 12 31.1 12 64s23.1 56 52 56 56-23.1 56-56-23.1-56-52-56zm0 28c0 2.2 1.8 4 4 4h24c2.2 0 4-1.8 4-4s-1.8-4-4-4H68c-2.2 0-4 1.8-4 4zm0 16c0 2.2 1.8 4 4 4h24c2.2 0 4-1.8 4-4s-1.8-4-4-4H68c-2.2 0-4 1.8-4 4zm0 16c0 2.2 1.8 4 4 4h24c2.2 0 4-1.8 4-4s-1.8-4-4-4H68c-2.2 0-4 1.8-4 4z"/></svg>`
+    // Official Deliveroo logo - teal brand color
+    deliveroo: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><g fill="currentColor"><circle cx="12" cy="12" r="3.5"/><circle cx="24" cy="8" r="3.5"/><circle cx="36" cy="12" r="3.5"/><circle cx="12" cy="24" r="3.5"/><circle cx="36" cy="24" r="3.5"/><circle cx="24" cy="32" r="3.5"/><circle cx="12" cy="36" r="3.5"/><circle cx="24" cy="40" r="3.5"/><circle cx="36" cy="36" r="3.5"/></g></svg>`,
+    
+    // Official Uber Eats logo
+    ubereats: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" fill="currentColor" rx="8"/><text x="24" y="33" font-size="22" font-weight="900" fill="white" text-anchor="middle" font-family="Arial, sans-serif" letter-spacing="-1">UE</text></svg>`,
+    
+    // OpenTable logo
+    opentable: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="14" y1="20" x2="34" y2="20" stroke="currentColor" stroke-width="2"/><line x1="14" y1="24" x2="34" y2="24" stroke="currentColor" stroke-width="2"/><line x1="14" y1="28" x2="34" y2="28" stroke="currentColor" stroke-width="2"/></svg>`
 };
 ---
 
@@ -22,8 +27,9 @@ const icons = {
     }
 
     .icon-container :global(svg) {
-        width: 80%;
-        height: 80%;
+        width: 85%;
+        height: 85%;
         fill: currentColor;
+        stroke: currentColor;
     }
 </style>
