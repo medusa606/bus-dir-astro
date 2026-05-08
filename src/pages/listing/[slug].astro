@@ -81,7 +81,7 @@ console.log('🔍 [DEBUG] Fetching listing for slug:', slug);
 // Fetch business data from Supabase
 const { data: dbBusiness, error } = await supabase
     .from('listings')
-    .select('id, name, business_slug, status, delivery_deliveroo, delivery_ubereats, delivery_opentable, social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin, phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, city_slug, category, area_slug, illustration_status, illustration_url, category_slug, google_maps_url, google_summary, google_rating, google_review_count, image_key, description, story_draft, photo_url')
+    .select('id, name, business_slug, status, delivery_deliveroo, delivery_ubereats, delivery_opentable, social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin, phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, city_slug, category, area_slug, illustration_status, illustration_url, category_slug, google_maps_url, google_summary, google_rating, google_review_count')
     .eq('business_slug', slug)
     .or('status.not.in.(closed,unverified),status.is.null')
     .single();
@@ -136,12 +136,11 @@ const business = {
     rating: dbBusiness.google_rating,
     review_count: dbBusiness.google_review_count,
     illustration_url: illustrationUrl,
-    image_key: dbBusiness.image_key || null,
     tags: dbBusiness.tags || [],
-    main_image: illustrationUrl || dbBusiness.image_key || imageCategoryImage || tagBasedImage || dbBusiness.image_url || dbBusiness.photo_url,
+    main_image: illustrationUrl || imageCategoryImage || tagBasedImage || dbBusiness.image_url,
     tagline: dbBusiness.google_summary,
-    description: dbBusiness.description,
-    owner_writeup: dbBusiness.story_draft,
+    description: null,
+    owner_writeup: null,
     
     // Contact info
     address: dbBusiness.address,
