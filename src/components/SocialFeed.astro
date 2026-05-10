@@ -9,10 +9,10 @@ interface Props {
     maxItems?: number;
 }
 
-const { feed = [], maxItems = 3 } = Astro.props;
+const { feed, maxItems = 3 } = Astro.props;
 
 // Show only the first maxItems
-const displayedFeed = feed.slice(0, maxItems);
+const displayedFeed = (feed || []).slice(0, maxItems);
 
 const platformColors = {
     instagram: '#E1306C',

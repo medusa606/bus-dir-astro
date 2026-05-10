@@ -568,8 +568,8 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 }
 
 .social-links--sm .social-link {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
 }
 
 /* THIS is the key fix — control SVG size via CSS, not attributes */

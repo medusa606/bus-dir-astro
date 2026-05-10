@@ -1,0 +1,59 @@
+---
+import ListingCard from './ListingCard.astro';
+
+const { listings } = Astro.props;
+
+if (!listings || listings.length === 0) {
+    return;
+}
+---
+
+<section class="similar-listings" aria-label="Similar places">
+    <div class="similar-listings__inner">
+        <h2 class="similar-listings__heading">Similar Places</h2>
+        <div class="similar-listings__grid">
+            {listings.map(listing => (
+                <ListingCard listing={listing} />
+            ))}
+        </div>
+    </div>
+</section>
+
+<style>
+    .similar-listings {
+        background: var(--parchment);
+        padding: var(--space-3xl) 0 var(--space-4xl);
+        margin-top: var(--space-3xl);
+    }
+
+    .similar-listings__inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 var(--space-lg);
+    }
+
+    .similar-listings__heading {
+        font-family: var(--font-serif);
+        font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+        color: var(--taupe);
+        margin-bottom: var(--space-xl);
+    }
+
+    .similar-listings__grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+    }
+
+    @media (max-width: 1024px) {
+        .similar-listings__grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .similar-listings__grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

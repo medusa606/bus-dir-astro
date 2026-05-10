@@ -6,8 +6,10 @@ import SocialLinks from '../../components/SocialLinks.astro';
 import SocialFeed from '../../components/SocialFeed.astro';
 import DeliveryLinks from '../../components/DeliveryLinks.astro';
 import Map from '../../components/Map.astro';
+import SimilarListings from '../../components/SimilarListings.astro';
+import NearbyCarousel from '../../components/NearbyCarousel.astro';
 import { supabase } from '../../lib/supabase.js';
-import { getEmoji } from '../../utils/helpers.js';
+import { getEmoji, haversineDistance, normaliseCategory } from '../../utils/helpers.js';
 import { 
     formatOpeningHours, 
     isCurrentlyOpen, 
@@ -17,6 +19,40 @@ import {
 
 // Generate static paths for all published listings
 export async function getStaticPaths() {
+    // Paginated fetch of all active listings for similarity / nearby computation
+    const CARD_FIELDS = [
+        'id', 'name', 'business_slug', 'city_slug', 'area_slug', 'status',
+        'category', 'category_slug', 'sub_category', 'tags', 'ranking_tier',
+        'latitude', 'longitude',
+        'image_url', 'image_key', 'image_category', 'illustration_status', 'illustration_url',
+        'google_rating', 'google_review_count', 'google_summary', 'description',
+        'social_facebook', 'social_instagram', 'social_twitter',
+        'social_tiktok', 'social_linkedin', 'social_youtube',
+    ].join(', ');
+
+    const PAGE_SIZE = 1000;
+    let allListings = [];
+    let page = 0;
+    let keepFetching = true;
+
+    while (keepFetching) {
+        const { data: batch, error: batchError } = await supabase
+            .from('listings')
+            .select(CARD_FIELDS)
+            .or('status.not.in.(closed,unverified),status.is.null')
+            .not('business_slug', 'is', null)
+            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (batchError) {
+            console.error('Supabase error fetching all listings:', batchError);
+            keepFetching = false;
+        } else {
+            allListings = allListings.concat(batch || []);
+            keepFetching = (batch && batch.length === PAGE_SIZE);
+            page++;
+        }
+    }
+
     const { data: listings, error } = await supabase
         .from('listings')
         .select('business_slug, city_slug')
@@ -66,7 +102,8 @@ export async function getStaticPaths() {
                 params: { slug: cleanSlug },
                 props: { 
                     slug: cleanSlug,
-                    citySlug: listing.city_slug 
+                    citySlug: listing.city_slug,
+                    allListings,
                 }
             };
         });
@@ -74,7 +111,9 @@ export async function getStaticPaths() {
     console.log('Total valid routes:', validListings.length);
     return validListings;
 }
+
 const { slug } = Astro.params;
+const { allListings = [] } = Astro.props;
 
 console.log('🔍 [DEBUG] Fetching listing for slug:', slug);
 
@@ -158,7 +197,22 @@ const business = {
                 try {
                     return JSON.parse(dbBusiness.opening_hours);
                 } catch (e) {
-                    // If it's not valid JSON, return null (will be handled in template)
+                    // Try pipe- or semicolon-separated format
+                    // e.g. "Monday: 5:00 – 11:00 PM; Tuesday: ..." or "Monday: ... | Tuesday: ..."
+                    const raw = dbBusiness.opening_hours;
+                    const sep = raw.includes('|') ? '|' : raw.includes(';') ? ';' : null;
+                    if (sep) {
+                        const parsed = {};
+                        raw.split(sep).forEach(entry => {
+                            const colonIdx = entry.indexOf(':');
+                            if (colonIdx !== -1) {
+                                const day = entry.substring(0, colonIdx).trim();
+                                const hrs = entry.substring(colonIdx + 1).trim();
+                                if (day && hrs) parsed[day.toLowerCase()] = hrs;
+                            }
+                        });
+                        return Object.keys(parsed).length > 0 ? parsed : null;
+                    }
                     return null;
                 }
             })()
@@ -188,6 +242,51 @@ const business = {
     reviews: null,
     social_feed: null
 };
+
+// ── Similar listings ─────────────────────────────────────────────────────────
+// Tier score weights: editors_choice=100, recommended=50, google_ranked=10, standard=0
+const TIER_SCORE = { editors_choice: 100, recommended: 50, google_ranked: 10, standard: 0 };
+
+const currentTags = new Set(dbBusiness.tags || []);
+
+const normCat = normaliseCategory(dbBusiness.category_slug);
+const similarListings = allListings
+    .filter(l =>
+        l.business_slug !== dbBusiness.business_slug &&
+        normaliseCategory(l.category_slug) === normCat
+    )
+    .map(l => {
+        const tagMatches = (l.tags || []).filter(t => currentTags.has(t)).length;
+        const score = (TIER_SCORE[l.ranking_tier] ?? 0) + tagMatches * 5;
+        return { ...l, _score: score };
+    })
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 6);
+
+// ── Nearby listings ──────────────────────────────────────────────────────────
+const NEARBY_RADIUS_M = 500;
+const TIER_RANK = { editors_choice: 0, recommended: 1, google_ranked: 2, standard: 3 };
+
+const nearbyListings = (dbBusiness.latitude && dbBusiness.longitude)
+    ? allListings
+        .filter(l =>
+            l.business_slug !== dbBusiness.business_slug &&
+            l.latitude && l.longitude
+        )
+        .map(l => ({
+            ...l,
+            _distance: haversineDistance(
+                dbBusiness.latitude, dbBusiness.longitude,
+                l.latitude, l.longitude
+            )
+        }))
+        .filter(l => l._distance <= NEARBY_RADIUS_M)
+        .sort((a, b) => {
+            const tierDiff = (TIER_RANK[a.ranking_tier] ?? 3) - (TIER_RANK[b.ranking_tier] ?? 3);
+            return tierDiff !== 0 ? tierDiff : a._distance - b._distance;
+        })
+        .slice(0, 8)
+    : [];
 ---
 
 <BaseLayout title={`${business.name} - Meridian Directory`}>
@@ -392,6 +491,9 @@ const business = {
             </div>
         </div>
     </div>
+
+    <SimilarListings listings={similarListings} />
+    <NearbyCarousel listings={nearbyListings} />
 </BaseLayout>
 
 <style>

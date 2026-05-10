@@ -1,0 +1,338 @@
+---
+import { getTagBasedImage, getImageByCategory } from '../utils/categoryImages.js';
+import { RANKING_TIERS } from '../utils/helpers.js';
+
+const { listings } = Astro.props;
+
+if (!listings || listings.length === 0) {
+    return;
+}
+
+function formatDistance(metres) {
+    if (metres < 100) return '<100m away';
+    if (metres < 1000) return `~${Math.round(metres / 10) * 10}m away`;
+    return `~${(metres / 1000).toFixed(1)}km away`;
+}
+
+function getCardImage(listing) {
+    if (listing.illustration_status === 'completed' && listing.illustration_url) {
+        return listing.illustration_url;
+    }
+    if (listing.image_category) {
+        const cat = getImageByCategory(listing.image_category, listing.business_slug);
+        if (cat) return cat;
+    }
+    return getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug)
+        || listing.image_url
+        || '/placeholders/default.svg';
+}
+---
+
+<section class="nearby" aria-label="Nearby listings">
+    <div class="nearby__inner">
+        <h2 class="nearby__heading">Nearby</h2>
+        <div class="nearby__track-wrapper">
+            <button class="nearby__arrow nearby__arrow--prev" aria-label="Scroll left" data-dir="-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+
+            <div class="nearby__track" role="list">
+                {listings.map(listing => {
+                    const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
+                    const imgSrc = getCardImage(listing);
+                    const tier = RANKING_TIERS[listing.ranking_tier];
+                    const showBadge = listing.ranking_tier === 'editors_choice' || listing.ranking_tier === 'recommended';
+                    return (
+                        <a href={href} class="nearby-card" role="listitem">
+                            <div class="nearby-card__image-wrap">
+                                <img
+                                    src={imgSrc}
+                                    alt={listing.name}
+                                    class="nearby-card__image"
+                                    loading="lazy"
+                                />
+                                {showBadge && (
+                                    <span class={`nearby-card__badge nearby-card__badge--${listing.ranking_tier === 'editors_choice' ? 'editors' : 'recommended'}`}>
+                                        {listing.ranking_tier === 'editors_choice' ? '👑' : '⭐'}
+                                    </span>
+                                )}
+                            </div>
+                            <div class="nearby-card__body">
+                                <p class="nearby-card__name">{listing.name}</p>
+                                {listing.category && (
+                                    <span class="nearby-card__category">{listing.category}</span>
+                                )}
+                                <span class="nearby-card__distance">{formatDistance(listing._distance)}</span>
+                            </div>
+                        </a>
+                    );
+                })}
+            </div>
+
+            <button class="nearby__arrow nearby__arrow--next" aria-label="Scroll right" data-dir="1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+        </div>
+    </div>
+</section>
+
+<style>
+    .nearby {
+        padding: var(--space-3xl) 0 var(--space-4xl);
+        background: var(--white);
+    }
+
+    .nearby__inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 var(--space-lg);
+    }
+
+    .nearby__heading {
+        font-family: var(--font-serif);
+        font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+        color: var(--taupe);
+        margin-bottom: var(--space-xl);
+    }
+
+    /* Outer wrapper for arrows + faded track */
+    .nearby__track-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    /* The scrollable strip, with edge fade mask */
+    .nearby__track {
+        display: flex;
+        gap: var(--space-md);
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        /* Fade edges to entice scrolling */
+        -webkit-mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            black 10%,
+            black 90%,
+            transparent 100%
+        );
+        mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            black 10%,
+            black 90%,
+            transparent 100%
+        );
+        flex: 1;
+        min-width: 0;
+    }
+
+    .nearby__track::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Arrow buttons */
+    .nearby__arrow {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 1.5px solid var(--silver, #d1cdc8);
+        background: var(--white);
+        box-shadow: var(--shadow-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--taupe);
+        transition: opacity 0.2s, box-shadow 0.2s, transform 0.15s;
+        z-index: 2;
+    }
+
+    .nearby__arrow svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .nearby__arrow:hover:not(:disabled) {
+        box-shadow: var(--shadow-lg);
+        transform: scale(1.08);
+    }
+
+    .nearby__arrow:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    /* Individual card */
+    .nearby-card {
+        flex: 0 0 240px;
+        scroll-snap-align: center;
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(70, 63, 58, 0.08);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition: box-shadow 0.2s, transform 0.2s;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .nearby-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .nearby-card__image-wrap {
+        position: relative;
+        width: 100%;
+        height: 160px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .nearby-card__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .nearby-card__badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 1.1rem;
+        line-height: 1;
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+
+    .nearby-card__body {
+        padding: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        flex: 1;
+    }
+
+    .nearby-card__name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--taupe);
+        margin: 0;
+        /* 2-line clamp */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.35;
+    }
+
+    .nearby-card__category {
+        font-size: 0.78rem;
+        color: var(--grey-olive, #7a7068);
+        background: var(--parchment);
+        padding: 2px 8px;
+        border-radius: var(--radius-sm);
+        align-self: flex-start;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .nearby-card__distance {
+        font-size: 0.8rem;
+        color: var(--powder-blush);
+        font-weight: 500;
+        margin-top: auto;
+    }
+
+    @media (max-width: 768px) {
+        .nearby__arrow {
+            display: none;
+        }
+
+        .nearby__track {
+            -webkit-mask-image: linear-gradient(
+                to right,
+                transparent 0%,
+                black 6%,
+                black 94%,
+                transparent 100%
+            );
+            mask-image: linear-gradient(
+                to right,
+                transparent 0%,
+                black 6%,
+                black 94%,
+                transparent 100%
+            );
+        }
+
+        .nearby-card {
+            flex: 0 0 75vw;
+            max-width: 300px;
+        }
+    }
+</style>
+
+<script>
+    // Arrow scroll behaviour — runs client-side after hydration
+    (function () {
+        const sections = document.querySelectorAll('.nearby');
+
+        sections.forEach(section => {
+            const track = section.querySelector('.nearby__track');
+            const prevBtn = section.querySelector('.nearby__arrow--prev');
+            const nextBtn = section.querySelector('.nearby__arrow--next');
+
+            if (!track || !prevBtn || !nextBtn) return;
+
+            function getScrollAmount() {
+                // Scroll by one card width (first card's offsetWidth + gap)
+                const card = track.querySelector('.nearby-card');
+                if (!card) return 260;
+                // gap is --space-md = 1rem = 16px typically
+                const gap = parseInt(getComputedStyle(track).gap) || 16;
+                return card.offsetWidth + gap;
+            }
+
+            function updateArrows() {
+                const atStart = track.scrollLeft <= 4;
+                const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
+                prevBtn.disabled = atStart;
+                nextBtn.disabled = atEnd;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                track.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
+            });
+
+            nextBtn.addEventListener('click', () => {
+                track.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
+            });
+
+            track.addEventListener('scroll', updateArrows, { passive: true });
+
+            // Set initial state
+            updateArrows();
+        });
+    })();
+</script>

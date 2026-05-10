@@ -10,7 +10,9 @@ import SocialFeed from '../../components/SocialFeed.astro';
 import DeliveryLinks from '../../components/DeliveryLinks.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
-import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
+import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory, haversineDistance } from '../../utils/helpers.js';
+import SimilarListings from '../../components/SimilarListings.astro';
+import NearbyCarousel from '../../components/NearbyCarousel.astro';
 import { getCategoryFallbackImage, getTagBasedImage, getImageByCategory } from '../../utils/categoryImages.js';
 import { getSubCategories, filterBySubCategory } from '../../utils/subCategoryHelpers.js';
 
@@ -78,16 +80,45 @@ export async function getStaticPaths() {
         if (l.area_slug && l.business_slug) {
             const areaSlug = String(l.area_slug).toLowerCase().trim();
             const businessSlug = String(l.business_slug).toLowerCase().trim();
+
+            // Compute similar listings: same category (normalised), scored by tier + tag overlap
+            const TIER_SCORE = { editors_choice: 100, recommended: 50, google_ranked: 10, standard: 0 };
+            const normCat = normaliseCategory(l.category_slug);
+            const currentTags = new Set(l.tags || []);
+            const similarListings = allListings
+                .filter(o => o.business_slug !== l.business_slug && normaliseCategory(o.category_slug) === normCat)
+                .map(o => {
+                    const tagMatches = (o.tags || []).filter(t => currentTags.has(t)).length;
+                    return { ...o, _score: (TIER_SCORE[o.ranking_tier] ?? 0) + tagMatches * 5 };
+                })
+                .sort((a, b) => b._score - a._score)
+                .slice(0, 6);
+
+            // Compute nearby listings: ≤500m, sorted by tier then distance
+            const NEARBY_RADIUS_M = 500;
+            const TIER_RANK = { editors_choice: 0, recommended: 1, google_ranked: 2, standard: 3 };
+            const nearbyListings = (l.latitude && l.longitude)
+                ? allListings
+                    .filter(o => o.business_slug !== l.business_slug && o.latitude && o.longitude)
+                    .map(o => ({ ...o, _distance: haversineDistance(l.latitude, l.longitude, o.latitude, o.longitude) }))
+                    .filter(o => o._distance <= NEARBY_RADIUS_M)
+                    .sort((a, b) => {
+                        const td = (TIER_RANK[a.ranking_tier] ?? 3) - (TIER_RANK[b.ranking_tier] ?? 3);
+                        return td !== 0 ? td : a._distance - b._distance;
+                    })
+                    .slice(0, 8)
+                : [];
+
             paths.push({
                 params: { city: citySlug, slug: `${areaSlug}/${businessSlug}` },
-                props: { type: 'listing', citySlug: l.city_slug, areaSlug: areaSlug, businessSlug: businessSlug, listing: l, allCategories: [...allCategories] }
+                props: { type: 'listing', citySlug: l.city_slug, areaSlug: areaSlug, businessSlug: businessSlug, listing: l, allCategories: [...allCategories], similarListings, nearbyListings }
             });
         }
     });
     return paths;
 }
 
-const { type, citySlug, areaSlug, categorySlug, businessSlug, listing: directListing } = Astro.props;
+const { type, citySlug, areaSlug, categorySlug, businessSlug, listing: directListing, similarListings = [], nearbyListings = [] } = Astro.props;
 
 let pageTitle = '';
 let pageDescription = '';
@@ -455,11 +486,13 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
                                 try {
                                     hoursData = JSON.parse(hoursData);
                                 } catch (e) {
-                                    // Try parsing as pipe-separated format
+                                    // Try parsing as pipe- or semicolon-separated format
                                     // e.g. "Monday: Closed | Tuesday: 4:00 – 9:00 PM | ..."
-                                    if (hoursData.includes('|')) {
+                                    // or  "Monday: 5:00 – 11:00 PM; Tuesday: 5:00 – 11:00 PM; ..."
+                                    const separator = hoursData.includes('|') ? '|' : hoursData.includes(';') ? ';' : null;
+                                    if (separator) {
                                         const parsed = {};
-                                        hoursData.split('|').forEach(entry => {
+                                        hoursData.split(separator).forEach(entry => {
                                             const firstColonIndex = entry.indexOf(':');
                                             if (firstColonIndex !== -1) {
                                                 const day = entry.substring(0, firstColonIndex).trim();
@@ -501,6 +534,9 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             <div class="listing-footer-illustration__fade"></div>
         </div>
     )}
+
+    <SimilarListings listings={similarListings} />
+    <NearbyCarousel listings={nearbyListings} />
 
 ) : (
     <!-- ════════ LIST PAGES (area, category, area+category) ════════ -->
