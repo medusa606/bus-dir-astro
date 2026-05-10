@@ -385,6 +385,37 @@ a.tag--link:hover { opacity: 0.85; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
 .area-pill__count { font-size: 0.75rem; color: var(--silver); background: var(--parchment); border-radius: 999px; padding: 1px 7px; }
 
 /* ========================================
+   BEST OF GRID
+   ======================================== */
+.best-of-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+.best-of-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--white);
+  border: 1.5px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: var(--taupe, #374151);
+  transition: var(--transition);
+}
+.best-of-card:hover {
+  border-color: var(--color-accent, #7c3aed);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: var(--color-accent, #7c3aed);
+}
+.best-of-card__emoji { font-size: 1.4rem; flex-shrink: 0; }
+.best-of-card__label { font-size: 0.9rem; font-weight: 600; flex: 1; }
+.best-of-card__arrow { font-size: 0.9rem; color: var(--silver); flex-shrink: 0; transition: var(--transition); }
+.best-of-card:hover .best-of-card__arrow { color: var(--color-accent, #7c3aed); }
+
+/* ========================================
    BROWSE / LISTINGS GRID
    ======================================== */
 .browse-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); }

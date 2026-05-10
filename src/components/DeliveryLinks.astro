@@ -16,10 +16,28 @@ const deliveryPlatforms = [
         logo: '/delivery/Uber_Eats/Uber_Eats_Symbol_7.png'
     },
     { 
+        key: 'delivery_justeat', 
+        platform: 'justeat', 
+        label: 'Order on Just Eat',
+        logo: '/delivery/JustEat/Just-Eat_idN2HSXxTx_0.png'
+    },
+    { 
+        key: 'delivery_foodhub', 
+        platform: 'foodhub', 
+        label: 'Order on Foodhub',
+        logo: '/delivery/FoodHub/Foodhub_idoedAE3Hj_0.png'
+    },
+    { 
+        key: 'delivery_beelivery', 
+        platform: 'beelivery', 
+        label: 'Order on Beelivery',
+        logo: '/delivery/Beelivery/Beelivery_ideEbmTtRP_2.png'
+    },
+    { 
         key: 'delivery_opentable', 
         platform: 'opentable', 
         label: 'Reserve on OpenTable',
-        logo: null // Will use a simple text/icon for OpenTable
+        logo: '/bookings/openTable/opentable-logo-ZGYRVF2L.svg'
     },
 ].filter(d => listing[d.key]);
 ---
@@ -36,11 +54,7 @@ const deliveryPlatforms = [
                 data-platform={d.platform}
             >
                 <span class="delivery-badge__icon">
-                    {d.logo ? (
-                        <img src={d.logo} alt={d.label} />
-                    ) : (
-                        <span class="delivery-badge__placeholder">🍽️</span>
-                    )}
+                    <img src={d.logo} alt={d.label} />
                 </span>
                 <span class="delivery-badge__text">{d.label}</span>
             </a>
@@ -94,7 +108,19 @@ const deliveryPlatforms = [
     }
 
     .delivery-badge--ubereats:hover {
-        background: #f0fdf9;
+        background: #f5f5f5;
+    }
+
+    .delivery-badge--justeat:hover {
+        background: #fff8f0;
+    }
+
+    .delivery-badge--foodhub:hover {
+        background: #fff0f0;
+    }
+
+    .delivery-badge--beelivery:hover {
+        background: #fffbf0;
     }
 
     .delivery-badge--opentable:hover {

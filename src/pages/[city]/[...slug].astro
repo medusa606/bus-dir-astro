@@ -8,6 +8,7 @@ import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
 import SocialFeed from '../../components/SocialFeed.astro';
 import DeliveryLinks from '../../components/DeliveryLinks.astro';
+import BookingLinks from '../../components/BookingLinks.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory, haversineDistance } from '../../utils/helpers.js';
@@ -448,10 +449,21 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             </div>
 
             <!-- Order Online -->
-            {(listing.delivery_deliveroo || listing.delivery_ubereats || listing.delivery_opentable) && (
+            {(listing.delivery_deliveroo || listing.delivery_ubereats || listing.delivery_justeat ||
+              listing.delivery_foodhub || listing.delivery_beelivery || listing.delivery_opentable) && (
                 <div class="sidebar-widget">
                     <h3>Order Online</h3>
                     <DeliveryLinks listing={listing} />
+                </div>
+            )}
+
+            <!-- Book a Table -->
+            {(listing.booking_opentable || listing.booking_firsttable || listing.booking_resdiary ||
+              listing.booking_thefork || listing.booking_sevenrooms || listing.booking_quandoo ||
+              listing.booking_resy || listing.booking_designmynight) && (
+                <div class="sidebar-widget">
+                    <h3>Book a Table</h3>
+                    <BookingLinks listing={listing} />
                 </div>
             )}
 

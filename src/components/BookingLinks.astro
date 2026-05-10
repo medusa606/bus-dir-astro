@@ -1,0 +1,182 @@
+---
+const { listing, small = false } = Astro.props;
+
+const bookingPlatforms = [
+    {
+        key: 'booking_opentable',
+        platform: 'opentable',
+        label: 'Book on OpenTable',
+        logo: '/bookings/openTable/opentable-logo-ZGYRVF2L.svg'
+    },
+    {
+        key: 'booking_resdiary',
+        platform: 'resdiary',
+        label: 'Book on ResDiary',
+        logo: '/bookings/resDiary/ResDiary-Logo.webp'
+    },
+    {
+        key: 'booking_thefork',
+        platform: 'thefork',
+        label: 'Book on TheFork',
+        logo: '/bookings/theFork/the-fork.svg'
+    },
+    {
+        key: 'booking_sevenrooms',
+        platform: 'sevenrooms',
+        label: 'Book on SevenRooms',
+        logo: '/bookings/sevenRooms/seven-rooms.svg'
+    },
+    {
+        key: 'booking_firsttable',
+        platform: 'firsttable',
+        label: 'Book on First Table',
+        logo: '/bookings/firstTable/First_Table_idkJAd-O6V_0.png'
+    },
+    {
+        key: 'booking_quandoo',
+        platform: 'quandoo',
+        label: 'Book on Quandoo',
+        logo: '/bookings/quandoo/Quandoo_Australia_idxFWpCfYV_0.png'
+    },
+    {
+        key: 'booking_resy',
+        platform: 'resy',
+        label: 'Book on Resy',
+        logo: '/bookings/resy/Resy_idF_NIqpvs_2.png'
+    },
+    {
+        key: 'booking_designmynight',
+        platform: 'designmynight',
+        label: 'Book on DesignMyNight',
+        logo: null
+    },
+].filter(b => listing[b.key]);
+---
+
+{bookingPlatforms.length > 0 && (
+    <div class={`booking-links ${small ? 'booking-links--sm' : ''}`}>
+        {bookingPlatforms.map(b => (
+            <a
+                href={listing[b.key]}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={`booking-badge booking-badge--${b.platform}`}
+                title={b.label}
+                data-platform={b.platform}
+            >
+                <span class="booking-badge__icon">
+                    {b.logo ? (
+                        <img src={b.logo} alt={b.label} />
+                    ) : (
+                        <span class="booking-badge__initials">DMN</span>
+                    )}
+                </span>
+                <span class="booking-badge__text">{b.label}</span>
+            </a>
+        ))}
+    </div>
+)}
+
+<style>
+    .booking-links {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        padding: var(--space-md) 0;
+        border-top: 1px solid var(--parchment);
+        margin-top: var(--space-md);
+    }
+
+    .booking-links--sm {
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+        padding: var(--space-sm) 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .booking-badge {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-md) var(--space-lg);
+        text-decoration: none;
+        border-radius: var(--radius-md);
+        transition: var(--transition);
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        background: white;
+        color: var(--taupe);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .booking-badge:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+        border-color: var(--powder-blush);
+    }
+
+    .booking-badge--opentable:hover { background: #fef0f0; }
+    .booking-badge--resdiary:hover { background: #f0f4ff; }
+    .booking-badge--thefork:hover { background: #f0fdf4; }
+    .booking-badge--sevenrooms:hover { background: #f5f5f5; }
+    .booking-badge--firsttable:hover { background: #fff8f0; }
+    .booking-badge--quandoo:hover { background: #fff0f8; }
+    .booking-badge--resy:hover { background: #f5f0ff; }
+    .booking-badge--designmynight:hover { background: #f0f8ff; }
+
+    .booking-badge__icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 35px;
+        height: 35px;
+        flex-shrink: 0;
+        background: #f8f8f8;
+        border-radius: var(--radius-sm);
+    }
+
+    .booking-badge__icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        padding: 2px;
+    }
+
+    .booking-badge__initials {
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: var(--taupe);
+        letter-spacing: 0.02em;
+    }
+
+    .booking-badge__text {
+        white-space: nowrap;
+        font-weight: 600;
+    }
+
+    /* Small variant */
+    .booking-links--sm .booking-badge {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.85rem;
+    }
+
+    .booking-links--sm .booking-badge__icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 640px) {
+        .booking-links {
+            flex-direction: column;
+        }
+
+        .booking-badge {
+            padding: var(--space-md) var(--space-lg);
+        }
+    }
+</style>

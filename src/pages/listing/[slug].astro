@@ -5,6 +5,7 @@ import StarRating from '../../components/StarRating.astro';
 import SocialLinks from '../../components/SocialLinks.astro';
 import SocialFeed from '../../components/SocialFeed.astro';
 import DeliveryLinks from '../../components/DeliveryLinks.astro';
+import BookingLinks from '../../components/BookingLinks.astro';
 import Map from '../../components/Map.astro';
 import SimilarListings from '../../components/SimilarListings.astro';
 import NearbyCarousel from '../../components/NearbyCarousel.astro';
@@ -120,7 +121,7 @@ console.log('🔍 [DEBUG] Fetching listing for slug:', slug);
 // Fetch business data from Supabase
 const { data: dbBusiness, error } = await supabase
     .from('listings')
-    .select('id, name, business_slug, status, delivery_deliveroo, delivery_ubereats, delivery_opentable, social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin, phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, city_slug, category, area_slug, illustration_status, illustration_url, category_slug, google_maps_url, google_summary, google_rating, google_review_count')
+    .select('id, name, business_slug, status, delivery_deliveroo, delivery_ubereats, delivery_justeat, delivery_foodhub, delivery_beelivery, delivery_opentable, booking_opentable, booking_firsttable, booking_resdiary, booking_thefork, booking_sevenrooms, booking_quandoo, booking_resy, booking_designmynight, social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin, phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, image_category, city_slug, category, area_slug, illustration_status, illustration_url, category_slug, google_maps_url, google_summary, google_rating, google_review_count')
     .eq('business_slug', slug)
     .or('status.not.in.(closed,unverified),status.is.null')
     .single();
@@ -236,7 +237,20 @@ const business = {
     // Delivery platform links
     delivery_deliveroo: dbBusiness.delivery_deliveroo,
     delivery_ubereats: dbBusiness.delivery_ubereats,
+    delivery_justeat: dbBusiness.delivery_justeat,
+    delivery_foodhub: dbBusiness.delivery_foodhub,
+    delivery_beelivery: dbBusiness.delivery_beelivery,
     delivery_opentable: dbBusiness.delivery_opentable,
+
+    // Booking platform links
+    booking_opentable: dbBusiness.booking_opentable,
+    booking_firsttable: dbBusiness.booking_firsttable,
+    booking_resdiary: dbBusiness.booking_resdiary,
+    booking_thefork: dbBusiness.booking_thefork,
+    booking_sevenrooms: dbBusiness.booking_sevenrooms,
+    booking_quandoo: dbBusiness.booking_quandoo,
+    booking_resy: dbBusiness.booking_resy,
+    booking_designmynight: dbBusiness.booking_designmynight,
     
     // Placeholder for reviews - add when review data is available
     reviews: null,
@@ -467,14 +481,16 @@ const nearbyListings = (dbBusiness.latitude && dbBusiness.longitude)
             <!-- Socials Widget with Feed Wheel -->
             {business.social_facebook || business.social_instagram || business.social_twitter || 
              business.social_tiktok || business.social_youtube || business.social_linkedin ||
-             business.delivery_deliveroo || business.delivery_ubereats || business.delivery_opentable ? (
+             business.delivery_deliveroo || business.delivery_ubereats || business.delivery_justeat ||
+             business.delivery_foodhub || business.delivery_beelivery || business.delivery_opentable ? (
                 <div class="sidebar-widget">
                     <h3>Connect</h3>
                     <SocialLinks listing={business} />
                     
                     <SocialFeed feed={business.social_feed} maxItems={3} />
                     
-                    {(business.delivery_deliveroo || business.delivery_ubereats || business.delivery_opentable) && (
+                    {(business.delivery_deliveroo || business.delivery_ubereats || business.delivery_justeat ||
+                      business.delivery_foodhub || business.delivery_beelivery || business.delivery_opentable) && (
                         <>
                             <h3 style="margin-top: var(--space-lg); margin-bottom: var(--space-md);">Order Online</h3>
                             <DeliveryLinks listing={business} />
@@ -482,6 +498,16 @@ const nearbyListings = (dbBusiness.latitude && dbBusiness.longitude)
                     )}
                 </div>
             ) : null}
+
+            <!-- Book a Table -->
+            {(business.booking_opentable || business.booking_firsttable || business.booking_resdiary ||
+              business.booking_thefork || business.booking_sevenrooms || business.booking_quandoo ||
+              business.booking_resy || business.booking_designmynight) && (
+                <div class="sidebar-widget">
+                    <h3>Book a Table</h3>
+                    <BookingLinks listing={business} />
+                </div>
+            )}
             
             <!-- Contact CTA -->
             <div class="sidebar-widget sidebar-widget--cta">
