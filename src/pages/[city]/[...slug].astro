@@ -585,6 +585,26 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
             <TieredListings listings={listings} />
 
+            {/* "Best of" CTA — shown on category and area-category pages */}
+            {(type === 'city-category' || type === 'area-category') && listings.length > 0 && (
+                <div class="best-picks-cta">
+                    <div class="best-picks-cta__inner">
+                        <p class="best-picks-cta__label">★ Editor's picks</p>
+                        <p class="best-picks-cta__text">
+                            Looking for the very best? We've hand-picked our top recommendations.
+                        </p>
+                        <a
+                            href={type === 'area-category'
+                                ? `/${citySlug}/${areaSlug}/${categorySlug}/best`
+                                : `/${citySlug}/${categorySlug}/best`}
+                            class="best-picks-cta__link"
+                        >
+                            See our best {catTitle.toLowerCase()} picks →
+                        </a>
+                    </div>
+                </div>
+            )}
+
             {listings.length === 0 && (
                 <div style="text-align: center; padding: var(--space-4xl) 0;">
                     <p class="text-secondary" style="font-size: 1.1rem;">No listings found.</p>
@@ -1020,5 +1040,47 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 50%);
             mask-image: linear-gradient(to bottom, transparent 0%, black 50%);
         }
+    }
+
+    /* ── Best picks CTA banner ── */
+    .best-picks-cta {
+        margin-top: var(--space-3xl, 3rem);
+        padding: var(--space-xl, 2rem);
+        background: linear-gradient(135deg, #f5f3ff 0%, #fdf4ff 100%);
+        border: 1px solid #e9d5ff;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .best-picks-cta__label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #7c3aed;
+        margin: 0 0 0.5rem;
+    }
+
+    .best-picks-cta__text {
+        font-size: 1rem;
+        color: #374151;
+        margin: 0 0 var(--space-md, 1rem);
+    }
+
+    .best-picks-cta__link {
+        display: inline-block;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #7c3aed;
+        text-decoration: none;
+        border: 2px solid #7c3aed;
+        border-radius: 6px;
+        padding: 0.5rem 1.25rem;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .best-picks-cta__link:hover {
+        background: #7c3aed;
+        color: #fff;
     }
 </style>

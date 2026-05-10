@@ -1,0 +1,37 @@
+---
+import ListingCard from '../ListingCard.astro';
+
+const { listings, heading } = Astro.props;
+---
+
+{listings?.length > 0 && (
+    <section class="landing-grid">
+        {heading && <h2 class="landing-grid__heading">{heading}</h2>}
+        <div class="landing-grid__grid">
+            {listings.map((listing: any) => (
+                <ListingCard listing={listing} />
+            ))}
+        </div>
+    </section>
+)}
+
+<style>
+.landing-grid {
+    margin-top: var(--space-3xl, 4rem);
+    padding-top: var(--space-2xl, 3rem);
+    border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.landing-grid__heading {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+    color: var(--color-heading, #111827);
+    margin: 0 0 var(--space-xl, 2rem);
+}
+
+.landing-grid__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-xl, 2rem);
+}
+</style>

@@ -1,0 +1,183 @@
+---
+import { getImageByCategory } from '../../utils/categoryImages.js';
+import { getTagBasedImage } from '../../utils/categoryImages.js';
+
+const { listing, floatDirection = 'right', pullQuote } = Astro.props;
+
+const href = `/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`;
+const imgUrl = listing.image_url
+    || listing.image_key
+    || (listing.image_category && getImageByCategory(listing.image_category, listing.business_slug))
+    || getTagBasedImage(listing.tags, listing.category_slug, listing.business_slug)
+    || '/placeholders/default.svg';
+
+const note = pullQuote || listing.editors_notes || listing.description || '';
+const excerpt = note.length > 200 ? note.substring(0, 200).trim() + '…' : note;
+
+const areaLabel = listing.area_slug?.replace(/-/g, ' ');
+---
+
+<div class={`editorial-card editorial-card--${floatDirection}`}>
+    <a href={href} class="editorial-card__image-wrap">
+        <img src={imgUrl} alt={listing.name} class="editorial-card__image" loading="lazy" />
+    </a>
+    <div class="editorial-card__body">
+        <div class="editorial-card__meta">
+            {listing.ranking_tier === 'editors_choice' && (
+                <span class="editorial-card__badge editorial-card__badge--editors">★ Editor's Choice</span>
+            )}
+            {listing.ranking_tier === 'recommended' && (
+                <span class="editorial-card__badge editorial-card__badge--recommended">⭐ Recommended</span>
+            )}
+            {areaLabel && (
+                <span class="editorial-card__area">📍 {areaLabel}</span>
+            )}
+        </div>
+        <a href={href} class="editorial-card__title-link">
+            <h3 class="editorial-card__title">{listing.name}</h3>
+        </a>
+        {listing.google_rating && (
+            <p class="editorial-card__rating">
+                ★ {listing.google_rating}
+                {listing.google_review_count > 0 && (
+                    <span class="editorial-card__rating-count">({listing.google_review_count} reviews)</span>
+                )}
+            </p>
+        )}
+        {excerpt && <p class="editorial-card__note">{excerpt}</p>}
+        <a href={href} class="editorial-card__cta">View listing →</a>
+    </div>
+</div>
+
+<style>
+.editorial-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md, 1rem);
+    background: var(--color-surface-raised, #fff);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: var(--space-lg, 1.5rem);
+    width: 100%;
+}
+
+/* Float layout for medium+ screens */
+@media (min-width: 640px) {
+    .editorial-card--right {
+        float: right;
+        width: 320px;
+        margin: 0 0 var(--space-lg, 1.5rem) var(--space-xl, 2rem);
+    }
+
+    .editorial-card--left {
+        float: left;
+        width: 320px;
+        margin: 0 var(--space-xl, 2rem) var(--space-lg, 1.5rem) 0;
+    }
+}
+
+.editorial-card__image-wrap {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.editorial-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.editorial-card__image-wrap:hover .editorial-card__image {
+    transform: scale(1.03);
+}
+
+.editorial-card__body {
+    padding: var(--space-md, 1rem) var(--space-lg, 1.5rem) var(--space-lg, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm, 0.5rem);
+}
+
+.editorial-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.editorial-card__badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+    letter-spacing: 0.02em;
+}
+
+.editorial-card__badge--editors {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.editorial-card__badge--recommended {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.editorial-card__area {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #6b7280);
+    text-transform: capitalize;
+}
+
+.editorial-card__title-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.editorial-card__title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.15rem;
+    margin: 0;
+    color: var(--color-heading, #111827);
+    line-height: 1.3;
+}
+
+.editorial-card__title-link:hover .editorial-card__title {
+    color: var(--color-accent, #7c3aed);
+}
+
+.editorial-card__rating {
+    font-size: 0.85rem;
+    color: #d97706;
+    margin: 0;
+}
+
+.editorial-card__rating-count {
+    color: var(--color-text-muted, #6b7280);
+}
+
+.editorial-card__note {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text, #374151);
+    margin: 0;
+    font-style: italic;
+}
+
+.editorial-card__cta {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-accent, #7c3aed);
+    text-decoration: none;
+    margin-top: var(--space-sm, 0.5rem);
+}
+
+.editorial-card__cta:hover {
+    text-decoration: underline;
+}
+</style>

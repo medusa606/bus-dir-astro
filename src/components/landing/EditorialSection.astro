@@ -1,0 +1,50 @@
+---
+import EditorialCard from './EditorialCard.astro';
+
+const { heading, body, listing, floatDirection = 'right' } = Astro.props;
+---
+
+<section class="editorial-section">
+    <div class="editorial-section__inner">
+        {listing && (
+            <EditorialCard listing={listing} floatDirection={floatDirection} />
+        )}
+        <h2 class="editorial-section__heading">{heading}</h2>
+        {body.split('\n').filter((p: string) => p.trim()).map((para: string) => (
+            <p class="editorial-section__body">{para}</p>
+        ))}
+        <div class="clearfix"></div>
+    </div>
+</section>
+
+<style>
+.editorial-section {
+    margin-bottom: var(--space-2xl, 3rem);
+}
+
+.editorial-section__inner {
+    /* Establish BFC so clearfix works and floated card stays within */
+}
+
+.editorial-section__heading {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+    color: var(--color-heading, #111827);
+    margin: 0 0 var(--space-md, 1rem);
+    line-height: 1.25;
+}
+
+.editorial-section__body {
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--color-text, #374151);
+    margin: 0 0 var(--space-md, 1rem);
+    max-width: 72ch;
+}
+
+.clearfix::after {
+    content: '';
+    display: table;
+    clear: both;
+}
+</style>

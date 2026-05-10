@@ -1,0 +1,86 @@
+---
+const { title, intro, topicLabel, city, area, count, topImageUrl, emoji } = Astro.props;
+---
+
+<header class="landing-hero" style={topImageUrl ? `--hero-image: url('${topImageUrl}')` : ''}>
+    {topImageUrl && <div class="landing-hero__backdrop" aria-hidden="true"></div>}
+    <div class="landing-hero__inner">
+        <div class="landing-hero__meta">
+            {emoji && <span class="landing-hero__emoji" aria-hidden="true">{emoji}</span>}
+            <span class="landing-hero__count">{count} curated {count === 1 ? 'place' : 'places'}</span>
+        </div>
+        <h1 class="landing-hero__title">{title}</h1>
+        <p class="landing-hero__intro">{intro}</p>
+    </div>
+</header>
+
+<style>
+.landing-hero {
+    position: relative;
+    background-color: var(--color-surface, #fafafa);
+    overflow: hidden;
+}
+
+.landing-hero__backdrop {
+    position: absolute;
+    inset: 0;
+    background-image: var(--hero-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(4px) brightness(0.35);
+    transform: scale(1.05); /* prevent blur edges showing */
+    z-index: 0;
+}
+
+.landing-hero__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: var(--space-3xl, 4rem) var(--space-lg, 1.5rem);
+}
+
+/* When we have a backdrop image, go light text */
+.landing-hero:has(.landing-hero__backdrop) .landing-hero__meta,
+.landing-hero:has(.landing-hero__backdrop) .landing-hero__title,
+.landing-hero:has(.landing-hero__backdrop) .landing-hero__intro {
+    color: #fff;
+}
+
+.landing-hero__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: var(--space-md, 1rem);
+    color: var(--color-text-muted, #6b7280);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.landing-hero__emoji {
+    font-size: 1.25rem;
+}
+
+.landing-hero__count::before {
+    content: '·';
+    margin-right: 0.5rem;
+}
+
+.landing-hero__title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.15;
+    margin: 0 0 var(--space-lg, 1.5rem);
+    color: var(--color-heading, #111827);
+}
+
+.landing-hero__intro {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--color-text, #374151);
+    max-width: 680px;
+    white-space: pre-line;
+}
+</style>

@@ -4,6 +4,7 @@ import ListingCard from '../components/ListingCard.astro';
 import TieredListings from '../components/TieredListings.astro';
 import { supabase } from '../lib/supabase.js';
 import { slugToTitle, getEmoji, sortByTier, groupByTier } from '../utils/helpers.js';
+import { TOPIC_TAXONOMY } from '../utils/topicTaxonomy.js';
 
 // Paginate to get accurate counts — PostgREST max-rows cap means a single request won't exceed 1000
 const PAGE_SIZE = 1000;
@@ -90,6 +91,28 @@ const standardListings = (allGroups.standard || []).slice(0, 18);
         <TieredListings listings={allListings} excludeTiers={['standard']} />
     </div>
 </section>
+
+<!-- Best of Bristol -->
+{firstCity && (
+<section class="section best-of-section" style="background: var(--white);">
+    <div class="container">
+        <div class="section-header">
+            <h2>Best of {firstCity.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</h2>
+            <div class="divider"></div>
+            <p>Our editor-curated picks — the definitive guides to what's worth your time.</p>
+        </div>
+        <div class="best-of-grid">
+            {Object.entries(TOPIC_TAXONOMY).map(([slug, topic]) => (
+                <a href={`/${firstCity}/${slug}/best`} class="best-of-card">
+                    <span class="best-of-card__emoji">{topic.emoji}</span>
+                    <span class="best-of-card__label">Best {topic.pluralLabel}</span>
+                    <span class="best-of-card__arrow">→</span>
+                </a>
+            ))}
+        </div>
+    </div>
+</section>
+)}
 
 <!-- Categories -->
 <section class="section" id="categories" style="background: var(--white);">

@@ -1,0 +1,251 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import LandingHero from '../../../components/landing/LandingHero.astro';
+import EditorialSection from '../../../components/landing/EditorialSection.astro';
+import LandingGrid from '../../../components/landing/LandingGrid.astro';
+import LandingSchema from '../../../components/landing/LandingSchema.astro';
+import { supabase } from '../../../lib/supabase.js';
+import { slugToTitle, sortByTier } from '../../../utils/helpers.js';
+import { TOPIC_TAXONOMY, filterListingsByTopic, getValidTopics } from '../../../utils/topicTaxonomy.js';
+import { buildTemplateContent, buildSeoTitle } from '../../../utils/landingCopy.js';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+    // Fetch all active listings
+    const PAGE_SIZE = 1000;
+    let allListings: any[] = [];
+    let from = 0;
+    while (true) {
+        const { data } = await supabase
+            .from('listings')
+            .select('*')
+            .or('status.not.in.(closed,unverified),status.is.null')
+            .range(from, from + PAGE_SIZE - 1);
+        if (!data || data.length === 0) break;
+        allListings = allListings.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+    }
+
+    // Group by city
+    const byCityMap = new Map<string, any[]>();
+    for (const l of allListings) {
+        const city = String(l.city_slug).toLowerCase().trim();
+        if (!byCityMap.has(city)) byCityMap.set(city, []);
+        byCityMap.get(city)!.push(l);
+    }
+
+    // Load all hand-crafted landing content (city-level only — no area)
+    const landingEntries = await getCollection('landing');
+    const contentMap = new Map<string, any>();
+    for (const entry of landingEntries) {
+        if (!entry.data.area) {
+            // Key: city--topic
+            contentMap.set(`${entry.data.city}--${entry.data.topic}`, entry);
+        }
+    }
+
+    const paths: any[] = [];
+    const seen = new Set<string>();
+
+    for (const [citySlug, cityListings] of byCityMap) {
+        const validTopics = getValidTopics(cityListings);
+
+        // Also add area slugs as topics (for "best of {area}" pages at /{city}/{area}/best)
+        // Note: those are handled by the [area]/[topic]/best.astro route — skip here
+        for (const topicSlug of validTopics) {
+            const key = `${citySlug}--${topicSlug}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+
+            const filtered = filterListingsByTopic(cityListings, topicSlug) || [];
+            const contentEntry = contentMap.get(key) || null;
+
+            paths.push({
+                params: { city: citySlug, topic: topicSlug },
+                props: { citySlug, topicSlug, listings: filtered, contentEntry },
+            });
+        }
+
+        // Also generate area "best of" pages at /{city}/{area}/best
+        // These resolve to [topic] = area slug at this route depth.
+        // We generate them here because [topic] catches any slug at /{city}/{x}/best.
+        const areaCounts = new Map<string, number>();
+        for (const l of cityListings) {
+            if (l.area_slug) {
+                const a = String(l.area_slug).toLowerCase().trim();
+                areaCounts.set(a, (areaCounts.get(a) || 0) + 1);
+            }
+        }
+        for (const [areaSlug, count] of areaCounts) {
+            if (count < 5) continue;
+            const key = `${citySlug}--${areaSlug}`;
+            if (seen.has(key)) continue;
+            // Only generate if NOT already a topic slug (avoid collision with tag topics)
+            if (TOPIC_TAXONOMY[areaSlug]) continue;
+            seen.add(key);
+
+            const areaListings = cityListings.filter(l =>
+                String(l.area_slug).toLowerCase().trim() === areaSlug
+            );
+            const contentEntry = contentMap.get(key) || null;
+
+            paths.push({
+                params: { city: citySlug, topic: areaSlug },
+                props: { citySlug, topicSlug: areaSlug, listings: areaListings, contentEntry, isAreaPage: true },
+            });
+        }
+    }
+
+    return paths;
+}
+
+const { citySlug, topicSlug, listings, contentEntry, isAreaPage = false } = Astro.props;
+
+// Sort listings by tier
+const TIER_ORDER: Record<string, number> = { editors_choice: 0, recommended: 1, google_ranked: 2, standard: 3 };
+const sortedListings = [...listings].sort(
+    (a, b) => (TIER_ORDER[a.ranking_tier] ?? 3) - (TIER_ORDER[b.ranking_tier] ?? 3)
+);
+
+// Top picks for editorial sections (editors_choice + recommended)
+const topPicks = sortedListings.filter(
+    l => l.ranking_tier === 'editors_choice' || l.ranking_tier === 'recommended'
+).slice(0, 6);
+
+// Remaining listings for the grid
+const gridListings = sortedListings.slice(0, 12);
+
+// Content: use markdown if available, otherwise build from template
+const content = contentEntry
+    ? { ...contentEntry.data, body: contentEntry.body }
+    : buildTemplateContent(citySlug, null, topicSlug, listings);
+
+const topic = TOPIC_TAXONOMY[topicSlug];
+const topicLabel = topic?.label || slugToTitle(topicSlug);
+const cityTitle = slugToTitle(citySlug);
+
+const seoTitle = content.seoTitle || buildSeoTitle(citySlug, null, topicSlug);
+const pageDescription = content.description;
+
+// Hero image: first editors_choice listing with an image
+const heroListing = sortedListings.find(l => l.image_url && l.ranking_tier === 'editors_choice')
+    || sortedListings.find(l => l.image_url);
+const heroImageUrl = heroListing?.image_url || null;
+
+// Breadcrumbs
+const crumbs = isAreaPage
+    ? [
+        { label: cityTitle, href: `/${citySlug}` },
+        { label: slugToTitle(topicSlug), href: `/${citySlug}/${topicSlug}` },
+        { label: `Best of ${slugToTitle(topicSlug)}` },
+      ]
+    : [
+        { label: cityTitle, href: `/${citySlug}` },
+        { label: `Best ${topicLabel} in ${cityTitle}` },
+      ];
+
+// JSON-LD breadcrumb data
+const breadcrumbData = [
+    { name: 'Home', url: '/' },
+    { name: cityTitle, url: `/${citySlug}` },
+    ...(isAreaPage ? [{ name: slugToTitle(topicSlug), url: `/${citySlug}/${topicSlug}` }] : []),
+    { name: content.title, url: `/${citySlug}/${topicSlug}/best` },
+];
+
+// Pair top picks with sections for editorial layout
+const editorialSections: any[] = (content.sections || []).map((section: any, i: number) => ({
+    ...section,
+    listing: topPicks[i] || null,
+    floatDirection: i % 2 === 0 ? 'right' : 'left',
+}));
+
+// Parent page URL for "browse all" link
+const parentUrl = `/${citySlug}/${topicSlug}`;
+const parentLabel = isAreaPage
+    ? `Browse all of ${slugToTitle(topicSlug)}`
+    : `Browse all ${topicLabel.toLowerCase()} in ${cityTitle}`;
+---
+
+<BaseLayout title={seoTitle} description={pageDescription} ogImage={heroImageUrl}>
+    <LandingSchema
+        listings={sortedListings.slice(0, 10)}
+        pageTitle={content.title}
+        pageUrl={`/${citySlug}/${topicSlug}/best`}
+        breadcrumbs={breadcrumbData}
+    />
+
+    <LandingHero
+        title={content.title}
+        intro={content.intro}
+        topicLabel={topicLabel}
+        city={citySlug}
+        count={listings.length}
+        topImageUrl={heroImageUrl}
+        emoji={topic?.emoji}
+    />
+
+    <div class="landing-page">
+        <div class="landing-page__breadcrumbs">
+            <Breadcrumbs crumbs={crumbs} />
+        </div>
+
+        <div class="landing-page__body">
+            {editorialSections.map((section: any) => (
+                <EditorialSection
+                    heading={section.heading}
+                    body={section.body}
+                    listing={section.listing}
+                    floatDirection={section.floatDirection}
+                />
+            ))}
+        </div>
+
+        {gridListings.length > 0 && (
+            <LandingGrid
+                listings={gridListings}
+                heading={`All our picks — ${content.title}`}
+            />
+        )}
+
+        <div class="landing-page__footer-links">
+            <a href={parentUrl} class="landing-page__browse-link">
+                {parentLabel} →
+            </a>
+        </div>
+    </div>
+</BaseLayout>
+
+<style>
+.landing-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.landing-page__breadcrumbs {
+    margin-bottom: var(--space-xl);
+}
+
+.landing-page__body {
+    margin-bottom: var(--space-2xl);
+}
+
+.landing-page__footer-links {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.landing-page__browse-link {
+    font-size: 0.95rem;
+    color: var(--color-accent, #7c3aed);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.landing-page__browse-link:hover {
+    text-decoration: underline;
+}
+</style>

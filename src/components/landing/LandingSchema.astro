@@ -1,0 +1,36 @@
+---
+const { listings, pageTitle, pageUrl, breadcrumbs } = Astro.props;
+
+const siteBase = 'https://meridian-directory.pages.dev';
+const fullPageUrl = `${siteBase}${pageUrl}`;
+
+const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: pageTitle,
+    url: fullPageUrl,
+    numberOfItems: listings.length,
+    itemListElement: listings.map((listing: any, i: number) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: listing.name,
+        url: `${siteBase}/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`,
+        ...(listing.image_url ? { image: listing.image_url } : {}),
+        ...(listing.description ? { description: listing.description.substring(0, 200) } : {}),
+    })),
+};
+
+const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map((crumb: { name: string; url: string }, i: number) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: crumb.name,
+        item: `${siteBase}${crumb.url}`,
+    })),
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} />
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />

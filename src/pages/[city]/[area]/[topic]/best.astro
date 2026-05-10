@@ -1,0 +1,227 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+import LandingHero from '../../../../components/landing/LandingHero.astro';
+import EditorialSection from '../../../../components/landing/EditorialSection.astro';
+import LandingGrid from '../../../../components/landing/LandingGrid.astro';
+import LandingSchema from '../../../../components/landing/LandingSchema.astro';
+import { supabase } from '../../../../lib/supabase.js';
+import { slugToTitle } from '../../../../utils/helpers.js';
+import { TOPIC_TAXONOMY, filterListingsByTopic, getValidTopics } from '../../../../utils/topicTaxonomy.js';
+import { buildTemplateContent, buildSeoTitle } from '../../../../utils/landingCopy.js';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+    const PAGE_SIZE = 1000;
+    let allListings: any[] = [];
+    let from = 0;
+    while (true) {
+        const { data } = await supabase
+            .from('listings')
+            .select('*')
+            .or('status.not.in.(closed,unverified),status.is.null')
+            .range(from, from + PAGE_SIZE - 1);
+        if (!data || data.length === 0) break;
+        allListings = allListings.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+    }
+
+    // Group by city → area
+    type AreaMap = Map<string, any[]>;
+    const byCityArea = new Map<string, AreaMap>();
+    for (const l of allListings) {
+        if (!l.area_slug) continue;
+        const city = String(l.city_slug).toLowerCase().trim();
+        const area = String(l.area_slug).toLowerCase().trim();
+        if (!byCityArea.has(city)) byCityArea.set(city, new Map());
+        const areaMap = byCityArea.get(city)!;
+        if (!areaMap.has(area)) areaMap.set(area, []);
+        areaMap.get(area)!.push(l);
+    }
+
+    // Load hand-crafted landing content entries that have an area set
+    const landingEntries = await getCollection('landing');
+    const contentMap = new Map<string, any>();
+    for (const entry of landingEntries) {
+        if (entry.data.area) {
+            contentMap.set(`${entry.data.city}--${entry.data.area}--${entry.data.topic}`, entry);
+        }
+    }
+
+    const paths: any[] = [];
+    const seen = new Set<string>();
+
+    for (const [citySlug, areaMap] of byCityArea) {
+        for (const [areaSlug, areaListings] of areaMap) {
+            if (areaListings.length < 3) continue;
+
+            const validTopics = getValidTopics(areaListings);
+
+            for (const topicSlug of validTopics) {
+                const key = `${citySlug}--${areaSlug}--${topicSlug}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+
+                const filtered = filterListingsByTopic(areaListings, topicSlug) || [];
+                if (filtered.length < 3) continue;
+
+                const contentEntry = contentMap.get(key) || null;
+
+                paths.push({
+                    params: { city: citySlug, area: areaSlug, topic: topicSlug },
+                    props: { citySlug, areaSlug, topicSlug, listings: filtered, contentEntry },
+                });
+            }
+        }
+    }
+
+    return paths;
+}
+
+const { citySlug, areaSlug, topicSlug, listings, contentEntry } = Astro.props;
+
+const TIER_ORDER: Record<string, number> = { editors_choice: 0, recommended: 1, google_ranked: 2, standard: 3 };
+const sortedListings = [...listings].sort(
+    (a, b) => (TIER_ORDER[a.ranking_tier] ?? 3) - (TIER_ORDER[b.ranking_tier] ?? 3)
+);
+
+const topPicks = sortedListings.filter(
+    l => l.ranking_tier === 'editors_choice' || l.ranking_tier === 'recommended'
+).slice(0, 6);
+
+const gridListings = sortedListings.slice(0, 12);
+
+const content = contentEntry
+    ? { ...contentEntry.data, body: contentEntry.body }
+    : buildTemplateContent(citySlug, areaSlug, topicSlug, listings);
+
+const topic = TOPIC_TAXONOMY[topicSlug];
+const topicLabel = topic?.label || slugToTitle(topicSlug);
+const cityTitle = slugToTitle(citySlug);
+const areaTitle = slugToTitle(areaSlug);
+
+const seoTitle = content.seoTitle || buildSeoTitle(citySlug, areaSlug, topicSlug);
+const pageDescription = content.description;
+
+const heroListing = sortedListings.find(l => l.image_url && l.ranking_tier === 'editors_choice')
+    || sortedListings.find(l => l.image_url);
+const heroImageUrl = heroListing?.image_url || null;
+
+const crumbs = [
+    { label: cityTitle, href: `/${citySlug}` },
+    { label: areaTitle, href: `/${citySlug}/${areaSlug}` },
+    { label: `Best ${topicLabel} in ${areaTitle}` },
+];
+
+const breadcrumbData = [
+    { name: 'Home', url: '/' },
+    { name: cityTitle, url: `/${citySlug}` },
+    { name: areaTitle, url: `/${citySlug}/${areaSlug}` },
+    { name: content.title, url: `/${citySlug}/${areaSlug}/${topicSlug}/best` },
+];
+
+const editorialSections: any[] = (content.sections || []).map((section: any, i: number) => ({
+    ...section,
+    listing: topPicks[i] || null,
+    floatDirection: i % 2 === 0 ? 'right' : 'left',
+}));
+
+const parentUrl = `/${citySlug}/${areaSlug}`;
+const parentLabel = `Browse everything in ${areaTitle}`;
+const cityTopicUrl = `/${citySlug}/${topicSlug}/best`;
+const cityTopicLabel = `Best ${topicLabel} in all of ${cityTitle} →`;
+---
+
+<BaseLayout title={seoTitle} description={pageDescription} ogImage={heroImageUrl}>
+    <LandingSchema
+        listings={sortedListings.slice(0, 10)}
+        pageTitle={content.title}
+        pageUrl={`/${citySlug}/${areaSlug}/${topicSlug}/best`}
+        breadcrumbs={breadcrumbData}
+    />
+
+    <LandingHero
+        title={content.title}
+        intro={content.intro}
+        topicLabel={topicLabel}
+        city={citySlug}
+        area={areaSlug}
+        count={listings.length}
+        topImageUrl={heroImageUrl}
+        emoji={topic?.emoji}
+    />
+
+    <div class="landing-page">
+        <div class="landing-page__breadcrumbs">
+            <Breadcrumbs crumbs={crumbs} />
+        </div>
+
+        <div class="landing-page__body">
+            {editorialSections.map((section: any) => (
+                <EditorialSection
+                    heading={section.heading}
+                    body={section.body}
+                    listing={section.listing}
+                    floatDirection={section.floatDirection}
+                />
+            ))}
+        </div>
+
+        {gridListings.length > 0 && (
+            <LandingGrid
+                listings={gridListings}
+                heading={`All our picks — ${content.title}`}
+            />
+        )}
+
+        <div class="landing-page__footer-links">
+            <a href={parentUrl} class="landing-page__browse-link">
+                {parentLabel} →
+            </a>
+            <a href={cityTopicUrl} class="landing-page__browse-link landing-page__browse-link--secondary">
+                {cityTopicLabel}
+            </a>
+        </div>
+    </div>
+</BaseLayout>
+
+<style>
+.landing-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.landing-page__breadcrumbs {
+    margin-bottom: var(--space-xl);
+}
+
+.landing-page__body {
+    margin-bottom: var(--space-2xl);
+}
+
+.landing-page__footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--color-border, #e5e7eb);
+}
+
+.landing-page__browse-link {
+    font-size: 0.95rem;
+    color: var(--color-accent, #7c3aed);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.landing-page__browse-link--secondary {
+    color: var(--color-text-muted, #6b7280);
+}
+
+.landing-page__browse-link:hover {
+    text-decoration: underline;
+}
+</style>
