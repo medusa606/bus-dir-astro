@@ -519,8 +519,16 @@ let featuredMeta  = {};    // { [id]: { name, area_slug, ranking_tier } }
   if (session) await onSignedIn(session.user);
 
   db.auth.onAuthStateChange(async (event, session) => {
-    if (session) await onSignedIn(session.user);
-    else onSignedOut();
+    if (session) {
+      // Same user = token refresh, not a new login — update silently, don't reload
+      if (currentUser && currentUser.id === session.user.id) {
+        currentUser = session.user;
+        return;
+      }
+      await onSignedIn(session.user);
+    } else {
+      onSignedOut();
+    }
   });
 
   if (!CLOUDFLARE_DEPLOY_HOOK) {
@@ -713,6 +721,7 @@ function renderSections(sections) {
 
 function refreshSectionCards() {
   const list = document.getElementById('sections-list');
+  if (!list) return;
   list.innerHTML = '';
 
   sectionsData.forEach((sec, i) => {
@@ -783,7 +792,7 @@ function refreshSectionCards() {
       }, 280);
     });
     el.addEventListener('blur', () => {
-      const idx = +e.target.dataset.i;
+      const idx = +el.dataset.i;
       setTimeout(() => closeResultsForSection(idx), 200);
     });
   });
