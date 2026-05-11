@@ -211,6 +211,21 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
 }
 .sec-listing-remove:hover { color: #7f1d1d; }
 
+/* ── Emoji picker ──────────────────────────────────────────── */
+.emoji-picker { margin-bottom: 0; }
+.emoji-grid {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 8px;
+  background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 8px;
+}
+.emoji-btn {
+  background: none; border: 1.5px solid transparent; border-radius: 6px;
+  font-size: 1.3rem; width: 36px; height: 36px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s, border-color 0.1s;
+}
+.emoji-btn:hover { background: #fff; border-color: #d1d5db; }
+.emoji-btn.selected { background: #ede9fe; border-color: #6366f1; }
+
 /* ── Featured listings picker ───────────────────────────────── */
 .featured-wrap { margin-bottom: 20px; }
 .featured-heading {
@@ -421,6 +436,48 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
               <option value="published">Published</option>
             </select>
           </div>
+        </div>
+
+        <div class="field-row">
+          <label>Card icon <em style="font-weight:400;color:#aaa">(emoji or image path)</em></label>
+          <div class="emoji-picker">
+            <div class="emoji-grid" id="emoji-grid">
+              <!-- food & drink -->
+              <button type="button" class="emoji-btn" data-e="🍳">🍳</button>
+              <button type="button" class="emoji-btn" data-e="🥞">🥞</button>
+              <button type="button" class="emoji-btn" data-e="🥐">🥐</button>
+              <button type="button" class="emoji-btn" data-e="☕">☕</button>
+              <button type="button" class="emoji-btn" data-e="🍕">🍕</button>
+              <button type="button" class="emoji-btn" data-e="🍔">🍔</button>
+              <button type="button" class="emoji-btn" data-e="🌮">🌮</button>
+              <button type="button" class="emoji-btn" data-e="🍜">🍜</button>
+              <button type="button" class="emoji-btn" data-e="🍝">🍝</button>
+              <button type="button" class="emoji-btn" data-e="🍛">🍛</button>
+              <button type="button" class="emoji-btn" data-e="🍣">🍣</button>
+              <button type="button" class="emoji-btn" data-e="🥩">🥩</button>
+              <button type="button" class="emoji-btn" data-e="🥗">🥗</button>
+              <button type="button" class="emoji-btn" data-e="🍺">🍺</button>
+              <button type="button" class="emoji-btn" data-e="🍸">🍸</button>
+              <button type="button" class="emoji-btn" data-e="🥂">🥂</button>
+              <button type="button" class="emoji-btn" data-e="🍾">🍾</button>
+              <button type="button" class="emoji-btn" data-e="🧁">🧁</button>
+              <button type="button" class="emoji-btn" data-e="🍰">🍰</button>
+              <button type="button" class="emoji-btn" data-e="🍫">🍫</button>
+              <!-- places & lifestyle -->
+              <button type="button" class="emoji-btn" data-e="🛍️">🛍️</button>
+              <button type="button" class="emoji-btn" data-e="🎨">🎨</button>
+              <button type="button" class="emoji-btn" data-e="🎭">🎭</button>
+              <button type="button" class="emoji-btn" data-e="💈">💈</button>
+              <button type="button" class="emoji-btn" data-e="🌿">🌿</button>
+              <button type="button" class="emoji-btn" data-e="🌺">🌺</button>
+              <button type="button" class="emoji-btn" data-e="📍">📍</button>
+              <button type="button" class="emoji-btn" data-e="⭐">⭐</button>
+              <button type="button" class="emoji-btn" data-e="✨">✨</button>
+              <button type="button" class="emoji-btn" data-e="🏡">🏡</button>
+            </div>
+          </div>
+          <input type="text" id="f-emoji" placeholder="Paste emoji or /photos/image.jpg for a public image" style="margin-top:8px">
+          <p class="hint">Click an emoji above or type any emoji. To use a photo, paste a path like <code>/photos/foo.jpg</code> (relative to public/).</p>
         </div>
 
         <div class="field-row">
@@ -672,7 +729,8 @@ function populateForm(row) {
   document.getElementById('f-area').value        = row.area        || '';
   document.getElementById('f-topic').value       = row.topic       || '';
   document.getElementById('f-topic-type').value  = row.topic_type  || 'tag';
-  document.getElementById('f-title').value       = row.title       || '';
+  document.getElementById('f-emoji').value        = row.emoji        || '';
+  document.getElementById('f-title').value        = row.title       || '';
   document.getElementById('f-seo-title').value   = row.seo_title   || '';
   document.getElementById('f-description').value = row.description || '';
   document.getElementById('f-intro').value       = row.intro       || '';
@@ -832,6 +890,25 @@ function refreshSectionCards() {
     });
   });
 }
+
+// ─── Emoji picker ─────────────────────────────────────────────────────────────
+document.getElementById('emoji-grid').addEventListener('click', e => {
+  const btn = e.target.closest('.emoji-btn');
+  if (!btn) return;
+  const picked = btn.dataset.e;
+  document.getElementById('f-emoji').value = picked;
+  // Highlight selected
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+});
+
+// Sync highlight when input is manually edited
+document.getElementById('f-emoji').addEventListener('input', e => {
+  const val = e.target.value.trim();
+  document.querySelectorAll('.emoji-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.e === val);
+  });
+});
 
 document.getElementById('btn-add-section').addEventListener('click', () => {
   sectionsData.push({ heading: '', body: '', image_url: null });
@@ -1040,6 +1117,7 @@ async function savePage(andDeploy) {
     area:         document.getElementById('f-area').value.trim() || null,
     topic,
     topic_type:   document.getElementById('f-topic-type').value,
+    emoji:        document.getElementById('f-emoji').value.trim() || null,
     title:        document.getElementById('f-title').value.trim(),
     seo_title:    document.getElementById('f-seo-title').value.trim(),
     description:  document.getElementById('f-description').value.trim(),

@@ -43,7 +43,7 @@ const standardListings = (allGroups.standard || []).slice(0, 18);
 // Fetch published landing pages for the first city
 const { data: landingPages } = firstCity ? await supabase
     .from('landing_pages')
-    .select('city, area, topic, topic_type, title')
+    .select('city, area, topic, topic_type, title, emoji')
     .eq('city', firstCity)
     .eq('status', 'published')
     .order('area', { nullsFirst: true })
@@ -117,12 +117,17 @@ const publishedLandingPages = landingPages || [];
                 const href = page.area
                     ? `/${page.city}/${page.area}/${page.topic}/best`
                     : `/${page.city}/${page.topic}/best`;
-                const topic = TOPIC_TAXONOMY[page.topic as keyof typeof TOPIC_TAXONOMY];
-                const emoji = topic?.emoji ?? '📍';
+                const topicEntry = TOPIC_TAXONOMY[page.topic as keyof typeof TOPIC_TAXONOMY];
+                const iconValue = page.emoji || topicEntry?.emoji || '📍';
+                const isImage = iconValue.startsWith('/');
                 return (
                     <a href={href} class="best-of-card">
-                        <span class="best-of-card__emoji">{emoji}</span>
-                        <span class="best-of-card__label">{page.title}</span>
+                        <div class="best-of-card__icon">
+                            {isImage ? <img src={iconValue} alt="" /> : iconValue}
+                        </div>
+                        <div class="best-of-card__text">
+                            <h4>{page.title}</h4>
+                        </div>
                         <span class="best-of-card__arrow">→</span>
                     </a>
                 );
