@@ -39,6 +39,17 @@ const { data: allListings } = await supabase
 const firstCity = Object.keys(cityCounts)[0];
 const allGroups = groupByTier(allListings || []);
 const standardListings = (allGroups.standard || []).slice(0, 18);
+
+// Fetch published landing pages for the first city
+const { data: landingPages } = firstCity ? await supabase
+    .from('landing_pages')
+    .select('city, area, topic, topic_type, title')
+    .eq('city', firstCity)
+    .eq('status', 'published')
+    .order('area', { nullsFirst: true })
+    .order('topic') : { data: [] };
+
+const publishedLandingPages = landingPages || [];
 ---
 
 <BaseLayout>
@@ -93,7 +104,7 @@ const standardListings = (allGroups.standard || []).slice(0, 18);
 </section>
 
 <!-- Best of Bristol -->
-{firstCity && (
+{firstCity && publishedLandingPages.length > 0 && (
 <section class="section best-of-section" style="background: var(--white);">
     <div class="container">
         <div class="section-header">
@@ -102,13 +113,20 @@ const standardListings = (allGroups.standard || []).slice(0, 18);
             <p>Our editor-curated picks — the definitive guides to what's worth your time.</p>
         </div>
         <div class="best-of-grid">
-            {Object.entries(TOPIC_TAXONOMY).map(([slug, topic]) => (
-                <a href={`/${firstCity}/${slug}/best`} class="best-of-card">
-                    <span class="best-of-card__emoji">{topic.emoji}</span>
-                    <span class="best-of-card__label">Best {topic.pluralLabel}</span>
-                    <span class="best-of-card__arrow">→</span>
-                </a>
-            ))}
+            {publishedLandingPages.map(page => {
+                const href = page.area
+                    ? `/${page.city}/${page.area}/${page.topic}/best`
+                    : `/${page.city}/${page.topic}/best`;
+                const topic = TOPIC_TAXONOMY[page.topic as keyof typeof TOPIC_TAXONOMY];
+                const emoji = topic?.emoji ?? '📍';
+                return (
+                    <a href={href} class="best-of-card">
+                        <span class="best-of-card__emoji">{emoji}</span>
+                        <span class="best-of-card__label">{page.title}</span>
+                        <span class="best-of-card__arrow">→</span>
+                    </a>
+                );
+            })}
         </div>
     </div>
 </section>
