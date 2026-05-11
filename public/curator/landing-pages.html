@@ -193,6 +193,24 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
 }
 .btn-add-section:hover { background: #eef2ff; }
 
+/* ── Section listing picker ────────────────────────────────── */
+.sec-listing-search {
+  position: relative;
+}
+.sec-results {
+  position: relative; margin-top: 4px;
+}
+.sec-listing-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af;
+  padding: 4px 10px; border-radius: 16px; font-size: 0.78rem; font-weight: 600;
+}
+.sec-listing-remove {
+  background: none; border: none; color: #dc2626; cursor: pointer;
+  font-size: 0.85rem; padding: 0; line-height: 1;
+}
+.sec-listing-remove:hover { color: #7f1d1d; }
+
 /* ── Featured listings picker ───────────────────────────────── */
 .featured-wrap { margin-bottom: 20px; }
 .featured-heading {
@@ -552,8 +570,20 @@ function onSignedOut() {
   document.getElementById('app').classList.remove('visible');
 }
 
+// ─── Tab visibility (prevent loading wheel when tab is hidden) ────────────────
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Tab is hidden - any ongoing fetches should stop or be aborted
+  } else {
+    // Tab is visible again - refresh if needed
+  }
+});
+
 // ─── Load pages ───────────────────────────────────────────────────────────────
 async function loadPages() {
+  // Don't start loading if tab is hidden
+  if (document.hidden) return;
+
   document.getElementById('loading-msg').style.display = 'flex';
   document.getElementById('pages-list').innerHTML = '';
   document.getElementById('list-empty').style.display = 'none';
@@ -688,6 +718,7 @@ function refreshSectionCards() {
   sectionsData.forEach((sec, i) => {
     const card = document.createElement('div');
     card.className = 'section-card';
+    const listingDisplay = sec.section_listing_name ? `<span class="sec-listing-chip">${esc(sec.section_listing_name)}${sec.section_listing_id ? '<button class="sec-listing-remove" data-i="' + i + '">✕</button>' : ''}</span>` : '<em style="color:#ccc">No listing selected</em>';
     card.innerHTML = `
       <div class="section-card-header">
         <span class="section-card-num">Section ${i + 1}</span>
@@ -706,6 +737,13 @@ function refreshSectionCards() {
         <textarea class="sec-body tall" data-i="${i}">${esc(sec.body || '')}</textarea>
       </div>
       <div class="field-row">
+        <label>Listing for this section <em style="font-weight:400;color:#aaa">(optional)</em></label>
+        <input type="text" class="sec-listing-search" data-i="${i}" placeholder="Search by name…" autocomplete="off">
+        <div class="sec-results" data-i="${i}"></div>
+        <div style="margin-top:6px;">${listingDisplay}</div>
+        <p class="hint">Start typing the listing name to see AI suggestions based on this section's heading.</p>
+      </div>
+      <div class="field-row">
         <label>Section photo URL <em style="font-weight:400;color:#aaa">(optional)</em></label>
         <input type="url" class="sec-image" data-i="${i}" value="${esc(sec.image_url || '')}" placeholder="https://…">
         <p class="hint">Displayed above the section body text. Paste a public image URL.</p>
@@ -714,10 +752,53 @@ function refreshSectionCards() {
     list.appendChild(card);
   });
 
+  // Section heading input → trigger AI suggestions
+  let sectionSearchTimers = {};
+  list.querySelectorAll('.sec-heading').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = +e.target.dataset.i;
+      sectionsData[idx].heading = e.target.value;
+      // Auto-suggest listings based on heading
+      clearTimeout(sectionSearchTimers[idx]);
+      if (e.target.value.trim().length > 1) {
+        sectionSearchTimers[idx] = setTimeout(() => {
+          suggestListingsForSection(idx);
+        }, 300);
+      }
+    });
+  });
+
+  // Section search input
+  list.querySelectorAll('.sec-listing-search').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = +e.target.dataset.i;
+      const term = e.target.value.trim();
+      clearTimeout(sectionSearchTimers[idx]);
+      if (term.length < 2) {
+        closeResultsForSection(idx);
+        return;
+      }
+      sectionSearchTimers[idx] = setTimeout(() => {
+        searchListingsForSection(idx, term);
+      }, 280);
+    });
+    el.addEventListener('blur', () => {
+      const idx = +e.target.dataset.i;
+      setTimeout(() => closeResultsForSection(idx), 200);
+    });
+  });
+
+  // Remove listing from section
+  list.querySelectorAll('.sec-listing-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = +btn.dataset.i;
+      sectionsData[idx].section_listing_id = null;
+      sectionsData[idx].section_listing_name = null;
+      refreshSectionCards();
+    });
+  });
+
   // Inputs → state
-  list.querySelectorAll('.sec-heading').forEach(el =>
-    el.addEventListener('input', e => { sectionsData[+e.target.dataset.i].heading = e.target.value; })
-  );
   list.querySelectorAll('.sec-body').forEach(el =>
     el.addEventListener('input', e => { sectionsData[+e.target.dataset.i].body = e.target.value; })
   );
@@ -847,6 +928,87 @@ async function loadFeaturedMeta(ids) {
   renderFeaturedChips();
 }
 
+// ─── Section listing picker (per-section AI suggestions) ──────────────────────
+async function suggestListingsForSection(sectionIdx) {
+  // AI: search listings by the section heading text
+  const heading = sectionsData[sectionIdx]?.heading || '';
+  if (heading.trim().length < 2) return;
+  
+  const city = document.getElementById('f-city').value.trim();
+  let query = db
+    .from('listings')
+    .select('id, name, area_slug, city_slug, ranking_tier')
+    .ilike('name', `%${heading}%`)
+    .not('status', 'in', '(closed,unverified)')
+    .order('ranking_tier')
+    .limit(3);
+
+  if (city) query = query.eq('city_slug', city);
+
+  const { data } = await query;
+  renderSectionResults(sectionIdx, data || []);
+}
+
+async function searchListingsForSection(sectionIdx, term) {
+  const city = document.getElementById('f-city').value.trim();
+  let query = db
+    .from('listings')
+    .select('id, name, area_slug, city_slug, ranking_tier')
+    .ilike('name', `%${term}%`)
+    .not('status', 'in', '(closed,unverified)')
+    .order('ranking_tier')
+    .limit(8);
+
+  if (city) query = query.eq('city_slug', city);
+
+  const { data } = await query;
+  renderSectionResults(sectionIdx, data || []);
+}
+
+function renderSectionResults(sectionIdx, items) {
+  const el = document.querySelector(`.sec-results[data-i="${sectionIdx}"]`);
+  if (!el) return;
+  el.innerHTML = '';
+  if (!items.length) { el.style.display = 'none'; return; }
+
+  const resultsDiv = document.createElement('div');
+  resultsDiv.style.cssText = 'position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:20; background:#fff; border:1.5px solid #d1d5db; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.12); max-height:220px; overflow-y:auto;';
+
+  for (const item of items) {
+    if (sectionsData[sectionIdx]?.section_listing_id === item.id) continue;
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:8px 12px; cursor:pointer; border-bottom:1px solid #f5f5f5; font-size:0.82rem;';
+    div.onmouseover = () => { div.style.background = '#f7f7ff'; };
+    div.onmouseout = () => { div.style.background = ''; };
+    const tierBadge = ['editors_choice', 'recommended'].includes(item.ranking_tier)
+      ? `<span style="display:inline-block; font-size:0.65rem; padding:1px 6px; border-radius:10px; font-weight:700; margin-right:4px; background:${item.ranking_tier === 'editors_choice' ? '#fef3c7' : '#dcfce7'}; color:${item.ranking_tier === 'editors_choice' ? '#92400e' : '#166534'}">${item.ranking_tier === 'editors_choice' ? '★ Editor\'s Choice' : '⭐ Recommended'}</span>`
+      : '';
+    div.innerHTML = `
+      <div style="font-weight:600; color:#1a1a2e">${esc(item.name)}</div>
+      <div style="font-size:0.71rem; color:#888; margin-top:1px">${tierBadge}${esc(item.area_slug || '')} · ${esc(item.city_slug || '')}</div>
+    `;
+    div.addEventListener('click', () => {
+      sectionsData[sectionIdx].section_listing_id = item.id;
+      sectionsData[sectionIdx].section_listing_name = item.name;
+      document.querySelector(`.sec-listing-search[data-i="${sectionIdx}"]`).value = '';
+      closeResultsForSection(sectionIdx);
+      refreshSectionCards();
+    });
+    resultsDiv.appendChild(div);
+  }
+
+  el.appendChild(resultsDiv);
+  el.style.display = 'block';
+}
+
+function closeResultsForSection(sectionIdx) {
+  const el = document.querySelector(`.sec-results[data-i="${sectionIdx}"]`);
+  if (el) {
+    el.innerHTML = '';
+    el.style.display = 'none';
+  }
+}
+
 // ─── Save ─────────────────────────────────────────────────────────────────────
 document.getElementById('btn-save').addEventListener('click', () => savePage(false));
 document.getElementById('btn-deploy').addEventListener('click', () => savePage(true));
@@ -874,9 +1036,11 @@ async function savePage(andDeploy) {
     description:  document.getElementById('f-description').value.trim(),
     intro:        document.getElementById('f-intro').value.trim(),
     sections:     sectionsData.map(s => ({
-      heading:   s.heading || '',
-      body:      s.body    || '',
-      image_url: s.image_url || null,
+      heading:              s.heading || '',
+      body:                 s.body    || '',
+      image_url:            s.image_url || null,
+      section_listing_id:   s.section_listing_id || null,
+      section_listing_name: s.section_listing_name || null,
     })),
     featured_ids: featuredIds,
     status:       document.getElementById('f-status').value,
