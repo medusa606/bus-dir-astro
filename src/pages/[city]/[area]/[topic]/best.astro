@@ -121,9 +121,16 @@ const breadcrumbData = [
     { name: content.title, url: `/${citySlug}/${areaSlug}/${topicSlug}/best` },
 ];
 
+// If curators have pinned specific listings via featuredIds, use those; else use topPicks.
+const sectionPicks = content.featuredIds?.length
+    ? content.featuredIds
+        .map((id: string) => listings.find((l: any) => l.id === id))
+        .filter((l: any) => l != null)
+    : topPicks;
+
 const editorialSections: any[] = (content.sections || []).map((section: any, i: number) => ({
     ...section,
-    listing: topPicks[i] || null,
+    listing: sectionPicks[i] || null,
     floatDirection: i % 2 === 0 ? 'right' : 'left',
 }));
 
@@ -164,6 +171,7 @@ const cityTopicLabel = `Best ${topicLabel} in all of ${cityTitle} →`;
                     body={section.body}
                     listing={section.listing}
                     floatDirection={section.floatDirection}
+                    sectionImageUrl={section.image_url ?? undefined}
                 />
             ))}
         </div>

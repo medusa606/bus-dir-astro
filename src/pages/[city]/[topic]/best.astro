@@ -154,10 +154,17 @@ const breadcrumbData = [
     { name: content.title, url: `/${citySlug}/${topicSlug}/best` },
 ];
 
-// Pair top picks with sections for editorial layout
+// If curators have pinned specific listings via featuredIds, use those; else use topPicks.
+const sectionPicks = content.featuredIds?.length
+    ? content.featuredIds
+        .map((id: string) => listings.find((l: any) => l.id === id))
+        .filter((l: any) => l != null)
+    : topPicks;
+
+// Pair picks with sections for editorial layout
 const editorialSections: any[] = (content.sections || []).map((section: any, i: number) => ({
     ...section,
-    listing: topPicks[i] || null,
+    listing: sectionPicks[i] || null,
     floatDirection: i % 2 === 0 ? 'right' : 'left',
 }));
 
@@ -198,6 +205,7 @@ const parentLabel = isAreaPage
                     body={section.body}
                     listing={section.listing}
                     floatDirection={section.floatDirection}
+                    sectionImageUrl={section.image_url ?? undefined}
                 />
             ))}
         </div>

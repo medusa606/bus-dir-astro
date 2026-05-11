@@ -1,7 +1,7 @@
 ---
 import EditorialCard from './EditorialCard.astro';
 
-const { heading, body, listing, floatDirection = 'right' } = Astro.props;
+const { heading, body, listing, floatDirection = 'right', sectionImageUrl } = Astro.props;
 ---
 
 <section class="editorial-section">
@@ -10,6 +10,11 @@ const { heading, body, listing, floatDirection = 'right' } = Astro.props;
             <EditorialCard listing={listing} floatDirection={floatDirection} />
         )}
         <h2 class="editorial-section__heading">{heading}</h2>
+        {sectionImageUrl && (
+            <figure class="editorial-section__photo">
+                <img src={sectionImageUrl} alt={heading} class="editorial-section__photo-img" loading="lazy" />
+            </figure>
+        )}
         {body.split('\n').filter((p: string) => p.trim()).map((para: string) => (
             <p class="editorial-section__body">{para}</p>
         ))}
@@ -40,6 +45,18 @@ const { heading, body, listing, floatDirection = 'right' } = Astro.props;
     color: var(--color-text, #374151);
     margin: 0 0 var(--space-md, 1rem);
     max-width: 72ch;
+}
+
+.editorial-section__photo {
+    margin: 0 0 var(--space-md, 1rem);
+}
+
+.editorial-section__photo-img {
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
 }
 
 .clearfix::after {

@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing Pages — Meridian Curator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f2f4f7; color: #222; min-height: 100vh; }
+
+/* ── Login ──────────────────────────────────────────────────── */
+#login-screen {
+  position: fixed; inset: 0; background: #1a1a2e;
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+#login-screen.hidden { display: none; }
+.login-box {
+  background: #fff; border-radius: 16px; padding: 40px;
+  width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.login-box h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }
+.login-box p  { font-size: 0.82rem; color: #888; margin-bottom: 24px; }
+.login-field  { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.login-field label { font-size: 0.75rem; font-weight: 600; color: #555; }
+.login-field input {
+  border: 1.5px solid #d1d5db; border-radius: 8px; padding: 9px 12px;
+  font-size: 0.9rem; outline: none;
+}
+.login-field input:focus { border-color: #6366f1; }
+.btn-login {
+  width: 100%; background: #6366f1; color: #fff; border: none; border-radius: 8px;
+  padding: 11px; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-top: 6px;
+}
+.btn-login:hover { background: #4f46e5; }
+.btn-login:disabled { opacity: 0.6; cursor: default; }
+.login-err { color: #dc2626; font-size: 0.78rem; margin-top: 10px; min-height: 18px; }
+
+/* ── App shell ──────────────────────────────────────────────── */
+#app { display: none; }
+#app.visible { display: block; }
+
+header {
+  background: #1a1a2e; color: #fff; padding: 10px 20px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  position: sticky; top: 0; z-index: 100;
+}
+header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
+.curator-badge {
+  font-size: 0.72rem; color: #a5b4fc; background: #312e81;
+  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+}
+.btn-sm {
+  background: #fff2; border: 1px solid #fff3; color: #fff;
+  padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+}
+.btn-sm:hover { background: #fff3; }
+.btn-logout {
+  background: #dc2626; border: none; color: #fff;
+  padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 600;
+}
+.btn-logout:hover { background: #b91c1c; }
+
+/* ── Main layout ────────────────────────────────────────────── */
+.main-wrap {
+  display: flex; height: calc(100vh - 50px);
+}
+
+/* ── List panel ─────────────────────────────────────────────── */
+#list-panel {
+  width: 340px; flex-shrink: 0;
+  background: #fff; border-right: 1px solid #e4e7ec;
+  overflow-y: auto;
+}
+.list-header {
+  padding: 14px 16px; border-bottom: 1px solid #e4e7ec;
+  display: flex; align-items: center; gap: 8px;
+}
+.list-header h2 { font-size: 0.88rem; font-weight: 700; flex: 1; }
+.btn-new {
+  background: #6366f1; color: #fff; border: none; border-radius: 7px;
+  padding: 6px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.btn-new:hover { background: #4f46e5; }
+
+.filter-row {
+  padding: 8px 16px; border-bottom: 1px solid #f0f0f0;
+  display: flex; gap: 6px;
+}
+.filter-row input {
+  flex: 1; border: 1.5px solid #e4e7ec; border-radius: 6px;
+  padding: 5px 10px; font-size: 0.8rem; outline: none;
+}
+.filter-row input:focus { border-color: #6366f1; }
+.filter-row select {
+  border: 1.5px solid #e4e7ec; border-radius: 6px; padding: 5px 8px;
+  font-size: 0.78rem; outline: none; background: #fff; cursor: pointer;
+}
+
+.page-item {
+  padding: 11px 16px; border-bottom: 1px solid #f5f5f5;
+  cursor: pointer; transition: background 0.1s;
+}
+.page-item:hover  { background: #f7f7ff; }
+.page-item.active { background: #eef2ff; border-left: 3px solid #6366f1; padding-left: 13px; }
+.page-item-title  { font-size: 0.84rem; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
+.page-item-slug   { font-size: 0.72rem; color: #888; font-family: monospace; }
+.page-item-status {
+  display: inline-block; font-size: 0.65rem; font-weight: 700;
+  padding: 1px 7px; border-radius: 20px; margin-top: 4px;
+}
+.page-item-status.published { background: #dcfce7; color: #166534; }
+.page-item-status.draft     { background: #fef3c7; color: #92400e; }
+#list-empty {
+  padding: 40px 20px; text-align: center; color: #999; font-size: 0.84rem; display: none;
+}
+
+/* ── Edit panel ─────────────────────────────────────────────── */
+#edit-panel {
+  flex: 1; overflow-y: auto; padding: 24px 28px;
+  background: #f9fafb;
+}
+#edit-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; color: #bbb; gap: 12px; text-align: center;
+}
+#edit-empty svg { width: 48px; height: 48px; opacity: 0.3; }
+#edit-empty p   { font-size: 0.9rem; }
+#edit-form { display: none; max-width: 760px; }
+#edit-form.visible { display: block; }
+
+.form-title {
+  font-size: 1.15rem; font-weight: 700; color: #1a1a2e; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.form-title .form-slug {
+  font-size: 0.72rem; font-weight: 400; color: #888; font-family: monospace;
+  background: #f0f0f0; padding: 2px 8px; border-radius: 4px;
+}
+
+.field-row { margin-bottom: 14px; }
+.field-row label { display: block; font-size: 0.75rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+.field-row input, .field-row select, .field-row textarea {
+  width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px;
+  padding: 8px 11px; font-size: 0.88rem; outline: none; font-family: inherit;
+  background: #fff;
+}
+.field-row input:focus, .field-row select:focus, .field-row textarea:focus {
+  border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.field-row textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+.field-row textarea.tall { min-height: 120px; }
+.field-row .hint { font-size: 0.71rem; color: #9ca3af; margin-top: 3px; }
+.field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* ── Sections editor ────────────────────────────────────────── */
+.section-editor-wrap { margin-bottom: 20px; }
+.section-editor-heading {
+  font-size: 0.88rem; font-weight: 700; color: #1a1a2e;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.section-editor-heading span { flex: 1; }
+
+#sections-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 10px; }
+
+.section-card {
+  background: #fff; border: 1.5px solid #e4e7ec; border-radius: 10px;
+  padding: 14px 16px; position: relative;
+}
+.section-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.section-card-num {
+  font-size: 0.72rem; font-weight: 700; color: #6366f1;
+  background: #eef2ff; padding: 2px 8px; border-radius: 20px;
+}
+.section-card-actions { margin-left: auto; display: flex; gap: 6px; }
+.section-btn {
+  background: #f3f4f6; border: 1px solid #e4e7ec; color: #555;
+  padding: 3px 8px; border-radius: 5px; cursor: pointer; font-size: 0.75rem;
+}
+.section-btn:hover { background: #e5e7eb; }
+.section-btn.danger { color: #dc2626; }
+.section-btn.danger:hover { background: #fee2e2; border-color: #fca5a5; }
+.section-card .field-row { margin-bottom: 8px; }
+.section-card .field-row:last-child { margin-bottom: 0; }
+
+.btn-add-section {
+  background: #fff; border: 1.5px dashed #c7d2fe; color: #6366f1;
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.82rem;
+  font-weight: 600; width: 100%; transition: background 0.1s;
+}
+.btn-add-section:hover { background: #eef2ff; }
+
+/* ── Featured listings picker ───────────────────────────────── */
+.featured-wrap { margin-bottom: 20px; }
+.featured-heading {
+  font-size: 0.88rem; font-weight: 700; color: #1a1a2e; margin-bottom: 10px;
+}
+.featured-search-row { position: relative; margin-bottom: 8px; }
+.featured-search-row input {
+  width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px;
+  padding: 8px 11px; font-size: 0.88rem; outline: none;
+}
+.featured-search-row input:focus { border-color: #6366f1; }
+#featured-results {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  background: #fff; border: 1.5px solid #d1d5db; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); max-height: 220px; overflow-y: auto;
+  display: none;
+}
+.featured-result-item {
+  padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f5f5f5;
+  font-size: 0.82rem;
+}
+.featured-result-item:last-child { border-bottom: none; }
+.featured-result-item:hover { background: #f7f7ff; }
+.featured-result-name { font-weight: 600; color: #1a1a2e; }
+.featured-result-meta { font-size: 0.71rem; color: #888; margin-top: 1px; }
+.featured-result-meta .tier-badge {
+  display: inline-block; font-size: 0.65rem; padding: 1px 6px; border-radius: 10px;
+  font-weight: 700; margin-right: 4px;
+}
+.tier-badge.editors_choice { background: #fef3c7; color: #92400e; }
+.tier-badge.recommended    { background: #dcfce7; color: #166534; }
+
+#featured-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+.featured-chip {
+  background: #eef2ff; border: 1px solid #c7d2fe; color: #4338ca;
+  padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+.featured-chip button {
+  background: none; border: none; color: #818cf8; cursor: pointer;
+  font-size: 0.85rem; padding: 0; line-height: 1;
+}
+.featured-chip button:hover { color: #dc2626; }
+.featured-hint { font-size: 0.71rem; color: #9ca3af; margin-top: 6px; }
+
+/* ── Divider ────────────────────────────────────────────────── */
+.form-divider { border: none; border-top: 1px solid #e4e7ec; margin: 22px 0; }
+
+/* ── Action bar ─────────────────────────────────────────────── */
+.action-bar {
+  display: flex; gap: 10px; align-items: center;
+  padding: 16px 0; border-top: 1px solid #e4e7ec; margin-top: 8px;
+  flex-wrap: wrap;
+}
+.action-bar .status-select {
+  border: 1.5px solid #d1d5db; border-radius: 8px; padding: 8px 11px;
+  font-size: 0.88rem; outline: none; background: #fff; cursor: pointer;
+}
+.btn-save {
+  background: #1a1a2e; color: #fff; border: none; border-radius: 8px;
+  padding: 9px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+}
+.btn-save:hover { background: #2d2d4e; }
+.btn-save:disabled { opacity: 0.5; cursor: default; }
+.btn-deploy {
+  background: #059669; color: #fff; border: none; border-radius: 8px;
+  padding: 9px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+}
+.btn-deploy:hover { background: #047857; }
+.btn-deploy:disabled { opacity: 0.5; cursor: default; }
+.btn-delete {
+  margin-left: auto; background: #fff; color: #dc2626;
+  border: 1.5px solid #fca5a5; border-radius: 8px;
+  padding: 9px 16px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+}
+.btn-delete:hover { background: #fee2e2; }
+.action-msg {
+  font-size: 0.8rem; padding: 7px 12px; border-radius: 7px; display: none;
+}
+.action-msg.ok  { background: #dcfce7; color: #166534; display: block; }
+.action-msg.err { background: #fee2e2; color: #991b1b; display: block; }
+
+/* ── Deploy hook banner ─────────────────────────────────────── */
+#hook-banner {
+  background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;
+  padding: 10px 16px; margin: 12px 16px; font-size: 0.78rem; color: #78350f;
+  display: none;
+}
+#hook-banner strong { display: block; margin-bottom: 2px; }
+
+/* ── Loading spinner ────────────────────────────────────────── */
+#loading-msg {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 60px 20px; gap: 12px; color: #888;
+}
+#loading-msg .spinner {
+  width: 32px; height: 32px; border: 3px solid #e5e7eb;
+  border-top-color: #6366f1; border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ═══════ Login ═══════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Meridian — Landing Pages</h1>
+    <p>Sign in with your curator account.</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" autocomplete="email" placeholder="curator@example.com">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="login-password" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btn-login">Sign in</button>
+    <p class="login-err" id="login-err"></p>
+  </div>
+</div>
+
+<!-- ═══════ App ═══════ -->
+<div id="app">
+  <header>
+    <h1>📄 Landing Pages</h1>
+    <span class="curator-badge" id="curator-badge">…</span>
+    <a href="index.html" class="btn-sm">← Listings portal</a>
+    <button class="btn-sm" id="btn-refresh">↺ Refresh</button>
+    <button class="btn-logout" id="btn-logout">Sign out</button>
+  </header>
+
+  <div id="hook-banner">
+    <strong>⚠ Cloudflare Deploy Hook not configured</strong>
+    Open this file and set <code>CLOUDFLARE_DEPLOY_HOOK</code> at the top of the script to enable one-click publishing.
+  </div>
+
+  <div class="main-wrap">
+    <!-- List -->
+    <div id="list-panel">
+      <div class="list-header">
+        <h2>All pages</h2>
+        <button class="btn-new" id="btn-new">+ New page</button>
+      </div>
+      <div class="filter-row">
+        <input id="filter-search" placeholder="Filter pages…" autocomplete="off">
+        <select id="filter-status">
+          <option value="">All</option>
+          <option value="published">Published</option>
+          <option value="draft">Drafts</option>
+        </select>
+      </div>
+      <div id="loading-msg">
+        <div class="spinner"></div>
+        <span>Loading…</span>
+      </div>
+      <div id="pages-list"></div>
+      <div id="list-empty">No pages found.</div>
+    </div>
+
+    <!-- Edit -->
+    <div id="edit-panel">
+      <div id="edit-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+        </svg>
+        <p>Select a page to edit, or create a new one.</p>
+      </div>
+
+      <div id="edit-form">
+        <div class="form-title">
+          <span id="form-title-text">Edit page</span>
+          <span class="form-slug" id="form-slug"></span>
+        </div>
+
+        <!-- Metadata -->
+        <div class="field-grid-3">
+          <div class="field-row">
+            <label>City *</label>
+            <input type="text" id="f-city" placeholder="bristol">
+          </div>
+          <div class="field-row">
+            <label>Area <em style="font-weight:400;color:#aaa">(optional)</em></label>
+            <input type="text" id="f-area" placeholder="clifton">
+          </div>
+          <div class="field-row">
+            <label>Topic *</label>
+            <input type="text" id="f-topic" placeholder="breakfast">
+          </div>
+        </div>
+
+        <div class="field-grid-2">
+          <div class="field-row">
+            <label>Topic type *</label>
+            <select id="f-topic-type">
+              <option value="tag">tag</option>
+              <option value="category">category</option>
+              <option value="area">area</option>
+              <option value="sub_category">sub_category</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label>Page title *</label>
+          <input type="text" id="f-title" placeholder="Best Breakfast in Bristol">
+        </div>
+
+        <div class="field-row">
+          <label>SEO title *</label>
+          <input type="text" id="f-seo-title" placeholder="Best Breakfast in Bristol 2026 — Locale">
+        </div>
+
+        <div class="field-row">
+          <label>Meta description *</label>
+          <textarea id="f-description" placeholder="Short description for search engines (150–160 chars)"></textarea>
+        </div>
+
+        <div class="field-row">
+          <label>Intro paragraph *</label>
+          <textarea id="f-intro" class="tall" placeholder="Opening editorial paragraph displayed under the hero heading…"></textarea>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Sections -->
+        <div class="section-editor-wrap">
+          <div class="section-editor-heading">
+            <span>Editorial sections</span>
+          </div>
+          <div id="sections-list"></div>
+          <button class="btn-add-section" id="btn-add-section">+ Add section</button>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Featured listings -->
+        <div class="featured-wrap">
+          <div class="featured-heading">Featured listing cards</div>
+          <p style="font-size:0.78rem;color:#6b7280;margin-bottom:10px;">
+            Pin specific listings to appear alongside editorial sections (in order).
+            If empty, the top-ranked listings for this page are used automatically.
+          </p>
+          <div class="featured-search-row">
+            <input type="text" id="featured-search" placeholder="Search listings by name…" autocomplete="off">
+            <div id="featured-results"></div>
+          </div>
+          <div id="featured-chips"></div>
+          <p class="featured-hint">Order matters — first listing pairs with first section.</p>
+        </div>
+
+        <hr class="form-divider">
+
+        <!-- Actions -->
+        <div class="action-bar">
+          <button class="btn-save" id="btn-save">Save</button>
+          <button class="btn-deploy" id="btn-deploy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+            Save &amp; Publish
+          </button>
+          <span class="action-msg" id="action-msg"></span>
+          <button class="btn-delete" id="btn-delete">Delete page</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Configuration ────────────────────────────────────────────────────────────
+//
+// 1. Get your Deploy Hook from: Cloudflare Pages → your project →
+//    Settings → Builds & Deployments → Deploy Hooks → Add hook
+// 2. Paste the URL below.
+//
+const CLOUDFLARE_DEPLOY_HOOK = 'https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/1cd98474-ced1-4b2e-9faf-967b6fb39de3';   // ← paste hook URL here
+
+const SUPABASE_URL      = 'https://ecrupbqtlhuisqmybleu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjcnVwYnF0bGh1aXNxbXlibGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MzIxNTQsImV4cCI6MjA5MTMwODE1NH0.aw2cdkG5j24zzgztJfE7afzXOQSJDNzHYQmMPdMyBm8';
+
+// ─── Supabase client ──────────────────────────────────────────────────────────
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentUser   = null;
+let allPages      = [];    // all landing_pages rows
+let currentPageId = null;  // id of page open in form, or null for new
+let featuredIds   = [];    // ordered array of listing IDs selected in picker
+let featuredMeta  = {};    // { [id]: { name, area_slug, ranking_tier } }
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+(async function init() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) await onSignedIn(session.user);
+
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (session) await onSignedIn(session.user);
+    else onSignedOut();
+  });
+
+  if (!CLOUDFLARE_DEPLOY_HOOK) {
+    document.getElementById('hook-banner').style.display = 'block';
+  }
+})();
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-err');
+  const btn      = document.getElementById('btn-login');
+  errEl.textContent = '';
+  btn.disabled = true;
+
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  if (error || !data.user) {
+    errEl.textContent = error?.message || 'Sign-in failed.';
+    btn.disabled = false;
+    return;
+  }
+  if (data.user?.app_metadata?.role !== 'curator') {
+    await db.auth.signOut();
+    errEl.textContent = 'Access denied — not a curator account.';
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-login').click();
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => db.auth.signOut());
+
+async function onSignedIn(user) {
+  currentUser = user;
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('curator-badge').textContent = '✏ ' + user.email;
+  await loadPages();
+}
+
+function onSignedOut() {
+  currentUser = null;
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.remove('visible');
+}
+
+// ─── Load pages ───────────────────────────────────────────────────────────────
+async function loadPages() {
+  document.getElementById('loading-msg').style.display = 'flex';
+  document.getElementById('pages-list').innerHTML = '';
+  document.getElementById('list-empty').style.display = 'none';
+
+  const { data, error } = await db
+    .from('landing_pages')
+    .select('id, city, area, topic, topic_type, title, status, updated_at')
+    .order('city').order('area', { nullsFirst: true }).order('topic');
+
+  document.getElementById('loading-msg').style.display = 'none';
+
+  if (error) { showMsg('Failed to load pages: ' + error.message, 'err'); return; }
+  allPages = data || [];
+  renderList();
+}
+
+document.getElementById('btn-refresh').addEventListener('click', loadPages);
+
+// ─── Render list ──────────────────────────────────────────────────────────────
+function renderList() {
+  const search  = document.getElementById('filter-search').value.toLowerCase();
+  const status  = document.getElementById('filter-status').value;
+  const listEl  = document.getElementById('pages-list');
+  const emptyEl = document.getElementById('list-empty');
+
+  const filtered = allPages.filter(p => {
+    const slug = pageSlug(p);
+    if (search && !slug.includes(search) && !p.title.toLowerCase().includes(search)) return false;
+    if (status && p.status !== status) return false;
+    return true;
+  });
+
+  listEl.innerHTML = '';
+  if (!filtered.length) { emptyEl.style.display = 'block'; return; }
+  emptyEl.style.display = 'none';
+
+  for (const page of filtered) {
+    const el = document.createElement('div');
+    el.className = 'page-item' + (page.id === currentPageId ? ' active' : '');
+    el.dataset.id = page.id;
+    el.innerHTML = `
+      <div class="page-item-title">${esc(page.title)}</div>
+      <div class="page-item-slug">${esc(pageSlug(page))}</div>
+      <span class="page-item-status ${page.status}">${page.status}</span>
+    `;
+    el.addEventListener('click', () => openPage(page.id));
+    listEl.appendChild(el);
+  }
+}
+
+document.getElementById('filter-search').addEventListener('input', renderList);
+document.getElementById('filter-status').addEventListener('change', renderList);
+
+function pageSlug(p) {
+  return p.area ? `${p.city}--${p.area}--${p.topic}` : `${p.city}--${p.topic}`;
+}
+
+// ─── Open page ────────────────────────────────────────────────────────────────
+async function openPage(id) {
+  currentPageId = id;
+  renderList(); // update active highlight
+
+  const { data, error } = await db
+    .from('landing_pages')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) { showMsg('Could not load page.', 'err'); return; }
+  populateForm(data);
+}
+
+function populateForm(row) {
+  showForm(row.id ? 'Edit page' : 'New page');
+  document.getElementById('form-slug').textContent = pageSlug(row);
+
+  document.getElementById('f-city').value        = row.city        || '';
+  document.getElementById('f-area').value        = row.area        || '';
+  document.getElementById('f-topic').value       = row.topic       || '';
+  document.getElementById('f-topic-type').value  = row.topic_type  || 'tag';
+  document.getElementById('f-title').value       = row.title       || '';
+  document.getElementById('f-seo-title').value   = row.seo_title   || '';
+  document.getElementById('f-description').value = row.description || '';
+  document.getElementById('f-intro').value       = row.intro       || '';
+  document.getElementById('f-status').value      = row.status      || 'draft';
+
+  renderSections(row.sections || []);
+
+  featuredIds  = row.featured_ids || [];
+  featuredMeta = {};
+  renderFeaturedChips();
+  if (featuredIds.length) loadFeaturedMeta(featuredIds);
+}
+
+function showForm(titleText) {
+  document.getElementById('edit-empty').style.display = 'none';
+  const form = document.getElementById('edit-form');
+  form.classList.add('visible');
+  document.getElementById('form-title-text').textContent = titleText;
+  clearMsg();
+}
+
+// ─── New page ─────────────────────────────────────────────────────────────────
+document.getElementById('btn-new').addEventListener('click', () => {
+  currentPageId = null;
+  renderList(); // deselect
+  populateForm({
+    city: '', area: '', topic: '', topic_type: 'tag',
+    title: '', seo_title: '', description: '', intro: '',
+    sections: [
+      { heading: '', body: '', image_url: null },
+      { heading: '', body: '', image_url: null },
+    ],
+    featured_ids: [], status: 'draft',
+  });
+  document.getElementById('form-title-text').textContent = 'New page';
+  document.getElementById('form-slug').textContent = '';
+});
+
+// ─── Sections editor ──────────────────────────────────────────────────────────
+let sectionsData = [];
+
+function renderSections(sections) {
+  sectionsData = sections.map(s => ({ ...s }));
+  refreshSectionCards();
+}
+
+function refreshSectionCards() {
+  const list = document.getElementById('sections-list');
+  list.innerHTML = '';
+
+  sectionsData.forEach((sec, i) => {
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.innerHTML = `
+      <div class="section-card-header">
+        <span class="section-card-num">Section ${i + 1}</span>
+        <div class="section-card-actions">
+          <button class="section-btn" data-action="up"   data-i="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
+          <button class="section-btn" data-action="down" data-i="${i}" ${i === sectionsData.length - 1 ? 'disabled' : ''}>↓</button>
+          <button class="section-btn danger" data-action="del" data-i="${i}">✕ Remove</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>Heading</label>
+        <input type="text" class="sec-heading" data-i="${i}" value="${esc(sec.heading || '')}">
+      </div>
+      <div class="field-row">
+        <label>Body text</label>
+        <textarea class="sec-body tall" data-i="${i}">${esc(sec.body || '')}</textarea>
+      </div>
+      <div class="field-row">
+        <label>Section photo URL <em style="font-weight:400;color:#aaa">(optional)</em></label>
+        <input type="url" class="sec-image" data-i="${i}" value="${esc(sec.image_url || '')}" placeholder="https://…">
+        <p class="hint">Displayed above the section body text. Paste a public image URL.</p>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  // Inputs → state
+  list.querySelectorAll('.sec-heading').forEach(el =>
+    el.addEventListener('input', e => { sectionsData[+e.target.dataset.i].heading = e.target.value; })
+  );
+  list.querySelectorAll('.sec-body').forEach(el =>
+    el.addEventListener('input', e => { sectionsData[+e.target.dataset.i].body = e.target.value; })
+  );
+  list.querySelectorAll('.sec-image').forEach(el =>
+    el.addEventListener('input', e => {
+      sectionsData[+e.target.dataset.i].image_url = e.target.value.trim() || null;
+    })
+  );
+
+  // Action buttons
+  list.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.i;
+      if (btn.dataset.action === 'up' && idx > 0) {
+        [sectionsData[idx - 1], sectionsData[idx]] = [sectionsData[idx], sectionsData[idx - 1]];
+      } else if (btn.dataset.action === 'down' && idx < sectionsData.length - 1) {
+        [sectionsData[idx], sectionsData[idx + 1]] = [sectionsData[idx + 1], sectionsData[idx]];
+      } else if (btn.dataset.action === 'del') {
+        sectionsData.splice(idx, 1);
+      }
+      refreshSectionCards();
+    });
+  });
+}
+
+document.getElementById('btn-add-section').addEventListener('click', () => {
+  sectionsData.push({ heading: '', body: '', image_url: null });
+  refreshSectionCards();
+  // Scroll to new card
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.section-card');
+    cards[cards.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
+});
+
+// ─── Featured listings picker ─────────────────────────────────────────────────
+let featuredSearchTimer = null;
+
+document.getElementById('featured-search').addEventListener('input', e => {
+  clearTimeout(featuredSearchTimer);
+  const term = e.target.value.trim();
+  if (term.length < 2) { closeResults(); return; }
+  featuredSearchTimer = setTimeout(() => searchListings(term), 280);
+});
+
+document.getElementById('featured-search').addEventListener('blur', () => {
+  setTimeout(closeResults, 200);
+});
+
+async function searchListings(term) {
+  const city = document.getElementById('f-city').value.trim();
+  let query = db
+    .from('listings')
+    .select('id, name, area_slug, city_slug, ranking_tier')
+    .ilike('name', `%${term}%`)
+    .not('status', 'in', '(closed,unverified)')
+    .limit(12);
+
+  if (city) query = query.eq('city_slug', city);
+
+  const { data } = await query;
+  renderResults(data || []);
+}
+
+function renderResults(items) {
+  const el = document.getElementById('featured-results');
+  el.innerHTML = '';
+  if (!items.length) { el.style.display = 'none'; return; }
+
+  for (const item of items) {
+    if (featuredIds.includes(item.id)) continue; // already added
+    const div = document.createElement('div');
+    div.className = 'featured-result-item';
+    const tierBadge = ['editors_choice', 'recommended'].includes(item.ranking_tier)
+      ? `<span class="tier-badge ${item.ranking_tier}">${item.ranking_tier === 'editors_choice' ? '★ Editor\'s Choice' : '⭐ Recommended'}</span>`
+      : '';
+    div.innerHTML = `
+      <div class="featured-result-name">${esc(item.name)}</div>
+      <div class="featured-result-meta">${tierBadge}${esc(item.area_slug || '')} · ${esc(item.city_slug || '')}</div>
+    `;
+    div.addEventListener('click', () => addFeatured(item));
+    el.appendChild(div);
+  }
+  el.style.display = el.children.length ? 'block' : 'none';
+}
+
+function closeResults() {
+  document.getElementById('featured-results').style.display = 'none';
+}
+
+function addFeatured(item) {
+  if (featuredIds.includes(item.id)) return;
+  featuredIds.push(item.id);
+  featuredMeta[item.id] = { name: item.name, area_slug: item.area_slug, ranking_tier: item.ranking_tier };
+  document.getElementById('featured-search').value = '';
+  closeResults();
+  renderFeaturedChips();
+}
+
+function removeFeatured(id) {
+  featuredIds = featuredIds.filter(x => x !== id);
+  renderFeaturedChips();
+}
+
+function renderFeaturedChips() {
+  const el = document.getElementById('featured-chips');
+  el.innerHTML = '';
+  for (const id of featuredIds) {
+    const meta = featuredMeta[id];
+    const label = meta ? meta.name : id;
+    const chip = document.createElement('div');
+    chip.className = 'featured-chip';
+    chip.innerHTML = `${esc(label)}<button title="Remove" data-id="${id}">✕</button>`;
+    chip.querySelector('button').addEventListener('click', () => removeFeatured(id));
+    el.appendChild(chip);
+  }
+}
+
+async function loadFeaturedMeta(ids) {
+  const { data } = await db
+    .from('listings')
+    .select('id, name, area_slug, ranking_tier')
+    .in('id', ids);
+  for (const row of data || []) {
+    featuredMeta[row.id] = { name: row.name, area_slug: row.area_slug, ranking_tier: row.ranking_tier };
+  }
+  renderFeaturedChips();
+}
+
+// ─── Save ─────────────────────────────────────────────────────────────────────
+document.getElementById('btn-save').addEventListener('click', () => savePage(false));
+document.getElementById('btn-deploy').addEventListener('click', () => savePage(true));
+
+async function savePage(andDeploy) {
+  clearMsg();
+  const btn = document.getElementById(andDeploy ? 'btn-deploy' : 'btn-save');
+  btn.disabled = true;
+
+  const city  = document.getElementById('f-city').value.trim();
+  const topic = document.getElementById('f-topic').value.trim();
+  if (!city || !topic) {
+    showMsg('City and Topic are required.', 'err');
+    btn.disabled = false;
+    return;
+  }
+
+  const row = {
+    city,
+    area:         document.getElementById('f-area').value.trim() || null,
+    topic,
+    topic_type:   document.getElementById('f-topic-type').value,
+    title:        document.getElementById('f-title').value.trim(),
+    seo_title:    document.getElementById('f-seo-title').value.trim(),
+    description:  document.getElementById('f-description').value.trim(),
+    intro:        document.getElementById('f-intro').value.trim(),
+    sections:     sectionsData.map(s => ({
+      heading:   s.heading || '',
+      body:      s.body    || '',
+      image_url: s.image_url || null,
+    })),
+    featured_ids: featuredIds,
+    status:       document.getElementById('f-status').value,
+  };
+
+  let result;
+  if (currentPageId) {
+    result = await db
+      .from('landing_pages')
+      .update(row)
+      .eq('id', currentPageId)
+      .select('id, city, area, topic, title, status')
+      .single();
+  } else {
+    result = await db
+      .from('landing_pages')
+      .insert(row)
+      .select('id, city, area, topic, title, status')
+      .single();
+  }
+
+  btn.disabled = false;
+
+  if (result.error) {
+    showMsg('Save failed: ' + result.error.message, 'err');
+    return;
+  }
+
+  currentPageId = result.data.id;
+  document.getElementById('form-slug').textContent = pageSlug(result.data);
+  showMsg('Saved ✓', 'ok');
+  await loadPages();
+  renderList();
+
+  if (andDeploy) triggerDeploy();
+}
+
+// ─── Deploy ───────────────────────────────────────────────────────────────────
+async function triggerDeploy() {
+  if (!CLOUDFLARE_DEPLOY_HOOK) {
+    showMsg('Configure CLOUDFLARE_DEPLOY_HOOK to enable publishing.', 'err');
+    return;
+  }
+  const btn = document.getElementById('btn-deploy');
+  btn.disabled = true;
+  btn.textContent = '↻ Triggering…';
+
+  try {
+    const res = await fetch(CLOUDFLARE_DEPLOY_HOOK, { method: 'POST' });
+    if (res.ok) {
+      showMsg('Saved ✓ — rebuild triggered. Live in ~1 min.', 'ok');
+    } else {
+      showMsg(`Deploy hook returned ${res.status}`, 'err');
+    }
+  } catch (e) {
+    showMsg('Deploy failed: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Save &amp; Publish`;
+  }
+}
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-delete').addEventListener('click', async () => {
+  if (!currentPageId) return;
+  const page = allPages.find(p => p.id === currentPageId);
+  const slug = page ? pageSlug(page) : currentPageId;
+  if (!confirm(`Delete "${slug}"?\nThis cannot be undone.`)) return;
+
+  const { error } = await db.from('landing_pages').delete().eq('id', currentPageId);
+  if (error) { showMsg('Delete failed: ' + error.message, 'err'); return; }
+
+  currentPageId = null;
+  document.getElementById('edit-form').classList.remove('visible');
+  document.getElementById('edit-empty').style.display = '';
+  await loadPages();
+  renderList();
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showMsg(msg, type) {
+  const el = document.getElementById('action-msg');
+  el.textContent = msg;
+  el.className = 'action-msg ' + type;
+  if (type === 'ok') setTimeout(clearMsg, 4000);
+}
+
+function clearMsg() {
+  const el = document.getElementById('action-msg');
+  el.textContent = '';
+  el.className = 'action-msg';
+}
+</script>
+</body>
+</html>
