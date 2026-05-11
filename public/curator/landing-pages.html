@@ -500,6 +500,16 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
           <textarea id="f-intro" class="tall" placeholder="Opening editorial paragraph displayed under the hero heading…"></textarea>
         </div>
 
+        <div class="field-row">
+          <label>Hero image <em style="font-weight:400;color:#aaa">(optional — overrides auto-selected photo)</em></label>
+          <input type="text" id="f-hero-image" placeholder="/photos/bristol-restaurant.jpg" autocomplete="off">
+          <p class="hint">Path relative to <code>public/</code>, e.g. <code>/photos/foo.jpg</code>. The same dark blur filter is applied automatically.</p>
+          <div id="hero-image-preview" style="display:none;margin-top:8px;border-radius:8px;overflow:hidden;height:120px;position:relative;background:#111;">
+            <img id="hero-preview-img" src="" alt="Hero preview" style="width:100%;height:100%;object-fit:cover;opacity:0.45;filter:blur(2px);">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.78rem;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.6);">Preview (with dark filter applied on live page)</div>
+          </div>
+        </div>
+
         <hr class="form-divider">
 
         <!-- Sections -->
@@ -736,6 +746,10 @@ function populateForm(row) {
   document.getElementById('f-intro').value       = row.intro       || '';
   document.getElementById('f-status').value      = row.status      || 'draft';
 
+  const heroVal = row.hero_image_url || '';
+  document.getElementById('f-hero-image').value = heroVal;
+  updateHeroPreview(heroVal);
+
   renderSections(row.sections || []);
 
   featuredIds  = row.featured_ids || [];
@@ -908,6 +922,23 @@ document.getElementById('f-emoji').addEventListener('input', e => {
   document.querySelectorAll('.emoji-btn').forEach(b => {
     b.classList.toggle('selected', b.dataset.e === val);
   });
+});
+
+// ─── Hero image preview ───────────────────────────────────────────────────────
+function updateHeroPreview(path) {
+  const preview = document.getElementById('hero-image-preview');
+  const img     = document.getElementById('hero-preview-img');
+  if (path && path.startsWith('/')) {
+    img.src = path;
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+    img.src = '';
+  }
+}
+
+document.getElementById('f-hero-image').addEventListener('input', e => {
+  updateHeroPreview(e.target.value.trim());
 });
 
 document.getElementById('btn-add-section').addEventListener('click', () => {
@@ -1131,6 +1162,7 @@ async function savePage(andDeploy) {
     })),
     featured_ids: featuredIds,
     status:       document.getElementById('f-status').value,
+    hero_image_url: document.getElementById('f-hero-image').value.trim() || null,
   };
 
   let result;

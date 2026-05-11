@@ -87,7 +87,8 @@ const publishedLandingPages = landingPages || [];
     </div>
 </section>
 
-<!-- Featured Listings -->
+<!-- Featured Listings (only shown when curated/ranked listings exist) -->
+{(allGroups.editors_choice?.length || allGroups.recommended?.length || allGroups.google_ranked?.length) ? (
 <section class="section" id="highlights">
     <div class="container">
         <div class="section-header flex-between">
@@ -102,6 +103,7 @@ const publishedLandingPages = landingPages || [];
         <TieredListings listings={allListings} excludeTiers={['standard']} />
     </div>
 </section>
+) : null}
 
 <!-- Best of Bristol -->
 {firstCity && publishedLandingPages.length > 0 && (

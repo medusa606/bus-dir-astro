@@ -32,23 +32,7 @@ while (true) {
     from += PAGE_SIZE;
 }
 
-// Determine if this is an area "best of" page (topic slug is an area, not a topic key)
-const isAreaPage = !TOPIC_TAXONOMY[topicSlug as keyof typeof TOPIC_TAXONOMY];
-
-let listings: any[];
-if (isAreaPage) {
-    listings = allListings.filter(l =>
-        String(l.area_slug).toLowerCase().trim() === topicSlug
-    );
-} else {
-    listings = filterListingsByTopic(allListings, topicSlug) || [];
-}
-
-if (listings.length === 0) {
-    return Astro.redirect('/404');
-}
-
-// Fetch curated landing page content from Supabase
+// Fetch curated landing page content from Supabase (must happen before 404 guard)
 const { data: landingRow } = await supabase
     .from('landing_pages')
     .select('*')
@@ -57,6 +41,26 @@ const { data: landingRow } = await supabase
     .eq('topic', topicSlug)
     .eq('status', 'published')
     .maybeSingle();
+
+// Determine if this is an area "best of" page (topic slug is an area, not a topic key)
+// A custom curator topic (exists in landing_pages but not TOPIC_TAXONOMY) is NOT an area page
+const isAreaPage = !TOPIC_TAXONOMY[topicSlug as keyof typeof TOPIC_TAXONOMY] && !landingRow;
+
+let listings: any[];
+if (isAreaPage) {
+    listings = allListings.filter(l =>
+        String(l.area_slug).toLowerCase().trim() === topicSlug
+    );
+} else if (TOPIC_TAXONOMY[topicSlug as keyof typeof TOPIC_TAXONOMY]) {
+    listings = filterListingsByTopic(allListings, topicSlug) || [];
+} else {
+    // Custom curator topic: use all city listings (sections pin specific ones)
+    listings = allListings;
+}
+
+if (listings.length === 0 && !landingRow) {
+    return Astro.redirect('/404');
+}
 
 // Sort listings by tier
 const TIER_ORDER: Record<string, number> = { editors_choice: 0, recommended: 1, google_ranked: 2, standard: 3 };
@@ -94,7 +98,7 @@ const pageDescription = content.description;
 
 const heroListing = sortedListings.find(l => l.image_url && l.ranking_tier === 'editors_choice')
     || sortedListings.find(l => l.image_url);
-const heroImageUrl = heroListing?.image_url || null;
+const heroImageUrl = landingRow?.hero_image_url || heroListing?.image_url || null;
 
 const crumbs = isAreaPage
     ? [
