@@ -4,7 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
     site: 'https://curatedlocale.uk',
-    output: 'hybrid',
+    output: 'static',
     adapter: cloudflare(),
     trailingSlash: 'never',
     prefetch: {
