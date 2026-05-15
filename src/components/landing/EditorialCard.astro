@@ -1,6 +1,7 @@
 ---
 import { getImageByCategory } from '../../utils/categoryImages.js';
 import { getTagBasedImage } from '../../utils/categoryImages.js';
+import { slugToTitle } from '../../utils/helpers.js';
 
 const { listing, floatDirection = 'right', pullQuote } = Astro.props;
 
@@ -14,7 +15,7 @@ const imgUrl = listing.image_url
 const note = pullQuote || listing.editors_notes || listing.description || '';
 const excerpt = note.length > 200 ? note.substring(0, 200).trim() + '…' : note;
 
-const areaLabel = listing.area_slug?.replace(/-/g, ' ');
+const areaLabel = listing.area_slug ? `${slugToTitle(listing.city_slug)} · ${slugToTitle(listing.area_slug)}` : null;
 ---
 
 <div class={`editorial-card editorial-card--${floatDirection}`}>
@@ -30,7 +31,7 @@ const areaLabel = listing.area_slug?.replace(/-/g, ' ');
                 <span class="editorial-card__badge editorial-card__badge--recommended">⭐ Recommended</span>
             )}
             {areaLabel && (
-                <span class="editorial-card__area">📍 {areaLabel}</span>
+                <span class="editorial-card__area">{areaLabel}</span>
             )}
         </div>
         <a href={href} class="editorial-card__title-link">

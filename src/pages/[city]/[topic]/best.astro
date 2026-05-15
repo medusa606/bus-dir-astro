@@ -72,8 +72,6 @@ const topPicks = sortedListings.filter(
     l => l.ranking_tier === 'editors_choice' || l.ranking_tier === 'recommended'
 ).slice(0, 6);
 
-const gridListings = sortedListings.slice(0, 12);
-
 // Map all listings by ID for per-section lookup
 const listingById = new Map<string, any>(allListings.map(l => [l.id, l]));
 
@@ -131,6 +129,34 @@ const editorialSections: any[] = (content.sections || []).map((section: any, i: 
     floatDirection: i % 2 === 0 ? 'right' : 'left',
 }));
 
+// Build grid: exclude editorial picks; for booking-field topics prioritise booking matches in related categories, then fill with tier-ranked same-category listings
+const sectionPickIds = new Set<string>(sectionPicks.map((l: any) => l.id));
+let gridListings: any[];
+if ((topic as any)?.queryType === 'booking_field' && (topic as any)?.relatedCategories) {
+    const relatedCats: string[] = (topic as any).relatedCategories;
+    const bookingField: string = (topic as any).queryValues[0];
+    const primaryPool = [...allListings]
+        .filter((l: any) =>
+            !sectionPickIds.has(l.id) &&
+            relatedCats.includes(l.category_slug) &&
+            l[bookingField] && String(l[bookingField]).trim() !== ''
+        )
+        .sort((a: any, b: any) => (TIER_ORDER[a.ranking_tier] ?? 3) - (TIER_ORDER[b.ranking_tier] ?? 3));
+    const primaryIds = new Set<string>(primaryPool.map((l: any) => l.id));
+    const secondaryPool = [...allListings]
+        .filter((l: any) =>
+            !sectionPickIds.has(l.id) &&
+            !primaryIds.has(l.id) &&
+            relatedCats.includes(l.category_slug)
+        )
+        .sort((a: any, b: any) => (TIER_ORDER[a.ranking_tier] ?? 3) - (TIER_ORDER[b.ranking_tier] ?? 3));
+    gridListings = [...primaryPool, ...secondaryPool].slice(0, 12);
+} else {
+    gridListings = sortedListings
+        .filter((l: any) => !sectionPickIds.has(l.id))
+        .slice(0, 12);
+}
+
 const parentUrl = `/${citySlug}/${topicSlug}`;
 const parentLabel = isAreaPage
     ? `Browse all of ${slugToTitle(topicSlug)}`
@@ -153,6 +179,7 @@ const parentLabel = isAreaPage
         count={listings.length}
         topImageUrl={heroImageUrl}
         emoji={topic?.emoji}
+        pluralLabel={topic?.pluralLabel}
     />
 
     <div class="landing-page">

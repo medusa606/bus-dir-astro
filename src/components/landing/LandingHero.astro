@@ -1,5 +1,6 @@
 ---
-const { title, intro, topicLabel, city, area, count, topImageUrl, emoji } = Astro.props;
+import { slugToTitle } from '../../utils/helpers.js';
+const { title, intro, topicLabel, city, area, count, topImageUrl, emoji, pluralLabel } = Astro.props;
 ---
 
 <header class="landing-hero" style={topImageUrl ? `--hero-image: url('${topImageUrl}')` : ''}>
@@ -7,7 +8,7 @@ const { title, intro, topicLabel, city, area, count, topImageUrl, emoji } = Astr
     <div class="landing-hero__inner">
         <div class="landing-hero__meta">
             {emoji && <span class="landing-hero__emoji" aria-hidden="true">{emoji}</span>}
-            <span class="landing-hero__count">{count} curated {count === 1 ? 'place' : 'places'}</span>
+            <span class="landing-hero__count">{pluralLabel || topicLabel}{city ? ` · ${slugToTitle(city)}` : ''}</span>
         </div>
         <h1 class="landing-hero__title">{title}</h1>
         <p class="landing-hero__intro">{intro}</p>

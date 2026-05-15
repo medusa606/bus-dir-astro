@@ -137,6 +137,15 @@ export const TOPIC_TAXONOMY = {
         emoji: '🍺',
         minListings: 5,
     },
+    'first-table': {
+        label: 'First Table',
+        pluralLabel: 'First Table Restaurants',
+        queryType: 'booking_field',
+        queryValues: ['booking_firsttable'],
+        relatedCategories: ['restaurants', 'restaurants-and-cafes', 'pubs-and-bars', 'cafes'],
+        emoji: '🍽️',
+        minListings: 1,
+    },
 };
 
 /**
@@ -164,6 +173,11 @@ export function filterListingsByTopic(listings, topicSlug) {
                 l.sub_category?.toLowerCase() === subCategoryValue.toLowerCase();
             return tagMatch || subMatch;
         });
+    }
+    if (queryType === 'booking_field') {
+        return listings.filter(l =>
+            queryValues.some(field => l[field] && String(l[field]).trim() !== '')
+        );
     }
     if (queryType === 'sub_category') {
         return listings.filter(l =>

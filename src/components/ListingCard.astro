@@ -1,7 +1,7 @@
 ---
 import StarRating from './StarRating.astro';
 import SocialIcon from './SocialIcon.astro';
-import { getEmoji, truncate, RANKING_TIERS, normalizeSocialUrl } from '../utils/helpers.js';
+import { getEmoji, truncate, RANKING_TIERS, normalizeSocialUrl, slugToTitle } from '../utils/helpers.js';
 import { getTagBasedImage, getImageByCategory } from '../utils/categoryImages.js';
 
 const { listing } = Astro.props;
@@ -45,8 +45,8 @@ const cardClasses = [
                         {listing.ranking_tier !== 'editors_choice' && tier.icon} {tier.label}
                     </span>
                 )}
-                <span class="tag tag--location" style="text-transform: capitalize;">
-                    📍 {listing.area_slug?.replace(/-/g, ' ')}
+                <span class="tag tag--location">
+                    {slugToTitle(listing.city_slug)} · {slugToTitle(listing.area_slug)}
                 </span>
             </div>
             <h3 class="card__title">{listing.name}</h3>
