@@ -10,7 +10,7 @@ import Map from '../../components/Map.astro';
 import SimilarListings from '../../components/SimilarListings.astro';
 import NearbyCarousel from '../../components/NearbyCarousel.astro';
 import { supabase } from '../../lib/supabase.js';
-import { getEmoji, haversineDistance, normaliseCategory } from '../../utils/helpers.js';
+import { getEmoji } from '../../utils/helpers.js';
 import { 
     formatOpeningHours, 
     isCurrentlyOpen, 
@@ -18,125 +18,80 @@ import {
     getListingSEO 
 } from '../../utils/listingHelpers.js';
 
-// Generate static paths for all published listings
+// Generate static paths — minimal fetch, no allListings bulk load
 export async function getStaticPaths() {
-    // Paginated fetch of all active listings for similarity / nearby computation
-    const CARD_FIELDS = [
-        'id', 'name', 'business_slug', 'city_slug', 'area_slug', 'status',
-        'category', 'category_slug', 'sub_category', 'tags', 'ranking_tier',
-        'latitude', 'longitude',
-        'image_url', 'image_key', 'image_category', 'illustration_status', 'illustration_url',
-        'google_rating', 'google_review_count', 'google_summary', 'description',
-        'social_facebook', 'social_instagram', 'social_twitter',
-        'social_tiktok', 'social_linkedin', 'social_youtube',
-    ].join(', ');
-
-    const PAGE_SIZE = 1000;
-    let allListings = [];
-    let page = 0;
-    let keepFetching = true;
-
-    while (keepFetching) {
-        const { data: batch, error: batchError } = await supabase
-            .from('listings')
-            .select(CARD_FIELDS)
-            .or('status.not.in.(closed,unverified),status.is.null')
-            .not('business_slug', 'is', null)
-            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-        if (batchError) {
-            console.error('Supabase error fetching all listings:', batchError);
-            keepFetching = false;
-        } else {
-            allListings = allListings.concat(batch || []);
-            keepFetching = (batch && batch.length === PAGE_SIZE);
-            page++;
-        }
-    }
-
     const { data: listings, error } = await supabase
         .from('listings')
         .select('business_slug, city_slug')
         .or('status.not.in.(closed,unverified),status.is.null')
         .not('business_slug', 'is', null);
-    
-    if (error) {
-        console.error('Supabase error:', error);
+
+    if (error || !listings || listings.length === 0) {
+        console.error('Supabase error in getStaticPaths:', error);
         return [];
     }
-    
-    if (!listings || listings.length === 0) {
-        console.log('No listings found');
-        return [];
-    }
-    
-    console.log('First listing sample:', listings[0]);
-    
-    // Filter and normalize slug values
-    const validListings = listings
-        .filter(listing => {
-            let slug = listing.business_slug;
-            
-            // If it's an array, take the first element
-            if (Array.isArray(slug)) {
-                slug = slug[0];
-            }
-            
-            // Check if it's a valid string
-            const isValid = slug && typeof slug === 'string' && slug.trim() !== '';
-            if (!isValid) {
-                console.warn('Invalid slug:', slug, 'Type:', typeof slug);
-            }
-            return isValid;
+
+    return listings
+        .filter(l => {
+            const slug = Array.isArray(l.business_slug) ? l.business_slug[0] : l.business_slug;
+            return slug && typeof slug === 'string' && slug.trim() !== '';
         })
-        .map(listing => {
-            // Normalize the slug
-            let slug = listing.business_slug;
-            if (Array.isArray(slug)) {
-                slug = slug[0];
-            }
-            
-            const cleanSlug = slug.toString().trim();
-            console.log('Generated route:', cleanSlug);
-            
-            return {
-                params: { slug: cleanSlug },
-                props: { 
-                    slug: cleanSlug,
-                    citySlug: listing.city_slug,
-                    allListings,
-                }
-            };
+        .map(l => {
+            const cleanSlug = (Array.isArray(l.business_slug) ? l.business_slug[0] : l.business_slug).toString().trim();
+            return { params: { slug: cleanSlug }, props: { slug: cleanSlug, citySlug: l.city_slug } };
         });
-    
-    console.log('Total valid routes:', validListings.length);
-    return validListings;
 }
 
 const { slug } = Astro.params;
-const { allListings = [] } = Astro.props;
 
-console.log('🔍 [DEBUG] Fetching listing for slug:', slug);
-
-// Fetch business data from Supabase
+// Fetch this listing (includes precomputed relation IDs)
 const { data: dbBusiness, error } = await supabase
     .from('listings')
-    .select('id, name, business_slug, status, delivery_deliveroo, delivery_ubereats, delivery_justeat, delivery_foodhub, delivery_beelivery, delivery_opentable, booking_opentable, booking_firsttable, booking_resdiary, booking_thefork, booking_sevenrooms, booking_quandoo, booking_resy, booking_designmynight, social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin, phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, image_category, city_slug, category, area_slug, illustration_status, illustration_url, category_slug, google_maps_url, google_summary, google_rating, google_review_count')
+    .select(`id, name, business_slug, status,
+        delivery_deliveroo, delivery_ubereats, delivery_justeat, delivery_foodhub, delivery_beelivery, delivery_opentable,
+        booking_opentable, booking_firsttable, booking_resdiary, booking_thefork, booking_sevenrooms, booking_quandoo, booking_resy, booking_designmynight,
+        social_facebook, social_instagram, social_twitter, social_tiktok, social_youtube, social_linkedin,
+        phone, email, website, address, latitude, longitude, opening_hours, tags, image_url, image_category,
+        city_slug, category, area_slug, illustration_status, illustration_url, category_slug,
+        google_maps_url, google_summary, google_rating, google_review_count,
+        nearby_ids, nearby_distances, similar_ids`)
     .eq('business_slug', slug)
     .or('status.not.in.(closed,unverified),status.is.null')
     .single();
 
-console.log('🔍 [DEBUG] Query error:', error);
-console.log('🔍 [DEBUG] Raw dbBusiness:', JSON.stringify(dbBusiness, null, 2));
-
 if (!dbBusiness || error) {
-    console.error('❌ Listing fetch error for slug:', slug, error);
+    console.error('Listing fetch error for slug:', slug, error);
     return Astro.redirect('/404');
 }
 
-console.log('🔍 [DEBUG] delivery_deliveroo:', dbBusiness.delivery_deliveroo);
-console.log('🔍 [DEBUG] delivery_ubereats:', dbBusiness.delivery_ubereats);
-console.log('🔍 [DEBUG] delivery_opentable:', dbBusiness.delivery_opentable);
+// Fetch similar + nearby by precomputed IDs — parallel, no computation needed
+const CARD_FIELDS = 'id, name, business_slug, city_slug, area_slug, category, category_slug, sub_category, tags, ranking_tier, latitude, longitude, image_url, image_category, illustration_status, illustration_url, google_rating, google_review_count, description, social_facebook, social_instagram, social_twitter, social_tiktok, social_linkedin, social_youtube';
+
+const [similarResult, nearbyResult] = await Promise.all([
+    dbBusiness.similar_ids?.length
+        ? supabase.from('listings').select(CARD_FIELDS).in('id', dbBusiness.similar_ids)
+        : Promise.resolve({ data: [] }),
+    dbBusiness.nearby_ids?.length
+        ? supabase.from('listings').select(CARD_FIELDS).in('id', dbBusiness.nearby_ids)
+        : Promise.resolve({ data: [] }),
+]);
+
+// Reattach stored distances to nearby results (preserving sort order)
+const nearbyById: Record<string, any> = {};
+(nearbyResult.data || []).forEach((l: any) => { nearbyById[l.id] = l; });
+const nearbyListings = (dbBusiness.nearby_ids || [])
+    .map((id: string, i: number) => {
+        const l = nearbyById[id];
+        return l ? { ...l, _distance: dbBusiness.nearby_distances?.[i] ?? 0 } : null;
+    })
+    .filter(Boolean);
+
+// Preserve precomputed score order for similar
+const similarById: Record<string, any> = {};
+(similarResult.data || []).forEach((l: any) => { similarById[l.id] = l; });
+const similarListings = (dbBusiness.similar_ids || [])
+    .map((id: string) => similarById[id])
+    .filter(Boolean);
 
 // Used until illustration_url column is added to Supabase
 const LOCAL_ILLUSTRATIONS = {
@@ -257,50 +212,7 @@ const business = {
     social_feed: null
 };
 
-// ── Similar listings ─────────────────────────────────────────────────────────
-// Tier score weights: editors_choice=100, recommended=50, google_ranked=10, standard=0
-const TIER_SCORE = { editors_choice: 100, recommended: 50, google_ranked: 10, standard: 0 };
-
-const currentTags = new Set(dbBusiness.tags || []);
-
-const normCat = normaliseCategory(dbBusiness.category_slug);
-const similarListings = allListings
-    .filter(l =>
-        l.business_slug !== dbBusiness.business_slug &&
-        normaliseCategory(l.category_slug) === normCat
-    )
-    .map(l => {
-        const tagMatches = (l.tags || []).filter(t => currentTags.has(t)).length;
-        const score = (TIER_SCORE[l.ranking_tier] ?? 0) + tagMatches * 5;
-        return { ...l, _score: score };
-    })
-    .sort((a, b) => b._score - a._score)
-    .slice(0, 6);
-
-// ── Nearby listings ──────────────────────────────────────────────────────────
-const NEARBY_RADIUS_M = 500;
-const TIER_RANK = { editors_choice: 0, recommended: 1, google_ranked: 2, standard: 3 };
-
-const nearbyListings = (dbBusiness.latitude && dbBusiness.longitude)
-    ? allListings
-        .filter(l =>
-            l.business_slug !== dbBusiness.business_slug &&
-            l.latitude && l.longitude
-        )
-        .map(l => ({
-            ...l,
-            _distance: haversineDistance(
-                dbBusiness.latitude, dbBusiness.longitude,
-                l.latitude, l.longitude
-            )
-        }))
-        .filter(l => l._distance <= NEARBY_RADIUS_M)
-        .sort((a, b) => {
-            const tierDiff = (TIER_RANK[a.ranking_tier] ?? 3) - (TIER_RANK[b.ranking_tier] ?? 3);
-            return tierDiff !== 0 ? tierDiff : a._distance - b._distance;
-        })
-        .slice(0, 8)
-    : [];
+// similarListings and nearbyListings already built above from precomputed IDs
 ---
 
 <BaseLayout title={`${business.name} - Meridian Directory`}>
