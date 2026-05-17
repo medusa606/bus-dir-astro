@@ -5,15 +5,6 @@ import TieredListings from '../../components/TieredListings.astro';
 import { supabase } from '../../lib/supabase.js';
 import { slugToTitle, getEmoji, normaliseCategory } from '../../utils/helpers.js';
 
-export async function getStaticPaths() {
-    const { data } = await supabase
-        .from('listings')
-        .select('city_slug')
-        .or('status.not.in.(closed,unverified),status.is.null');
-    const cities = [...new Set(data?.map(l => l.city_slug).filter(Boolean))];
-    return cities.map(city => ({ params: { city } }));
-}
-
 const { city } = Astro.params;
 const cityTitle = slugToTitle(city);
 

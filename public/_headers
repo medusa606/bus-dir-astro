@@ -1,0 +1,19 @@
+# Cloudflare Pages edge cache headers
+
+# Listing and browse pages — cache at edge for 1 hour, serve stale for 1 day while revalidating
+/bristol/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/clevedon/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/listing/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+# Static assets — cache for 1 year (content-hashed filenames)
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Landing pages and homepage — shorter cache so curator edits go live faster
+/
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600
