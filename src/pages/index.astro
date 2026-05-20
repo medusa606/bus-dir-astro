@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase.js';
 import { slugToTitle, getEmoji, sortByTier, groupByTier } from '../utils/helpers.js';
 import { TOPIC_TAXONOMY } from '../utils/topicTaxonomy.js';
 
+
 // Paginate to get accurate counts — PostgREST max-rows cap means a single request won't exceed 1000
 const PAGE_SIZE = 1000;
 let allForCounts: { category_slug: string; city_slug: string }[] = [];
@@ -80,9 +81,9 @@ const publishedLandingPages = landingPages || [];
             </script>
         </div>
         <div class="hero__mosaic">
-            <img src="/front/01-bristol-sweet-mart.webp" alt="Bristol Sweet Mart" class="hero__mosaic-img" fetchpriority="high" loading="eager">
-            <img src="/front/02-fox-and-moon.webp" alt="Fox and Moon" class="hero__mosaic-img" loading="lazy">
-            <img src="/front/03-chris-williams.webp" alt="Chris Williams" class="hero__mosaic-img" loading="lazy">
+            <img src="/front/01.webp" alt="" class="hero__mosaic-img" fetchpriority="high" loading="eager">
+            <img src="/front/02.webp" alt="" class="hero__mosaic-img" loading="lazy">
+            <img src="/front/03.webp" alt="" class="hero__mosaic-img" loading="lazy">
         </div>
     </div>
 </section>
