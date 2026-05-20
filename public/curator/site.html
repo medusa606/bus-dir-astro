@@ -889,6 +889,7 @@ function initEditState(id, row) {
     chain_flag:         row.chain_flag         || "independent",
     category:           row.category           || "",
     category_slug:      row.category_slug      || "",
+    sub_category:       row.sub_category       || "",
     secondary_category: row.secondary_category || null,
     ranking_tier:       row.ranking_tier       || "standard",
     tags:               [...(row.tags          || [])],
@@ -952,12 +953,12 @@ function buildEditPanel(row) {
       onclick="_setCat('${row.id}',this.dataset.cat)">${cat.emoji} ${esc(cat.display)}</button>`;
   }).join("");
 
-  // Category slug buttons
+  // Sub-category buttons (business type within the primary category → saves to sub_category, not category_slug)
   const slugBtns = [
-    `<button class="pill-btn${!s.category_slug ? ' selected green-select' : ''}" data-slug="" onclick="_setSlug('${row.id}','')">— none —</button>`,
+    `<button class="pill-btn${!s.sub_category ? ' selected green-select' : ''}" data-slug="" onclick="_setSubCat('${row.id}','')">— none —</button>`,
     ...(CATEGORY_SLUGS[s.category] || []).map(slug =>
-      `<button class="pill-btn${s.category_slug === slug ? ' selected green-select' : ''}" data-slug="${esc(slug)}"
-        onclick="_setSlug('${row.id}',this.dataset.slug)">${esc(slug)}</button>`)
+      `<button class="pill-btn${s.sub_category === slug ? ' selected green-select' : ''}" data-slug="${esc(slug)}"
+        onclick="_setSubCat('${row.id}',this.dataset.slug)">${esc(slug)}</button>`)
   ].join("");
 
   // Image category buttons
@@ -1024,7 +1025,7 @@ function buildEditPanel(row) {
       <div class="cat-grid">${catBtns}</div>
     </div>
     <div class="edit-row">
-      <div class="edit-label">Category Slug</div>
+      <div class="edit-label">Sub-Category <span class="edit-label-hint">business type within the primary category</span></div>
       <div class="pill-buttons" id="slug-btns-${row.id}">${slugBtns}</div>
     </div>
     <div class="edit-row">
@@ -1226,17 +1227,19 @@ function buildEditPanel(row) {
 function _setCat(id, cat) {
   if (!_editState[id]) return;
   _editState[id].category = cat;
-  _editState[id].category_slug = "";
+  const catData = CATEGORIES_DATA.find(c => c.display === cat);
+  _editState[id].category_slug = catData ? catData.slug : "";
+  _editState[id].sub_category = "";
   _editState[id].image_category = null;
   document.querySelectorAll(`#edit-${id} .cat-icon-btn`).forEach(b => b.classList.toggle("selected", b.dataset.cat === cat));
-  // Rebuild slug buttons
+  // Rebuild sub-category buttons
   const slugContainer = document.getElementById("slug-btns-" + id);
   if (slugContainer) {
     const slugs = CATEGORY_SLUGS[cat] || [];
     slugContainer.innerHTML = [
-      `<button class="pill-btn selected green-select" data-slug="" onclick="_setSlug('${id}','')">— none —</button>`,
+      `<button class="pill-btn selected green-select" data-slug="" onclick="_setSubCat('${id}','')">— none —</button>`,
       ...slugs.map(slug =>
-        `<button class="pill-btn green-select" data-slug="${esc(slug)}" onclick="_setSlug('${id}',this.dataset.slug)">${esc(slug)}</button>`)
+        `<button class="pill-btn green-select" data-slug="${esc(slug)}" onclick="_setSubCat('${id}',this.dataset.slug)">${esc(slug)}</button>`)
     ].join("");
   }
   // Rebuild image category buttons
@@ -1262,7 +1265,7 @@ function _setImageCat(id, type) {
   document.querySelectorAll(`#image-cat-btns-${id} .pill-btn`).forEach(b =>
     b.classList.toggle("selected", b.dataset.type === (type || "")));
 }
-function _setSlug(id, slug)   { if (_editState[id]) { _editState[id].category_slug = slug; document.querySelectorAll(`#slug-btns-${id} .pill-btn`).forEach(b => b.classList.toggle("selected", b.dataset.slug === slug)); } }
+function _setSubCat(id, slug) { if (_editState[id]) { _editState[id].sub_category = slug; document.querySelectorAll(`#slug-btns-${id} .pill-btn`).forEach(b => b.classList.toggle("selected", b.dataset.slug === slug)); } }
 function _setStatus(id, val)  { if (_editState[id]) { _editState[id].status = val; document.querySelectorAll(`#edit-${id} .pill-btn[data-val]`).forEach(b => { if (["active","pending","closed"].includes(b.dataset.val)) b.classList.toggle("selected", b.dataset.val === val); }); } }
 function _setChain(id, val)   { if (_editState[id]) { _editState[id].chain_flag = val; document.querySelectorAll(`#edit-${id} .pill-btn[data-val]`).forEach(b => { if (["independent","local","chain"].includes(b.dataset.val)) b.classList.toggle("selected", b.dataset.val === val); }); } }
 function _setTier(id, val)    { if (_editState[id]) { _editState[id].ranking_tier = val; document.querySelectorAll(`#edit-${id} .pill-btn[data-val]`).forEach(b => { if (["editors-choice","recommended","high","standard","low"].includes(b.dataset.val)) b.classList.toggle("selected", b.dataset.val === val); }); } }
@@ -1324,6 +1327,7 @@ async function saveEdit(id) {
     chain_flag:         s.chain_flag                          || null,
     category:           s.category                            || null,
     category_slug:      s.category_slug                       || null,
+    sub_category:       s.sub_category                        || null,
     ranking_tier:       s.ranking_tier                        || null,
     tags:               finalTags.length ? finalTags : null,
     description:        gv(`ed-desc-${id}`)                   || null,
