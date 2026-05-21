@@ -7,7 +7,14 @@ const { title, intro, topicLabel, city, area, count, topImageUrl, emoji, pluralL
     {topImageUrl && <div class="landing-hero__backdrop" aria-hidden="true"></div>}
     <div class="landing-hero__inner">
         <div class="landing-hero__meta">
-            {emoji && <span class="landing-hero__emoji" aria-hidden="true">{emoji}</span>}
+            {emoji && (
+                <span class="landing-hero__emoji" aria-hidden="true">
+                    {emoji.startsWith('/') || emoji.startsWith('http')
+                        ? <img src={emoji} alt="" class="landing-hero__emoji-img" />
+                        : emoji
+                    }
+                </span>
+            )}
             <span class="landing-hero__count">{pluralLabel || topicLabel}{city ? ` · ${slugToTitle(city)}` : ''}</span>
         </div>
         <h1 class="landing-hero__title">{title}</h1>
@@ -62,6 +69,24 @@ const { title, intro, topicLabel, city, area, count, topImageUrl, emoji, pluralL
 
 .landing-hero__emoji {
     font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.landing-hero__emoji-img {
+    width: 1.5rem;
+    height: 1.5rem;
+    object-fit: contain;
+}
+
+/* When dark backdrop is present, invert icon to white */
+.landing-hero:has(.landing-hero__backdrop) .landing-hero__emoji-img {
+    filter: brightness(0) invert(1);
+}
+
+/* When no backdrop, darken the icon to match muted text colour */
+.landing-hero:not(:has(.landing-hero__backdrop)) .landing-hero__emoji-img {
+    filter: brightness(0) opacity(0.5);
 }
 
 .landing-hero__count::before {

@@ -247,6 +247,7 @@ if (type === 'city-category') {
             .filter(Boolean);
     } else {
         landingEditorialSections = (landingPage.sections || []).map((section: any, i: number) => ({
+
             ...section,
             listing: null,
             floatDirection: i % 2 === 0 ? 'right' : 'left',
@@ -319,8 +320,11 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
         title={landingPage.title}
         intro={landingPage.intro}
         topicLabel={cityTitle}
-        topImageUrl={landingPage.hero_image_url || null}
-        emoji={landingPage.emoji || null}
+        topImageUrl={landingPage.hero_image_url
+            || landingGridListings.find((l: any) => l.image_url)?.image_url
+            || landingEditorialSections.find((s: any) => s.listing?.image_url)?.listing?.image_url
+            || null}
+        emoji={`/curator/${parts[0]}/icon.png`}
     />
     <div class="landing-page">
         <div class="landing-page__breadcrumbs">

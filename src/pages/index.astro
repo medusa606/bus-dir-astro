@@ -4,7 +4,6 @@ import ListingCard from '../components/ListingCard.astro';
 import TieredListings from '../components/TieredListings.astro';
 import { supabase } from '../lib/supabase.js';
 import { slugToTitle, getEmoji, sortByTier, groupByTier } from '../utils/helpers.js';
-import { TOPIC_TAXONOMY } from '../utils/topicTaxonomy.js';
 
 
 // Paginate to get accurate counts — PostgREST max-rows cap means a single request won't exceed 1000
@@ -44,7 +43,7 @@ const standardListings = (allGroups.standard || []).slice(0, 18);
 // Fetch published landing pages for the first city
 const { data: landingPages } = firstCity ? await supabase
     .from('landing_pages')
-    .select('city, area, topic, topic_type, title, emoji')
+    .select('city, area, topic, topic_type, title, emoji, slug')
     .eq('city', firstCity)
     .eq('status', 'published')
     .order('area', { nullsFirst: true })
@@ -117,11 +116,14 @@ const publishedLandingPages = landingPages || [];
         </div>
         <div class="best-of-grid">
             {publishedLandingPages.map(page => {
-                const href = page.area
-                    ? `/${page.city}/${page.area}/${page.topic}/best`
-                    : `/${page.city}/${page.topic}/best`;
-                const topicEntry = TOPIC_TAXONOMY[page.topic as keyof typeof TOPIC_TAXONOMY];
-                const iconValue = page.emoji || topicEntry?.emoji || '📍';
+                const href = page.slug
+                    ? `/${page.city}/${page.slug}`
+                    : (page.area
+                        ? `/${page.city}/${page.area}/${page.topic}/best`
+                        : `/${page.city}/${page.topic}/best`);
+                const iconValue = page.slug
+                    ? `/curator/${page.slug}/icon.png`
+                    : (page.emoji || '📍');
                 const isImage = iconValue.startsWith('/');
                 return (
                     <a href={href} class="best-of-card">
