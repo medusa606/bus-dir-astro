@@ -16,6 +16,9 @@ import SimilarListings from '../../components/SimilarListings.astro';
 import NearbyCarousel from '../../components/NearbyCarousel.astro';
 import { getCategoryFallbackImage, getTagBasedImage, getImageByCategory } from '../../utils/categoryImages.js';
 import { getSubCategories, filterBySubCategory } from '../../utils/subCategoryHelpers.js';
+import LandingHero from '../../components/landing/LandingHero.astro';
+import EditorialSection from '../../components/landing/EditorialSection.astro';
+import LandingGrid from '../../components/landing/LandingGrid.astro';
 
 const citySlug = Astro.params.city ?? '';
 const rawSlug = Astro.params.slug;
@@ -27,6 +30,7 @@ let areaSlug = '';
 let categorySlug = '';
 let businessSlug = '';
 let listing: any = null;
+let landingPage: any = null;
 
 if (parts.length === 0) {
     return Astro.redirect('/404');
@@ -53,7 +57,18 @@ if (parts.length === 0) {
             type = 'area';
             areaSlug = segment;
         } else {
-            return Astro.redirect('/404');
+            const { data: lpCheck } = await supabase
+                .from('landing_pages')
+                .select('id')
+                .eq('city', citySlug)
+                .eq('slug', segment)
+                .eq('status', 'published')
+                .maybeSingle();
+            if (lpCheck) {
+                type = 'landing-page';
+            } else {
+                return Astro.redirect('/404');
+            }
         }
     }
 } else if (parts.length === 2) {
@@ -100,6 +115,8 @@ let crumbs = [];
 let areaHeroUrl: string | null = null;
 let similarListings: any[] = [];
 let nearbyListings: any[] = [];
+let landingGridListings: any[] = [];
+let landingEditorialSections: any[] = [];
 
 // Get sub-category filter from URL parameters
 const subCategorySlug = Astro.url.searchParams.get('subCategory');
@@ -191,6 +208,50 @@ if (type === 'city-category') {
     similarListings = (listing.similar_ids || [])
         .map((id: string) => similarById[id])
         .filter(Boolean);
+} else if (type === 'landing-page') {
+    const { data: lpData } = await supabase
+        .from('landing_pages')
+        .select('*')
+        .eq('city', citySlug)
+        .eq('slug', parts[0])
+        .eq('status', 'published')
+        .maybeSingle();
+    landingPage = lpData;
+    if (!landingPage) return Astro.redirect('/404');
+    pageTitle = landingPage.seo_title || landingPage.title;
+    pageDescription = landingPage.description || '';
+    crumbs = [
+        { label: cityTitle, href: `/${citySlug}` },
+        { label: landingPage.title },
+    ];
+    // Collect all listing IDs needed — one targeted query, no topic/area filtering
+    const neededIds = [
+        ...(landingPage.featured_ids || []),
+        ...(landingPage.sections || []).map((s: any) => s.section_listing_id).filter(Boolean),
+    ];
+    const uniqueIds = [...new Set(neededIds)] as string[];
+    if (uniqueIds.length) {
+        const { data: lpListings } = await supabase
+            .from('listings')
+            .select('*')
+            .in('id', uniqueIds);
+        const listingById: Record<string, any> = {};
+        (lpListings || []).forEach((l: any) => { listingById[l.id] = l; });
+        landingEditorialSections = (landingPage.sections || []).map((section: any, i: number) => ({
+            ...section,
+            listing: section.section_listing_id ? listingById[section.section_listing_id] || null : null,
+            floatDirection: i % 2 === 0 ? 'right' : 'left',
+        }));
+        landingGridListings = (landingPage.featured_ids || [])
+            .map((id: string) => listingById[id])
+            .filter(Boolean);
+    } else {
+        landingEditorialSections = (landingPage.sections || []).map((section: any, i: number) => ({
+            ...section,
+            listing: null,
+            floatDirection: i % 2 === 0 ? 'right' : 'left',
+        }));
+    }
 }
 
 const tier = listing ? (RANKING_TIERS[listing.ranking_tier] || RANKING_TIERS.standard) : null;
@@ -252,7 +313,43 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
 {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
 
-{type === 'listing' && listing ? (
+{type === 'landing-page' ? (
+    <!-- ════════ LANDING PAGE ════════ -->
+    <LandingHero
+        title={landingPage.title}
+        intro={landingPage.intro}
+        topicLabel={cityTitle}
+        topImageUrl={landingPage.hero_image_url || null}
+        emoji={landingPage.emoji || null}
+    />
+    <div class="landing-page">
+        <div class="landing-page__breadcrumbs">
+            <Breadcrumbs crumbs={crumbs} />
+        </div>
+        <div class="landing-page__body">
+            {landingEditorialSections.map((section: any) => (
+                <EditorialSection
+                    heading={section.heading}
+                    body={section.body}
+                    listing={section.listing}
+                    floatDirection={section.floatDirection}
+                    sectionImageUrl={section.image_url ?? undefined}
+                />
+            ))}
+        </div>
+        {landingGridListings.length > 0 && (
+            <LandingGrid
+                listings={landingGridListings}
+                heading="More of our favourites"
+            />
+        )}
+        <div class="landing-page__footer-links">
+            <a href={`/${citySlug}`} class="landing-page__browse-link">
+                Browse everything in {cityTitle} &rarr;
+            </a>
+        </div>
+    </div>
+) : type === 'listing' && listing ? (
     <!-- ════════ INDIVIDUAL LISTING PAGE ════════ -->
     <div class={`listing-hero${illustrationUrl ? ' listing-hero--illustration' : ''}`}>
         <img
@@ -598,25 +695,7 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
 
             <TieredListings listings={listings} />
 
-            {/* "Best of" CTA — shown on category and area-category pages */}
-            {(type === 'city-category' || type === 'area-category') && listings.length > 0 && (
-                <div class="best-picks-cta">
-                    <div class="best-picks-cta__inner">
-                        <p class="best-picks-cta__label">★ Editor's picks</p>
-                        <p class="best-picks-cta__text">
-                            Looking for the very best? We've hand-picked our top recommendations.
-                        </p>
-                        <a
-                            href={type === 'area-category'
-                                ? `/${citySlug}/${areaSlug}/${categorySlug}/best`
-                                : `/${citySlug}/${categorySlug}/best`}
-                            class="best-picks-cta__link"
-                        >
-                            See our best {catTitle.toLowerCase()} picks →
-                        </a>
-                    </div>
-                </div>
-            )}
+
 
             {listings.length === 0 && (
                 <div style="text-align: center; padding: var(--space-4xl) 0;">
@@ -1095,5 +1174,40 @@ const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
     .best-picks-cta__link:hover {
         background: #7c3aed;
         color: #fff;
+    }
+
+    /* ── Landing page wrapper ── */
+    .landing-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: var(--space-2xl) var(--space-lg);
+    }
+
+    .landing-page__breadcrumbs {
+        margin-bottom: var(--space-xl);
+    }
+
+    .landing-page__body {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .landing-page__footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-lg);
+        margin-top: var(--space-2xl);
+        padding-top: var(--space-xl);
+        border-top: 1px solid var(--color-border, #e5e7eb);
+    }
+
+    .landing-page__browse-link {
+        color: var(--color-primary, #6366f1);
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .landing-page__browse-link:hover {
+        text-decoration: underline;
     }
 </style>

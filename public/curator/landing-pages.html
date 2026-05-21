@@ -419,6 +419,12 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
           </div>
         </div>
 
+        <div class="field-row">
+          <label>Page slug *</label>
+          <input type="text" id="f-slug" placeholder="best-breakfast">
+          <p class="hint">The URL will be <code>/{city}/{slug}</code>, e.g. <code>/bristol/best-breakfast</code>. Auto-generated from topic — edit freely.</p>
+        </div>
+
         <div class="field-grid-2">
           <div class="field-row">
             <label>Topic type *</label>
@@ -738,6 +744,7 @@ function populateForm(row) {
   document.getElementById('f-city').value        = row.city        || '';
   document.getElementById('f-area').value        = row.area        || '';
   document.getElementById('f-topic').value       = row.topic       || '';
+  document.getElementById('f-slug').value        = row.slug        || '';
   document.getElementById('f-topic-type').value  = row.topic_type  || 'tag';
   document.getElementById('f-emoji').value        = row.emoji        || '';
   document.getElementById('f-title').value        = row.title       || '';
@@ -772,6 +779,7 @@ document.getElementById('btn-new').addEventListener('click', () => {
   renderList(); // deselect
   populateForm({
     city: '', area: '', topic: '', topic_type: 'tag',
+    slug: '',
     title: '', seo_title: '', description: '', intro: '',
     sections: [
       { heading: '', body: '', image_url: null },
@@ -782,6 +790,20 @@ document.getElementById('btn-new').addEventListener('click', () => {
   document.getElementById('form-title-text').textContent = 'New page';
   document.getElementById('form-slug').textContent = '';
 });
+
+// Auto-generate slug from area + topic when those fields change
+function autoSlug() {
+  const slugEl = document.getElementById('f-slug');
+  // Only auto-fill if the slug field is empty or was previously auto-generated
+  const area  = document.getElementById('f-area').value.trim();
+  const topic = document.getElementById('f-topic').value.trim();
+  if (!topic) return;
+  const generated = (area ? area + '-' : '') + 'best-' + topic;
+  slugEl.value = generated;
+}
+
+document.getElementById('f-topic').addEventListener('input', autoSlug);
+document.getElementById('f-area').addEventListener('input', autoSlug);
 
 // ─── Sections editor ──────────────────────────────────────────────────────────
 let sectionsData = [];
@@ -1137,8 +1159,14 @@ async function savePage(andDeploy) {
 
   const city  = document.getElementById('f-city').value.trim();
   const topic = document.getElementById('f-topic').value.trim();
+  const slug  = document.getElementById('f-slug').value.trim();
   if (!city || !topic) {
     showMsg('City and Topic are required.', 'err');
+    btn.disabled = false;
+    return;
+  }
+  if (!slug) {
+    showMsg('Page slug is required.', 'err');
     btn.disabled = false;
     return;
   }
@@ -1148,6 +1176,7 @@ async function savePage(andDeploy) {
     area:         document.getElementById('f-area').value.trim() || null,
     topic,
     topic_type:   document.getElementById('f-topic-type').value,
+    slug,
     emoji:        document.getElementById('f-emoji').value.trim() || null,
     title:        document.getElementById('f-title').value.trim(),
     seo_title:    document.getElementById('f-seo-title').value.trim(),
