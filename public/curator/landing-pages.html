@@ -213,18 +213,45 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
 
 /* ── Emoji picker ──────────────────────────────────────────── */
 .emoji-picker { margin-bottom: 0; }
+.emoji-tabs {
+  display: flex; gap: 0; border-bottom: 1.5px solid #e5e7eb; background: #f9fafb;
+  border-radius: 8px 8px 0 0; border: 1.5px solid #e5e7eb; border-bottom: none;
+}
+.emoji-tab-btn {
+  background: none; border: none; border-bottom: 2.5px solid transparent;
+  padding: 6px 14px; font-size: 0.8rem; font-weight: 600; color: #6b7280;
+  cursor: pointer; margin-bottom: -1.5px; white-space: nowrap;
+  transition: color 0.1s, border-color 0.1s;
+}
+.emoji-tab-btn:hover { color: #374151; }
+.emoji-tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
 .emoji-grid {
   display: flex; flex-wrap: wrap; gap: 4px; padding: 8px;
-  background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 8px;
+  background: #f9fafb; border: 1.5px solid #e5e7eb; border-top: none;
+  border-radius: 0 0 0 0; max-height: 220px; overflow-y: auto;
 }
-.emoji-btn {
+.openmoji-btn {
   background: none; border: 1.5px solid transparent; border-radius: 6px;
-  font-size: 1.3rem; width: 36px; height: 36px; cursor: pointer;
+  width: 40px; height: 40px; cursor: pointer; padding: 3px;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.1s, border-color 0.1s;
 }
-.emoji-btn:hover { background: #fff; border-color: #d1d5db; }
-.emoji-btn.selected { background: #ede9fe; border-color: #6366f1; }
+.openmoji-btn:hover { background: #fff; border-color: #d1d5db; }
+.openmoji-btn.selected { background: #ede9fe; border-color: #6366f1; }
+.openmoji-btn img { width: 28px; height: 28px; display: block; }
+.colour-controls {
+  display: flex; align-items: center; gap: 8px; padding: 7px 8px 4px;
+  background: #f9fafb; border: 1.5px solid #e5e7eb; border-top: none;
+  border-radius: 0 0 8px 8px; flex-wrap: wrap;
+}
+.colour-swatch {
+  background: none; border: 1.5px solid #e5e7eb; border-radius: 6px;
+  padding: 3px 10px; font-size: 0.8rem; cursor: pointer; line-height: 1.4;
+  transition: border-color 0.1s; display: flex; align-items: center; gap: 4px;
+}
+.colour-swatch:hover { border-color: #6366f1; }
+.colour-swatch.active { border-color: #6366f1; background: #ede9fe; }
+#emoji-colour { width: 34px; height: 28px; padding: 1px 2px; border: 1.5px solid #e5e7eb; border-radius: 6px; cursor: pointer; }
 
 /* ── Featured listings picker ───────────────────────────────── */
 .featured-wrap { margin-bottom: 20px; }
@@ -441,43 +468,17 @@ header h1 { font-size: 0.95rem; font-weight: 600; flex: 1 1 auto; }
         <div class="field-row">
           <label>Card icon <em style="font-weight:400;color:#aaa">(emoji or image path)</em></label>
           <div class="emoji-picker">
-            <div class="emoji-grid" id="emoji-grid">
-              <!-- food & drink -->
-              <button type="button" class="emoji-btn" data-e="🍳">🍳</button>
-              <button type="button" class="emoji-btn" data-e="🥞">🥞</button>
-              <button type="button" class="emoji-btn" data-e="🥐">🥐</button>
-              <button type="button" class="emoji-btn" data-e="☕">☕</button>
-              <button type="button" class="emoji-btn" data-e="🍕">🍕</button>
-              <button type="button" class="emoji-btn" data-e="🍔">🍔</button>
-              <button type="button" class="emoji-btn" data-e="🌮">🌮</button>
-              <button type="button" class="emoji-btn" data-e="🍜">🍜</button>
-              <button type="button" class="emoji-btn" data-e="🍝">🍝</button>
-              <button type="button" class="emoji-btn" data-e="🍛">🍛</button>
-              <button type="button" class="emoji-btn" data-e="🍣">🍣</button>
-              <button type="button" class="emoji-btn" data-e="🥩">🥩</button>
-              <button type="button" class="emoji-btn" data-e="🥗">🥗</button>
-              <button type="button" class="emoji-btn" data-e="🍺">🍺</button>
-              <button type="button" class="emoji-btn" data-e="🍸">🍸</button>
-              <button type="button" class="emoji-btn" data-e="🥂">🥂</button>
-              <button type="button" class="emoji-btn" data-e="🍾">🍾</button>
-              <button type="button" class="emoji-btn" data-e="🧁">🧁</button>
-              <button type="button" class="emoji-btn" data-e="🍰">🍰</button>
-              <button type="button" class="emoji-btn" data-e="🍫">🍫</button>
-              <!-- places & lifestyle -->
-              <button type="button" class="emoji-btn" data-e="🛍️">🛍️</button>
-              <button type="button" class="emoji-btn" data-e="🎨">🎨</button>
-              <button type="button" class="emoji-btn" data-e="🎭">🎭</button>
-              <button type="button" class="emoji-btn" data-e="💈">💈</button>
-              <button type="button" class="emoji-btn" data-e="🌿">🌿</button>
-              <button type="button" class="emoji-btn" data-e="🌺">🌺</button>
-              <button type="button" class="emoji-btn" data-e="📍">📍</button>
-              <button type="button" class="emoji-btn" data-e="⭐">⭐</button>
-              <button type="button" class="emoji-btn" data-e="✨">✨</button>
-              <button type="button" class="emoji-btn" data-e="🏡">🏡</button>
+            <div class="emoji-tabs" id="emoji-tabs"></div>
+            <div class="emoji-grid" id="emoji-grid"></div>
+            <div class="colour-controls">
+              <button type="button" class="colour-swatch active" data-colour="#000000" title="Black on white">⬛ Black</button>
+              <button type="button" class="colour-swatch" data-colour="#ffffff" title="White on dark">⬜ White</button>
+              <input type="color" id="emoji-colour" value="#000000" title="Custom fill colour">
+              <span class="hint" style="margin:0;font-size:0.74rem;color:#9ca3af">Fill preview only — not saved to DB</span>
             </div>
           </div>
-          <input type="text" id="f-emoji" placeholder="Paste emoji or /photos/image.jpg for a public image" style="margin-top:8px">
-          <p class="hint">Click an emoji above or type any emoji. To use a photo, paste a path like <code>/photos/foo.jpg</code> (relative to public/).</p>
+          <input type="text" id="f-emoji" placeholder="Paste emoji 🍕 or /photos/image.jpg for a public image" style="margin-top:8px">
+          <p class="hint">The field stores the value. Use the picker for an OpenMoji SVG (saved as a CDN URL), or paste any emoji / image path. Icons by <a href="https://openmoji.org" target="_blank" rel="noopener noreferrer">OpenMoji</a> – CC BY-SA 4.0.</p>
         </div>
 
         <div class="field-row">
@@ -740,6 +741,8 @@ function populateForm(row) {
   document.getElementById('f-topic').value       = row.topic       || '';
   document.getElementById('f-topic-type').value  = row.topic_type  || 'tag';
   document.getElementById('f-emoji').value        = row.emoji        || '';
+  // Re-sync openmoji button highlight for the loaded value
+  document.getElementById('f-emoji').dispatchEvent(new Event('input'));
   document.getElementById('f-title').value        = row.title       || '';
   document.getElementById('f-seo-title').value   = row.seo_title   || '';
   document.getElementById('f-description').value = row.description || '';
@@ -905,24 +908,250 @@ function refreshSectionCards() {
   });
 }
 
-// ─── Emoji picker ─────────────────────────────────────────────────────────────
-document.getElementById('emoji-grid').addEventListener('click', e => {
-  const btn = e.target.closest('.emoji-btn');
-  if (!btn) return;
-  const picked = btn.dataset.e;
-  document.getElementById('f-emoji').value = picked;
-  // Highlight selected
-  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-});
+// ─── OpenMoji Emoji Picker ────────────────────────────────────────────────────
+const OPENMOJI_CDN = 'https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@15.1.0/black/svg/';
+const EMOJI_GROUPS = {
+  'Food & Drink': [
+    {h:'1F347',l:'grapes'},{h:'1F349',l:'watermelon'},{h:'1F34A',l:'tangerine'},
+    {h:'1F34B',l:'lemon'},{h:'1F34C',l:'banana'},{h:'1F34D',l:'pineapple'},
+    {h:'1F96D',l:'mango'},{h:'1F34E',l:'apple'},{h:'1F351',l:'peach'},
+    {h:'1F352',l:'cherries'},{h:'1F353',l:'strawberry'},{h:'1F95D',l:'kiwi'},
+    {h:'1F345',l:'tomato'},{h:'1FAD0',l:'blueberries'},{h:'1F951',l:'avocado'},
+    {h:'1F955',l:'carrot'},{h:'1F33D',l:'corn'},{h:'1F336',l:'hot pepper'},
+    {h:'1F966',l:'broccoli'},{h:'1F9C4',l:'garlic'},{h:'1F9C5',l:'onion'},
+    {h:'1F344',l:'mushroom'},{h:'1F344-200D-1F7EB',l:'brown mushroom'},
+    {h:'1F35E',l:'bread'},{h:'1F950',l:'croissant'},{h:'1F956',l:'baguette'},
+    {h:'1F968',l:'pretzel'},{h:'1F96F',l:'bagel'},{h:'1F95E',l:'pancakes'},
+    {h:'1F9C7',l:'waffle'},{h:'1F9C0',l:'cheese'},{h:'1F354',l:'hamburger'},
+    {h:'1F35F',l:'fries'},{h:'1F355',l:'pizza'},{h:'1F32D',l:'hot dog'},
+    {h:'1F96A',l:'sandwich'},{h:'1F32E',l:'taco'},{h:'1F32F',l:'burrito'},
+    {h:'1F95A',l:'egg'},{h:'1F373',l:'cooking'},{h:'1F372',l:'pot of food'},
+    {h:'1F957',l:'salad'},{h:'1F37F',l:'popcorn'},{h:'1F953',l:'bacon'},
+    {h:'1F35C',l:'ramen'},{h:'1F35D',l:'spaghetti'},{h:'1F363',l:'sushi'},
+    {h:'1F95F',l:'dumpling'},{h:'1F961',l:'takeout box'},{h:'1F371',l:'bento'},
+    {h:'1F35B',l:'curry'},{h:'1F366',l:'ice cream'},{h:'1F369',l:'donut'},
+    {h:'1F36A',l:'cookie'},{h:'1F382',l:'birthday cake'},{h:'1F370',l:'cake'},
+    {h:'1F9C1',l:'cupcake'},{h:'1F36B',l:'chocolate'},{h:'1F36C',l:'candy'},
+    {h:'1F36D',l:'lollipop'},{h:'1F36F',l:'honey pot'},{h:'2615',l:'coffee'},
+    {h:'1FAD6',l:'teapot'},{h:'1F375',l:'tea'},{h:'1F37E',l:'champagne'},
+    {h:'1F377',l:'wine'},{h:'1F378',l:'cocktail'},{h:'1F379',l:'tropical drink'},
+    {h:'1F37A',l:'beer'},{h:'1F37B',l:'clinking beers'},{h:'1F942',l:'clinking glasses'},
+    {h:'1F943',l:'whiskey'},{h:'1F964',l:'iced drink'},{h:'1F9CB',l:'bubble tea'},
+    {h:'1F95B',l:'milk'},{h:'1F374',l:'fork & knife'},{h:'1F944',l:'spoon'},
+    {h:'1F37D',l:'plate & cutlery'}
+  ],
+  'Travel & Places': [
+    {h:'1F3D6',l:'beach'},{h:'1F3DD',l:'island'},{h:'1F3DE',l:'national park'},
+    {h:'1F3D4',l:'mountain'},{h:'1F30B',l:'volcano'},{h:'1F334',l:'palm tree'},
+    {h:'1F333',l:'tree'},{h:'1F332',l:'pine tree'},{h:'1F335',l:'cactus'},
+    {h:'1F3E0',l:'house'},{h:'1F3E1',l:'house & garden'},{h:'1F3E2',l:'office building'},
+    {h:'1F3E5',l:'hospital'},{h:'1F3E6',l:'bank'},{h:'1F3E8',l:'hotel'},
+    {h:'1F3EA',l:'convenience store'},{h:'1F3EB',l:'school'},{h:'1F3EC',l:'department store'},
+    {h:'1F3F0',l:'castle'},{h:'1F5FC',l:'tokyo tower'},{h:'26EA',l:'church'},
+    {h:'1F54C',l:'mosque'},{h:'1F492',l:'wedding chapel'},{h:'26F2',l:'fountain'},
+    {h:'26FA',l:'tent'},{h:'1F3D9',l:'cityscape'},{h:'1F309',l:'bridge at night'},
+    {h:'1F3A0',l:'carousel'},{h:'1F3A1',l:'ferris wheel'},{h:'1F488',l:'barber pole'},
+    {h:'1F3AA',l:'circus tent'},{h:'1F3EE',l:'red lantern'},
+    {h:'1F682',l:'locomotive'},{h:'1F68C',l:'bus'},{h:'1F695',l:'taxi'},
+    {h:'1F697',l:'car'},{h:'1F6B2',l:'bicycle'},{h:'1F6F4',l:'scooter'},
+    {h:'1F699',l:'SUV'},{h:'1F69A',l:'delivery truck'},{h:'1F3CE',l:'racing car'},
+    {h:'26F5',l:'sailboat'},{h:'1F6A4',l:'speedboat'},{h:'1F6A2',l:'ship'},
+    {h:'2708',l:'airplane'},{h:'1F6EB',l:'takeoff'},{h:'1F6EC',l:'landing'},
+    {h:'1F681',l:'helicopter'},{h:'1F680',l:'rocket'},{h:'1F6F8',l:'flying saucer'},
+    {h:'1F9F3',l:'luggage'},{h:'1F5FA',l:'world map'},{h:'1F9ED',l:'compass'},
+    {h:'1F4CD',l:'location pin'},{h:'1F30D',l:'globe Europe-Africa'},
+    {h:'1F30E',l:'globe Americas'},{h:'1F30F',l:'globe Asia-Australia'}
+  ],
+  'Activities': [
+    {h:'2728',l:'sparkles'},{h:'2B50',l:'star'},{h:'1F31F',l:'glowing star'},
+    {h:'1F388',l:'balloon'},{h:'1F389',l:'party popper'},{h:'1F38A',l:'confetti'},
+    {h:'1F381',l:'gift'},{h:'1F3C6',l:'trophy'},{h:'1F3C5',l:'medal'},
+    {h:'1F947',l:'gold medal'},{h:'26BD',l:'soccer'},{h:'1F3C0',l:'basketball'},
+    {h:'1F3BE',l:'tennis'},{h:'1F3C8',l:'american football'},{h:'1F3CA',l:'swimmer'},
+    {h:'1F3BF',l:'skis'},{h:'1F3AF',l:'bullseye'},{h:'1F3B1',l:'pool ball'},
+    {h:'26F3',l:'golf'},{h:'1F94A',l:'boxing glove'},{h:'1F3CB',l:'weightlifter'},
+    {h:'1F9D8',l:'yoga'},{h:'1F4AA',l:'muscle'},{h:'1F3AD',l:'performing arts'},
+    {h:'1F3A8',l:'art palette'},{h:'1F3B5',l:'music note'},{h:'1F3B6',l:'music notes'},
+    {h:'1F3B7',l:'saxophone'},{h:'1F3B8',l:'guitar'},{h:'1F3BA',l:'trumpet'},
+    {h:'1F3BB',l:'violin'},{h:'1F941',l:'drum'},{h:'1F3A4',l:'microphone'},
+    {h:'1F3A7',l:'headphones'},{h:'1F3AB',l:'ticket'},{h:'1F3AC',l:'film'},
+    {h:'1F4FA',l:'TV'},{h:'1F3AE',l:'video game'},{h:'1F3B2',l:'dice'},
+    {h:'1F9E9',l:'puzzle'},{h:'1F525',l:'fire'},{h:'2764',l:'heart'},
+    {h:'1F30A',l:'wave'},{h:'1F338',l:'blossom'},{h:'1F33B',l:'sunflower'},
+    {h:'1F33F',l:'herb'},{h:'1F4A1',l:'light bulb'},{h:'1F4D6',l:'open book'},
+    {h:'1F4F8',l:'camera'},{h:'1F6CD',l:'shopping bags'},{h:'1F484',l:'lipstick'},
+    {h:'1F451',l:'crown'},{h:'1F48E',l:'gem stone'},{h:'1F9F4',l:'lotion'},
+    {h:'1F9FA',l:'basket'},{h:'1F44D',l:'thumbs up'},{h:'1F44C',l:'OK hand'}
+  ]
+};
 
-// Sync highlight when input is manually edited
-document.getElementById('f-emoji').addEventListener('input', e => {
-  const val = e.target.value.trim();
-  document.querySelectorAll('.emoji-btn').forEach(b => {
-    b.classList.toggle('selected', b.dataset.e === val);
+let _activeEmojiGroup = Object.keys(EMOJI_GROUPS)[0];
+let _activeEmojiColour = '#000000';
+let _hexFilterCache = {};
+
+function _getImgFilter(hex) {
+  if (!hex || hex === '#000000') return 'brightness(0)';
+  if (hex === '#ffffff') return 'brightness(0) invert(1)';
+  if (_hexFilterCache[hex]) return _hexFilterCache[hex];
+  const f = _hexToFilter(hex);
+  _hexFilterCache[hex] = f;
+  return f;
+}
+
+function _buildEmojiPicker() {
+  const tabsEl = document.getElementById('emoji-tabs');
+  tabsEl.innerHTML = '';
+  Object.keys(EMOJI_GROUPS).forEach(name => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'emoji-tab-btn' + (name === _activeEmojiGroup ? ' active' : '');
+    btn.textContent = name;
+    btn.addEventListener('click', () => {
+      _activeEmojiGroup = name;
+      tabsEl.querySelectorAll('.emoji-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      _renderEmojiGroup();
+    });
+    tabsEl.appendChild(btn);
+  });
+  _renderEmojiGroup();
+}
+
+function _renderEmojiGroup() {
+  const grid = document.getElementById('emoji-grid');
+  const current = document.getElementById('f-emoji').value.trim();
+  const filter = _getImgFilter(_activeEmojiColour);
+  grid.innerHTML = '';
+  EMOJI_GROUPS[_activeEmojiGroup].forEach(({h, l}) => {
+    const url = OPENMOJI_CDN + h + '.svg';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'openmoji-btn' + (current === url ? ' selected' : '');
+    btn.dataset.url = url;
+    btn.title = l;
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = l;
+    img.loading = 'lazy';
+    img.style.filter = filter;
+    btn.appendChild(img);
+    btn.addEventListener('click', () => {
+      document.getElementById('f-emoji').value = url;
+      document.querySelectorAll('.openmoji-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function _applyColourToGrid(hex) {
+  _activeEmojiColour = hex;
+  const f = _getImgFilter(hex);
+  document.querySelectorAll('#emoji-grid .openmoji-btn img').forEach(img => {
+    img.style.filter = f;
+  });
+}
+
+// Colour swatch buttons
+document.querySelectorAll('.colour-swatch').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const col = btn.dataset.colour;
+    document.getElementById('emoji-colour').value = col;
+    document.querySelectorAll('.colour-swatch').forEach(b => b.classList.toggle('active', b === btn));
+    _applyColourToGrid(col);
   });
 });
+
+// Custom colour picker (debounced so the SPSA solver doesn't block typing)
+let _colourDebounce = null;
+document.getElementById('emoji-colour').addEventListener('input', e => {
+  document.querySelectorAll('.colour-swatch').forEach(b => b.classList.remove('active'));
+  clearTimeout(_colourDebounce);
+  _colourDebounce = setTimeout(() => _applyColourToGrid(e.target.value), 150);
+});
+
+// Sync highlight when f-emoji input is manually edited
+document.getElementById('f-emoji').addEventListener('input', e => {
+  const val = e.target.value.trim();
+  document.querySelectorAll('.openmoji-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.url === val);
+  });
+});
+
+// ─── CSS filter solver: hex colour → filter chain for black SVGs ──────────────
+// Compact implementation of the Barrett Sonntag SPSA-based approach.
+function _hexToFilter(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+
+  function clamp(n) { return Math.max(0, Math.min(255, n)); }
+
+  function applyFilters(inv, sep, sat, hr, bri, con) {
+    // Start from black, apply invert to get grey level
+    let r2 = inv * 255, g2 = inv * 255, b2 = inv * 255;
+    // sepia
+    const s = sep;
+    [r2,g2,b2] = [
+      clamp(r2*(0.393+0.607*(1-s)) + g2*(0.769-0.769*(1-s)) + b2*(0.189-0.189*(1-s))),
+      clamp(r2*(0.349-0.349*(1-s)) + g2*(0.686+0.314*(1-s)) + b2*(0.168-0.168*(1-s))),
+      clamp(r2*(0.272-0.272*(1-s)) + g2*(0.534-0.534*(1-s)) + b2*(0.131+0.869*(1-s)))
+    ];
+    // saturate
+    [r2,g2,b2] = [
+      clamp(r2*(0.213+0.787*sat) + g2*(0.715-0.715*sat) + b2*(0.072-0.072*sat)),
+      clamp(r2*(0.213-0.213*sat) + g2*(0.715+0.285*sat) + b2*(0.072-0.072*sat)),
+      clamp(r2*(0.213-0.213*sat) + g2*(0.715-0.715*sat) + b2*(0.072+0.928*sat))
+    ];
+    // hue-rotate
+    const rad = hr * Math.PI / 180, c = Math.cos(rad), sn = Math.sin(rad);
+    [r2,g2,b2] = [
+      clamp(r2*(0.213+c*0.787-sn*0.213) + g2*(0.715-c*0.715-sn*0.715) + b2*(0.072-c*0.072+sn*0.928)),
+      clamp(r2*(0.213-c*0.213+sn*0.143) + g2*(0.715+c*0.285+sn*0.140) + b2*(0.072-c*0.072-sn*0.283)),
+      clamp(r2*(0.213-c*0.213-sn*0.787) + g2*(0.715-c*0.715+sn*0.715) + b2*(0.072+c*0.928+sn*0.072))
+    ];
+    // brightness
+    r2 = clamp(r2*bri); g2 = clamp(g2*bri); b2 = clamp(b2*bri);
+    // contrast
+    r2 = clamp(r2*con - (con-1)*127.5);
+    g2 = clamp(g2*con - (con-1)*127.5);
+    b2 = clamp(b2*con - (con-1)*127.5);
+    return [r2, g2, b2];
+  }
+
+  function loss(v) {
+    const [pr,pg,pb] = applyFilters(v[0],v[1],v[2],v[3],v[4],v[5]);
+    return Math.sqrt(((pr-r)**2 + (pg-g)**2 + (pb-b)**2) / 3);
+  }
+
+  function spsa(a, vals, iters) {
+    const A = iters * 0.1, c = 0.1, alpha = 1, gamma = 0.167;
+    for (let k = 0; k < iters; k++) {
+      const ck = c / Math.pow(k+1, gamma);
+      const ak = a / Math.pow(k+A+1, alpha);
+      const delta = vals.map(() => Math.random() > 0.5 ? 1 : -1);
+      const lp = loss(vals.map((v,i) => Math.max(0, v + ck*delta[i])));
+      const lm = loss(vals.map((v,i) => Math.max(0, v - ck*delta[i])));
+      const grad = (lp - lm) / (2 * ck);
+      vals = vals.map((v, i) => Math.max(0, v - ak * grad * delta[i]));
+    }
+    return vals;
+  }
+
+  let best = null, bestLoss = Infinity;
+  for (let i = 0; i < 8 && bestLoss > 5; i++) {
+    const start = [
+      Math.random(), Math.random(), Math.random()*5,
+      Math.random()*360, Math.random()*2, Math.random()*2
+    ];
+    const result = spsa(5, start, 500);
+    const l = loss(result);
+    if (l < bestLoss) { bestLoss = l; best = result; }
+  }
+  const v = best;
+  return `brightness(0) saturate(100%) invert(${Math.round(v[0]*100)}%) sepia(${Math.round(v[1]*100)}%) saturate(${Math.round(v[2]*100)}%) hue-rotate(${Math.round(v[3])}deg) brightness(${Math.round(v[4]*100)}%) contrast(${Math.round(v[5]*100)}.${Math.round((v[5]*100%1)*10)}%)`;
+}
+
+_buildEmojiPicker();
 
 // ─── Hero image preview ───────────────────────────────────────────────────────
 function updateHeroPreview(path) {
