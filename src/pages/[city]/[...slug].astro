@@ -11,7 +11,7 @@ import DeliveryLinks from '../../components/DeliveryLinks.astro';
 import BookingLinks from '../../components/BookingLinks.astro';
 import Map from '../../components/Map.astro';
 import { supabase, getAreaHeroUrl } from '../../lib/supabase.js';
-import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory } from '../../utils/helpers.js';
+import { slugToTitle, getEmoji, RANKING_TIERS, normaliseCategory, normalizeSocialUrl } from '../../utils/helpers.js';
 import SimilarListings from '../../components/SimilarListings.astro';
 import NearbyCarousel from '../../components/NearbyCarousel.astro';
 import { getCategoryFallbackImage, getTagBasedImage, getImageByCategory } from '../../utils/categoryImages.js';
@@ -286,33 +286,87 @@ const logoUrl = listing
     ? (listing.show_logo && listing.logo_url ? listing.logo_url : LOCAL_LOGOS[listing.business_slug] || null)
     : null;
 
-const jsonLd = (type === 'listing' && listing) ? JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": listing.name,
-    "description": listing.description,
-    "address": {
-        "@type": "PostalAddress",
-        "addressLocality": cityTitle,
-        "addressRegion": areaTitle,
-        "addressCountry": "GB"
-    },
-    ...(listing.google_rating && {
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": listing.google_rating,
-            "reviewCount": listing.google_review_count || 0
-        }
-    }),
-    "image": illustrationUrl || listing.image_url,
-    "telephone": listing.phone,
-    "url": listing.website
+const SCHEMA_TYPE_MAP: Record<string, string> = {
+    'restaurants': 'Restaurant',
+    'restaurants-and-cafes': 'Restaurant',
+    'restaurant': 'Restaurant',
+    'cafes': 'CafeOrCoffeeShop',
+    'pubs-and-bars': 'BarOrPub',
+    'drinks-and-brewing': 'BarOrPub',
+    'food-and-produce': 'FoodEstablishment',
+    'health-and-wellbeing': 'HealthAndBeautyBusiness',
+    'hair-and-beauty': 'BeautySalon',
+    'sports-and-recreation': 'SportsActivityLocation',
+    'fitness-and-sports': 'SportsActivityLocation',
+    'accommodation': 'LodgingBusiness',
+    'retail-and-fashion': 'Store',
+    'shops': 'Store',
+    'entertainment': 'EntertainmentBusiness',
+    'events': 'EntertainmentBusiness',
+    'education': 'EducationalOrganization',
+    'automotive': 'AutoRepair',
+    'services': 'ProfessionalService',
+    'building-and-trades': 'ProfessionalService',
+    'tech-and-digital': 'ProfessionalService',
+    'legal': 'ProfessionalService',
+};
+
+const jsonLd = (type === 'listing' && listing) ? (() => {
+    const schemaType = SCHEMA_TYPE_MAP[normaliseCategory(listing.category_slug)] || 'LocalBusiness';
+    const socialSameAs = [
+        listing.social_facebook  ? normalizeSocialUrl('facebook',  listing.social_facebook)  : null,
+        listing.social_instagram ? normalizeSocialUrl('instagram', listing.social_instagram) : null,
+        listing.social_twitter   ? normalizeSocialUrl('twitter',   listing.social_twitter)   : null,
+        listing.social_tiktok    ? normalizeSocialUrl('tiktok',    listing.social_tiktok)    : null,
+        listing.social_youtube   ? normalizeSocialUrl('youtube',   listing.social_youtube)   : null,
+        listing.social_linkedin  ? normalizeSocialUrl('linkedin',  listing.social_linkedin)  : null,
+    ].filter(Boolean);
+    const allSameAs = [
+        ...(listing.website ? [listing.website] : []),
+        ...socialSameAs,
+    ];
+    const obj: Record<string, any> = {
+        '@context': 'https://schema.org',
+        '@type': schemaType,
+        'name': listing.name,
+        'url': `https://curatedlocale.uk/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`,
+        'address': {
+            '@type': 'PostalAddress',
+            ...(listing.address ? { 'streetAddress': listing.address } : {}),
+            'addressLocality': areaTitle,
+            'addressRegion': cityTitle,
+            'addressCountry': 'GB',
+        },
+    };
+    if (listing.description || listing.google_summary)
+        obj.description = listing.description || listing.google_summary;
+    if (listing.latitude && listing.longitude)
+        obj.geo = { '@type': 'GeoCoordinates', 'latitude': listing.latitude, 'longitude': listing.longitude };
+    if (listing.google_rating)
+        obj.aggregateRating = { '@type': 'AggregateRating', 'ratingValue': listing.google_rating, 'ratingCount': listing.google_review_count || 0 };
+    if (heroImage) obj.image = heroImage.startsWith('http') ? heroImage : `https://curatedlocale.uk${heroImage}`;
+    if (listing.phone) obj.telephone = listing.phone;
+    if (listing.email) obj.email = listing.email;
+    if (allSameAs.length) obj.sameAs = allSameAs;
+    return JSON.stringify(obj);
+})() : null;
+
+const breadcrumbLd = (type === 'listing' && crumbs.length) ? JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': crumbs.map((crumb: any, i: number) => ({
+        '@type': 'ListItem',
+        'position': i + 1,
+        'name': crumb.label,
+        ...(crumb.href ? { 'item': `https://curatedlocale.uk${crumb.href}` } : {}),
+    })),
 }) : null;
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
 
 {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
+{breadcrumbLd && <script type="application/ld+json" set:html={breadcrumbLd} />}
 
 {type === 'landing-page' ? (
     <!-- ════════ LANDING PAGE ════════ -->
