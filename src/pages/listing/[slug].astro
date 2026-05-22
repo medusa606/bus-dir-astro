@@ -40,6 +40,9 @@ if (!dbBusiness || error) {
     return Astro.redirect('/404');
 }
 
+// Redirect to canonical city/area/slug URL
+return Astro.redirect(`/${dbBusiness.city_slug}/${dbBusiness.area_slug}/${slug}`, 301);
+
 // Fetch similar + nearby by precomputed IDs — parallel, no computation needed
 const CARD_FIELDS = 'id, name, business_slug, city_slug, area_slug, category, category_slug, sub_category, tags, ranking_tier, latitude, longitude, image_url, image_category, illustration_status, illustration_url, google_rating, google_review_count, description, social_facebook, social_instagram, social_twitter, social_tiktok, social_linkedin, social_youtube';
 

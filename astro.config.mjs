@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
 import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
@@ -12,7 +11,7 @@ export default defineConfig({
     prefetch: {
         defaultStrategy: 'hover'
     },
-    integrations: [sitemap()],
+    integrations: [],
     vite: {
         server: {
             allowedHosts: true
