@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Contact Us | locale.">
+    <div class="contact-page">
+        <div class="contact-hero">
+            <h1>Contact Us</h1>
+            <p class="contact-hero__sub">We're a small team and we read everything. Whether you have a question, a suggestion, or just want to say hello — get in touch.</p>
+        </div>
+
+        <section class="contact-section">
+            <h2>Get in touch</h2>
+            <div class="contact-methods">
+                <a href="mailto:info@curatedlocale.uk" class="contact-card">
+                    <span class="contact-card__icon">✉</span>
+                    <div class="contact-card__body">
+                        <strong>Email</strong>
+                        <span>info@curatedlocale.uk</span>
+                        <p>For general enquiries, listing questions, and feedback.</p>
+                    </div>
+                </a>
+                <a href="https://instagram.com/curatedlocale" target="_blank" rel="noopener noreferrer" class="contact-card">
+                    <span class="contact-card__icon">📷</span>
+                    <div class="contact-card__body">
+                        <strong>Instagram</strong>
+                        <span>@curatedlocale</span>
+                        <p>Follow along and send us a DM.</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="contact-section">
+            <h2>Looking to get listed?</h2>
+            <p>If you're an independent business and want to appear in the directory, head to our <a href="/apply">Apply to be Listed</a> page for details on how it works.</p>
+        </section>
+    </div>
+</BaseLayout>
+
+<style>
+    .contact-page {
+        max-width: 720px;
+        margin: 3rem auto;
+        padding: 0 2rem 4rem;
+    }
+
+    .contact-hero {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--warm-grey, #e8e4dc);
+    }
+
+    .contact-hero h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .contact-hero__sub {
+        font-size: 1.1rem;
+        color: var(--grey-olive, #6b6b5e);
+        line-height: 1.7;
+        max-width: 560px;
+    }
+
+    .contact-section {
+        margin: 2.5rem 0;
+    }
+
+    .contact-section h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .contact-section p {
+        line-height: 1.7;
+        color: var(--charcoal, #2c2c27);
+    }
+
+    .contact-section p a {
+        color: var(--moss, #5a6b4b);
+        text-decoration: underline;
+    }
+
+    .contact-methods {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .contact-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid var(--warm-grey, #e8e4dc);
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .contact-card:hover {
+        border-color: var(--moss, #5a6b4b);
+        background: var(--parchment, #faf8f3);
+    }
+
+    .contact-card__icon {
+        font-size: 1.6rem;
+        line-height: 1;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+
+    .contact-card__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .contact-card__body strong {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--grey-olive, #6b6b5e);
+    }
+
+    .contact-card__body span {
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: var(--charcoal, #2c2c27);
+    }
+
+    .contact-card__body p {
+        margin: 0.25rem 0 0;
+        font-size: 0.9rem;
+        color: var(--grey-olive, #6b6b5e);
+        line-height: 1.5;
+    }
+
+    @media (min-width: 540px) {
+        .contact-methods {
+            flex-direction: row;
+        }
+
+        .contact-card {
+            flex: 1;
+        }
+    }
+</style>

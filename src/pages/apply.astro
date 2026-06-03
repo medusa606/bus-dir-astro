@@ -1,0 +1,174 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Apply to be Listed | locale.">
+    <div class="apply-page">
+        <div class="apply-hero">
+            <h1>Apply to be Listed</h1>
+            <p class="apply-hero__sub">locale is a curated directory of independent people doing great work in their communities. No ads, no algorithms — just trust.</p>
+        </div>
+
+        <section class="apply-section">
+            <h2>Who we list</h2>
+            <p>We focus on independent businesses, sole traders, and small teams that are genuinely embedded in their local community. We're looking for people whose reputation is built on craft, care, and word of mouth — not marketing spend.</p>
+            <p>If your neighbours already recommend you, you probably belong here.</p>
+        </section>
+
+        <section class="apply-section">
+            <h2>What a listing includes</h2>
+            <ul>
+                <li>A dedicated profile page with your description, contact details, and opening hours</li>
+                <li>Placement in relevant city, area, and category browsing pages</li>
+                <li>A curated tier — our editors review each listing and may highlight exceptional businesses</li>
+                <li>Inclusion in our search index</li>
+            </ul>
+        </section>
+
+        <section class="apply-section">
+            <h2>How to apply</h2>
+            <p>Get in touch and tell us a little about your business and where you're based. We review every submission personally.</p>
+            <div class="apply-contact">
+                <a href="mailto:info@curatedlocale.uk" class="apply-contact__item">
+                    <span class="apply-contact__icon">✉</span>
+                    <div>
+                        <strong>Email us</strong>
+                        <span>info@curatedlocale.uk</span>
+                    </div>
+                </a>
+                <a href="https://instagram.com/curatedlocale" target="_blank" rel="noopener noreferrer" class="apply-contact__item">
+                    <span class="apply-contact__icon">📷</span>
+                    <div>
+                        <strong>Instagram</strong>
+                        <span>@curatedlocale</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="apply-section apply-section--note">
+            <p>Listing on locale is currently <strong>free</strong>. We believe every independent business deserves visibility, regardless of budget.</p>
+        </section>
+    </div>
+</BaseLayout>
+
+<style>
+    .apply-page {
+        max-width: 720px;
+        margin: 3rem auto;
+        padding: 0 2rem 4rem;
+    }
+
+    .apply-hero {
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--warm-grey, #e8e4dc);
+    }
+
+    .apply-hero h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .apply-hero__sub {
+        font-size: 1.1rem;
+        color: var(--grey-olive, #6b6b5e);
+        line-height: 1.7;
+        max-width: 560px;
+    }
+
+    .apply-section {
+        margin: 2.5rem 0;
+    }
+
+    .apply-section h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+    }
+
+    .apply-section p {
+        line-height: 1.7;
+        color: var(--charcoal, #2c2c27);
+        margin-bottom: 0.85rem;
+    }
+
+    .apply-section ul {
+        margin-left: 1.25rem;
+        margin-top: 0.5rem;
+    }
+
+    .apply-section li {
+        line-height: 1.7;
+        margin-bottom: 0.5rem;
+        color: var(--charcoal, #2c2c27);
+    }
+
+    .apply-contact {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .apply-contact__item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--warm-grey, #e8e4dc);
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .apply-contact__item:hover {
+        border-color: var(--moss, #5a6b4b);
+        background: var(--parchment, #faf8f3);
+    }
+
+    .apply-contact__item div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .apply-contact__item strong {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--grey-olive, #6b6b5e);
+    }
+
+    .apply-contact__item span:last-child {
+        font-size: 1rem;
+        color: var(--charcoal, #2c2c27);
+    }
+
+    .apply-contact__icon {
+        font-size: 1.4rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .apply-section--note {
+        background: var(--parchment, #faf8f3);
+        border-left: 3px solid var(--moss, #5a6b4b);
+        padding: 1rem 1.25rem;
+        border-radius: 0 6px 6px 0;
+    }
+
+    .apply-section--note p {
+        margin: 0;
+    }
+
+    @media (min-width: 480px) {
+        .apply-contact {
+            flex-direction: row;
+        }
+
+        .apply-contact__item {
+            flex: 1;
+        }
+    }
+</style>
