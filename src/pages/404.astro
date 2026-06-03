@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page not found">
+    <div class="not-found">
+        <h1>Page not found</h1>
+        <p>We couldn't find what you were looking for.</p>
+        <a href="/">Back to home</a>
+    </div>
+</BaseLayout>
+
+<style>
+    .not-found {
+        max-width: 800px;
+        margin: 6rem auto;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .not-found h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .not-found p {
+        color: #666;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+    .not-found a {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #111;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.95rem;
+    }
+
+    .not-found a:hover {
+        background: #333;
+    }
+</style>
