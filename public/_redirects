@@ -1,0 +1,20 @@
+# Cloudflare Pages redirects
+# Old /city/topic/best and /city/area/topic/best URLs → current flat slugs
+
+# City-level topic pages
+/bristol/breakfast/best     /bristol/best-breakfast         301
+/bristol/burgers/best       /bristol/best-burgers           301
+/bristol/cafes/best         /bristol/best-cafes             301
+/bristol/cocktails/best     /bristol/best-cocktails         301
+/bristol/craft-ale/best     /bristol/best-craft-ale         301
+/bristol/pizza/best         /bristol/best-pizza             301
+/bristol/steak/best         /bristol/best-steak             301
+/bristol/sunday-lunch/best  /bristol/best-sunday-lunch      301
+/bristol/first-table/best   /bristol/best-first-table       301
+/bristol/clifton/best       /bristol/clifton-best           301
+
+# Area + topic pages
+/bristol/clifton/breakfast/best   /bristol/clifton-best-breakfast   301
+/bristol/clifton/cafes/best       /bristol/clifton-best-cafes       301
+/bristol/clifton/indian/best      /bristol/clifton-best-indian      301
+/bristol/easton/beer/best         /bristol/easton-best-beer         301
