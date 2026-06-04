@@ -25,7 +25,7 @@ const tierCssMap = {
 
     return (
         <div id={anchorId} style="margin-bottom: var(--space-2xl);">
-            {tier.label ? (
+            {tier.label && tierKey !== 'recommended' ? (
                 <div class={`tier-header tier-header--${cssKey}`}>
                     <span class="tier-header__icon">{tier.icon}</span>
                     <div class="tier-header__text">
@@ -34,14 +34,14 @@ const tierCssMap = {
                     </div>
                     <span class="tier-header__count">{`${items.length} ${items.length === 1 ? 'listing' : 'listings'}`}</span>
                 </div>
-            ) : (
+            ) : (!tier.label ? (
                 <div class="tier-header tier-header--standard">
                     <div class="tier-header__text">
                         <h3>All Listings</h3>
                     </div>
                     <span class="tier-header__count">{items.length} listings</span>
                 </div>
-            )}
+            ) : null)}
 
             <div class="browse-grid">
                 {items.map(item => (
