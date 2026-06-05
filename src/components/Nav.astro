@@ -6,7 +6,8 @@ const currentPath = Astro.url.pathname;
         <a href="/" class="nav__logo">locale<span>.</span></a>
         <div class="nav__links">
             <a href="/" class={`nav__link ${currentPath === '/' ? 'active' : ''}`}>Home</a>
-            <a href="/#highlights" class="nav__link">Highlights</a>
+            <a href="/#featured" class="nav__link">Featured</a>
+            <a href="/#best-of" class="nav__link">Best of Guides</a>
             <a href="/#categories" class="nav__link">Categories</a>
             <a href="/#community" class="nav__link">Browse</a>
             <a href="/search" class="nav__link">Search</a>

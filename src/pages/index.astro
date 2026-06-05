@@ -89,11 +89,11 @@ const publishedLandingPages = landingPages || [];
 
 <!-- Featured Listings (only shown when curated/ranked listings exist) -->
 {(allGroups.editors_choice?.length || allGroups.recommended?.length || allGroups.google_ranked?.length) ? (
-<section class="section" id="best-of">
+<section class="section" id="featured">
     <div class="container">
         <div class="section-header flex-between">
             <div>
-                <h2>Highlights</h2>
+                <h2>Featured</h2>
                 <div class="divider"></div>
                 <p>Hand-picked from your community — these are the people your neighbours trust and recommend.</p>
             </div>
@@ -105,12 +105,12 @@ const publishedLandingPages = landingPages || [];
 </section>
 ) : null}
 
-<!-- Highlights -->
+<!-- Best of Guides -->
 {firstCity && publishedLandingPages.length > 0 && (
-<section class="section best-of-section" id="highlights" style="background: var(--white);">
+<section class="section best-of-section" id="best-of" style="background: var(--white);">
     <div class="container">
         <div class="section-header">
-            <h2>Highlights</h2>
+            <h2>Best of Guides</h2>
             <div class="divider"></div>
             <p>Our editor-curated picks — the definitive guides to what's worth your time.</p>
         </div>
