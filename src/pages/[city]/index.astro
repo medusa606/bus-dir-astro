@@ -8,17 +8,27 @@ import { slugToTitle, getEmoji, normaliseCategory } from '../../utils/helpers.js
 const { city } = Astro.params;
 const cityTitle = slugToTitle(city);
 
-const { data: listings } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('city_slug', city)
-    .or('status.not.in.(closed,unverified),status.is.null');
+// Paginate past the PostgREST 1000-row cap — a single request would silently
+// truncate the city hub, orphaning every listing and area beyond row 1000.
+const PAGE_SIZE = 1000;
+const listings: any[] = [];
+for (let page = 0; ; page++) {
+    const { data: chunk } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('city_slug', city)
+        .or('status.not.in.(closed,unverified),status.is.null')
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (!chunk?.length) break;
+    listings.push(...chunk);
+    if (chunk.length < PAGE_SIZE) break;
+}
 
 const areaCounts: Record<string, number> = {};
-listings?.forEach(l => { if (l.area_slug) areaCounts[l.area_slug] = (areaCounts[l.area_slug] || 0) + 1; });
+listings.forEach(l => { if (l.area_slug) areaCounts[l.area_slug] = (areaCounts[l.area_slug] || 0) + 1; });
 
 const categoryCounts: Record<string, number> = {};
-listings?.forEach(l => {
+listings.forEach(l => {
     const cat = normaliseCategory(l.category_slug);
     if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
 });
@@ -40,7 +50,7 @@ const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].loca
         <h1 style="margin-top: var(--space-lg);">People in {cityTitle}</h1>
         <div class="divider"></div>
         <p class="text-secondary" style="font-size: 1.05rem; max-width: 550px;">
-            {listings?.length || 0} people across {Object.keys(areaCounts).length} areas
+            {listings.length} people across {Object.keys(areaCounts).length} areas
             — every one of them here because they deserve to be.
         </p>
     </div>

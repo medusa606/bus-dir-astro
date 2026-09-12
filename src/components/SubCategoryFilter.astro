@@ -26,6 +26,7 @@ const { category, subCategories, selectedSubCategory } = Astro.props;
       subCategories.map((subCat) => (
         <a
           href={`?subCategory=${encodeURIComponent(subCat.slug)}`}
+          rel="nofollow"
           class={`filter-pill ${selectedSubCategory === subCat.slug ? 'active' : ''}`}
           title={`${subCat.count} ${subCat.name} listings`}
         >

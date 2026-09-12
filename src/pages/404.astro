@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Explicit so the status survives rewrites from other routes — otherwise
+// missing pages answer 200 and Google files them as soft 404s.
+Astro.response.status = 404;
+Astro.response.headers.set('X-Robots-Tag', 'noindex');
 ---
 
 <BaseLayout title="Page not found">

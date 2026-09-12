@@ -37,7 +37,7 @@ const { data: dbBusiness, error } = await supabase
 
 if (!dbBusiness || error) {
     console.error('Listing fetch error for slug:', slug, error);
-    return Astro.redirect('/404');
+    return Astro.rewrite('/404');
 }
 
 // Redirect to canonical city/area/slug URL
