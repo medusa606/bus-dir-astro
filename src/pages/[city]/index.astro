@@ -8,30 +8,47 @@ import { slugToTitle, getEmoji, normaliseCategory } from '../../utils/helpers.js
 const { city } = Astro.params;
 const cityTitle = slugToTitle(city);
 
-// Paginate past the PostgREST 1000-row cap — a single request would silently
-// truncate the city hub, orphaning every listing and area beyond row 1000.
+const ACTIVE = 'status.not.in.(closed,unverified),status.is.null';
 const PAGE_SIZE = 1000;
-const listings: any[] = [];
+
+// Area and category links are this city's crawl paths into every listing, so
+// they must be derived from ALL rows. A single request stops at the PostgREST
+// 1000-row cap, which silently hid areas and categories that only appear
+// further down the table. Select just the two slug columns to keep it cheap.
+const slugRows: { area_slug: string | null; category_slug: string | null }[] = [];
 for (let page = 0; ; page++) {
     const { data: chunk } = await supabase
         .from('listings')
-        .select('*')
+        .select('area_slug, category_slug')
         .eq('city_slug', city)
-        .or('status.not.in.(closed,unverified),status.is.null')
+        .or(ACTIVE)
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     if (!chunk?.length) break;
-    listings.push(...chunk);
+    slugRows.push(...chunk);
     if (chunk.length < PAGE_SIZE) break;
 }
 
+const totalListings = slugRows.length;
+
 const areaCounts: Record<string, number> = {};
-listings.forEach(l => { if (l.area_slug) areaCounts[l.area_slug] = (areaCounts[l.area_slug] || 0) + 1; });
+slugRows.forEach(l => { if (l.area_slug) areaCounts[l.area_slug] = (areaCounts[l.area_slug] || 0) + 1; });
 
 const categoryCounts: Record<string, number> = {};
-listings.forEach(l => {
+slugRows.forEach(l => {
     const cat = normaliseCategory(l.category_slug);
     if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
 });
+
+// The card grid below is a sample, not an index — rendering thousands of cards
+// would bloat the page. Area and category pages are the real per-listing hubs.
+const CARD_LIMIT = 240;
+const { data: cardListings } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('city_slug', city)
+    .or(ACTIVE)
+    .limit(CARD_LIMIT);
+const listings = cardListings || [];
 
 // Top 10 areas by listing count, rest alphabetically
 const allAreaEntries = Object.entries(areaCounts) as [string, number][];
@@ -50,7 +67,7 @@ const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].loca
         <h1 style="margin-top: var(--space-lg);">People in {cityTitle}</h1>
         <div class="divider"></div>
         <p class="text-secondary" style="font-size: 1.05rem; max-width: 550px;">
-            {listings.length} people across {Object.keys(areaCounts).length} areas
+            {totalListings} people across {Object.keys(areaCounts).length} areas
             — every one of them here because they deserve to be.
         </p>
     </div>
@@ -113,7 +130,7 @@ const sortedCategories = Object.entries(categoryCounts).sort((a, b) => a[0].loca
 <section class="section">
     <div class="container">
         <div class="section-header">
-            <h2>Everyone in {cityTitle}</h2>
+            <h2>A look at {cityTitle}</h2>
             <div class="divider"></div>
         </div>
         <TieredListings listings={listings} />
