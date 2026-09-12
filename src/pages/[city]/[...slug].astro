@@ -133,7 +133,7 @@ if (type === 'city-category') {
     pageTitle = `${catTitle} in ${cityTitle}`;
     pageDescription = `Find the best ${catTitle.toLowerCase()} in ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: catTitle }];
-    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('category_slug', categorySlug).not('address', 'is', null);
     allListings = data || [];
     listings = allListings;
     // Apply sub-category filter if provided
@@ -145,7 +145,7 @@ if (type === 'city-category') {
     pageTitle = `People in ${areaTitle}, ${cityTitle}`;
     pageDescription = `Discover independent makers and traders in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle }];
-    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).not('address', 'is', null);
     allListings = data || [];
     listings = allListings;
     // Apply sub-category filter if provided
@@ -166,7 +166,7 @@ if (type === 'city-category') {
     pageTitle = `${catTitle} in ${areaTitle}, ${cityTitle}`;
     pageDescription = `Find ${catTitle.toLowerCase()} in ${areaTitle}, ${cityTitle}.`;
     crumbs = [{ label: cityTitle, href: `/${citySlug}` }, { label: areaTitle, href: `/${citySlug}/${areaSlug}` }, { label: catTitle }];
-    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug);
+    const { data } = await supabase.from('listings').select('*').or('status.not.in.(closed,unverified),status.is.null').eq('city_slug', citySlug).eq('area_slug', areaSlug).eq('category_slug', categorySlug).not('address', 'is', null);
     allListings = data || [];
     listings = allListings;
     // Apply sub-category filter if provided

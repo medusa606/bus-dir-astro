@@ -11,6 +11,8 @@ const cityTitle = slugToTitle(city);
 const ACTIVE = 'status.not.in.(closed,unverified),status.is.null';
 const PAGE_SIZE = 1000;
 
+// Listings with no address are excluded everywhere on the site, so they must
+// not be counted or linked here either.
 // Area and category links are this city's crawl paths into every listing, so
 // they must be derived from ALL rows. A single request stops at the PostgREST
 // 1000-row cap, which silently hid areas and categories that only appear
@@ -22,6 +24,7 @@ for (let page = 0; ; page++) {
         .select('area_slug, category_slug')
         .eq('city_slug', city)
         .or(ACTIVE)
+        .not('address', 'is', null)
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     if (!chunk?.length) break;
     slugRows.push(...chunk);
@@ -47,6 +50,7 @@ const { data: cardListings } = await supabase
     .select('*')
     .eq('city_slug', city)
     .or(ACTIVE)
+    .not('address', 'is', null)
     .limit(CARD_LIMIT);
 const listings = cardListings || [];
 
