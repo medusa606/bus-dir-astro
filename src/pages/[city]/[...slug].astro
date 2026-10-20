@@ -311,6 +311,9 @@ const SCHEMA_TYPE_MAP: Record<string, string> = {
     'legal': 'ProfessionalService',
 };
 
+// Same origin as the canonical tag in BaseLayout, so structured data never points at a redirecting host
+const siteOrigin = (Astro.site ?? Astro.url).origin;
+
 const jsonLd = (type === 'listing' && listing) ? (() => {
     const schemaType = SCHEMA_TYPE_MAP[normaliseCategory(listing.category_slug)] || 'LocalBusiness';
     const socialSameAs = [
@@ -329,7 +332,7 @@ const jsonLd = (type === 'listing' && listing) ? (() => {
         '@context': 'https://schema.org',
         '@type': schemaType,
         'name': listing.name,
-        'url': `https://curatedlocale.uk/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`,
+        'url': `${siteOrigin}/${listing.city_slug}/${listing.area_slug}/${listing.business_slug}`,
         'address': {
             '@type': 'PostalAddress',
             ...(listing.address ? { 'streetAddress': listing.address } : {}),
@@ -344,7 +347,7 @@ const jsonLd = (type === 'listing' && listing) ? (() => {
         obj.geo = { '@type': 'GeoCoordinates', 'latitude': listing.latitude, 'longitude': listing.longitude };
     if (listing.google_rating)
         obj.aggregateRating = { '@type': 'AggregateRating', 'ratingValue': listing.google_rating, 'ratingCount': listing.google_review_count || 0 };
-    if (heroImage) obj.image = heroImage.startsWith('http') ? heroImage : `https://curatedlocale.uk${heroImage}`;
+    if (heroImage) obj.image = heroImage.startsWith('http') ? heroImage : `${siteOrigin}${heroImage}`;
     if (listing.phone) obj.telephone = listing.phone;
     if (listing.email) obj.email = listing.email;
     if (allSameAs.length) obj.sameAs = allSameAs;
@@ -358,7 +361,7 @@ const breadcrumbLd = (type === 'listing' && crumbs.length) ? JSON.stringify({
         '@type': 'ListItem',
         'position': i + 1,
         'name': crumb.label,
-        ...(crumb.href ? { 'item': `https://curatedlocale.uk${crumb.href}` } : {}),
+        ...(crumb.href ? { 'item': `${siteOrigin}${crumb.href}` } : {}),
     })),
 }) : null;
 ---

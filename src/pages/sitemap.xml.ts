@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../lib/supabase.js';
 
-// Must match `site` in astro.config.mjs — a non-canonical host makes every
+// Taken from `site` in astro.config.mjs — a non-canonical host makes every
 // sitemap URL a redirect, which Google logs instead of indexing.
-const SITE = 'https://www.curatedlocale.uk';
+const SITE = new URL(import.meta.env.SITE).origin;
 
 function urlEntry(
     loc: string,
