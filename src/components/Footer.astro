@@ -4,14 +4,14 @@ import { supabase } from '../lib/supabase.js';
 const { data: cityData } = await supabase
     .from('listings')
     .select('city_slug')
-    .eq('status', 'Published');
+    .or('status.not.in.(closed,unverified),status.is.null');
 
 const cities = [...new Set(cityData?.map(l => l.city_slug).filter(Boolean))];
 
 const { data: catData } = await supabase
     .from('listings')
     .select('category_slug')
-    .eq('status', 'Published');
+    .or('status.not.in.(closed,unverified),status.is.null');
 
 const categories = [...new Set(catData?.map(l => l.category_slug).filter(Boolean))].slice(0, 5);
 

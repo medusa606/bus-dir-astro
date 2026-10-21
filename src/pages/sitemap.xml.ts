@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../lib/supabase.js';
 
-const SITE = 'https://curatedlocale.uk';
+// Taken from `site` in astro.config.mjs — a non-canonical host makes every
+// sitemap URL a redirect, which Google logs instead of indexing.
+const SITE = new URL(import.meta.env.SITE).origin;
 
 function urlEntry(
     loc: string,
@@ -37,10 +39,15 @@ export const GET: APIRoute = async () => {
     const listingEntries: string[] = [];
 
     while (hasMore) {
+        // Mirrors the browse pages: listings with no address are deliberately not
+        // surfaced anywhere on the site, so don't submit them for indexing either.
+        // Deriving cities/areas/categories from the same rows also keeps empty
+        // browse pages out of the sitemap.
         const { data: rows, error } = await supabase
             .from('listings')
             .select('business_slug, city_slug, area_slug, category_slug')
             .or('status.not.in.(closed,unverified),status.is.null')
+            .not('address', 'is', null)
             .range(offset, offset + PAGE_SIZE - 1);
 
         if (error || !rows?.length) { hasMore = false; break; }
