@@ -31,6 +31,14 @@ for (let page = 0; ; page++) {
     if (chunk.length < PAGE_SIZE) break;
 }
 
+// This route matches any single path segment, so an unknown or mistyped
+// "city" (a typo'd link, a bot-guessed URL, anything) would otherwise render
+// a thin, empty "People in X" page at 200 instead of a 404 — an unbounded
+// space of soft-404 URLs for crawlers to discover.
+if (slugRows.length === 0) {
+    return Astro.rewrite('/404');
+}
+
 const totalListings = slugRows.length;
 
 const areaCounts: Record<string, number> = {};
