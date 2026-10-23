@@ -22,6 +22,8 @@ export const GET: APIRoute = async () => {
     // Static pages
     entries.push(
         urlEntry('/', { priority: '1.0', changefreq: 'weekly' }),
+        urlEntry('/apply', { priority: '0.5', changefreq: 'monthly' }),
+        urlEntry('/contact', { priority: '0.4', changefreq: 'monthly' }),
         urlEntry('/search', { priority: '0.6', changefreq: 'monthly' }),
         urlEntry('/privacy', { priority: '0.3', changefreq: 'yearly' }),
         urlEntry('/terms', { priority: '0.3', changefreq: 'yearly' }),

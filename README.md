@@ -8,6 +8,8 @@ a purpose-built internal tool for the editorial team.
 
 **Live:** https://www.curatedlocale.uk
 
+![locale homepage](docs/images/homepage.webp)
+
 ## What it is
 
 The public site is a directory of ~3,500 independent businesses across
