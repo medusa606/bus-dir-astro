@@ -64,6 +64,10 @@ public/
 └── curator/                      # The curator portal (see below) — static HTML, not part of the Astro build
 
 scripts/                          # One-off data migration, import, and Supabase maintenance scripts
+                                   # (run from the repo root — several resolve relative paths against it)
+
+docs/                              # Internal planning notes and feature write-ups (GDPR, delivery
+                                    # links, listing templates, RLS fixes) — not needed to run the site
 ```
 
 The `[city]/[...slug].astro` catch-all is the core routing decision: rather
